@@ -6,12 +6,12 @@ services:
   # FRONTEND (React)
   # ======================
   client:
-    build: ./client
-    container_name: linkedin-client
+    build: ./frontend
+    container_name: linkedin-frontend
     ports:
       - "3000:3000"
     volumes:
-      - ./client:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
