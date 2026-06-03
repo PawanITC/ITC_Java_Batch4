@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: searchAndDiscover
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/searchdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+server:
+  port: 8085
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    org.springframework.data.elasticsearch: DEBUG
