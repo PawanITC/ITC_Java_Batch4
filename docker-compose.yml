@@ -2,9 +2,6 @@ version: "3.8"
 
 services:
 
-  # ======================
-  # FRONTEND (React)
-  # ======================
   client:
     build: ./frontend
     container_name: linkedin-frontend
@@ -16,22 +13,32 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-  # ======================
-  # BACKEND PLACEHOLDERS
-  # (Spring Boot services later)
-  # ======================
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: linkedin-keycloak
+    command: start-dev --import-realm
+    ports:
+      - "8080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
-  # auth-service:
-  #   build: ./server/auth-service
-  #   ports:
-  #     - "8081:8081"
+  redis:
+    image: redis:7
+    container_name: linkedin-redis
+    ports:
+      - "6379:6379"
 
-  # user-service:
-  #   build: ./server/user-service
-  #   ports:
-  #     - "8082:8082"
-
-  # post-service:
-  #   build: ./server/post-service
-  #   ports:
-  #     - "8083:8083"
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: linkedin-api-gateway
+    ports:
+      - "8085:8085"
+    depends_on:
+      - keycloak
+      - redis
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      REDIS_HOST: redis
