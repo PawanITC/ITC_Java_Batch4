@@ -8,6 +8,7 @@ import Login from "../pages/Login";
 >>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
 import Profile from "../pages/Profile";
 import ProtectedRoute from "./ProtectedRoute";
+import UserProfile from "../pages/UserProfile";
 
 export default function AppRoutes() {
   return (
@@ -15,7 +16,8 @@ export default function AppRoutes() {
       <Routes>
 
         {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login />}/>
+        <Route path="/user-profile" element={<UserProfile/>} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

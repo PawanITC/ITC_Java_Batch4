@@ -16,8 +16,10 @@
     "keycloak-js": "^24.0.5",
 =======
 >>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
+    "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-icons": "^5.6.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.16.0",
     "react-scripts": "5.0.1",
