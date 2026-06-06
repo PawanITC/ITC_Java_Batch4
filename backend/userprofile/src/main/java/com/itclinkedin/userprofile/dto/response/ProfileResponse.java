@@ -25,4 +25,6 @@ public class ProfileResponse {
 
     private List<EducationResponse> educations;
     private List<ExperienceResponse> experiences;
+    private List<SkillResponse> skills;
+    private List<LanguageResponse> languages;
 }

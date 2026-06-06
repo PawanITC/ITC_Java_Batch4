@@ -1,7 +1,3 @@
-//package com.itclinkedin.userprofile.entity;
-//
-//public class UserProfile {
-//}
 
 package com.itclinkedin.userprofile.entity;
 
@@ -44,5 +40,11 @@ public class UserProfile {
 
     @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL)
     private List<Education> educations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL)
+    private List<Skill> skills = new ArrayList<>();
+
+    @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL)
+    private List<Language> languages = new ArrayList<>();
 
 }
