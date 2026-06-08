@@ -21,26 +21,21 @@ public class EducationServiceImpl implements EducationService {
     private final EducationRepository educationRepository;
     private final UserProfileRepository userProfileRepository;
     private final EducationMapper educationMapper;
+
     @Override
     public EducationResponse addEducation(CreateEducationRequest request) {
 
-        // 1. Find user profile
         UserProfile profile = userProfileRepository.findById(request.getProfileId())
                 .orElseThrow(() -> new RuntimeException(
                         "Profile not found with id: " + request.getProfileId()
                 ));
-        System.out.println("Request Profile ID in EducationServiceImpl = " + request.getProfileId());
-System.out.println(profile+"hwjwkjh");
-        // 2. Map DTO → Entity
+
         Education education = educationMapper.toEntity(request);
 
-        // 3. Set relationship manually
         education.setUserProfile(profile);
 
-        // 4. Save to DB
         Education saved = educationRepository.save(education);
 
-        // 5. Convert Entity → Response DTO
         return educationMapper.toResponse(saved);
     }
 
@@ -51,5 +46,34 @@ System.out.println(profile+"hwjwkjh");
                 .stream()
                 .map(educationMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public EducationResponse updateEducation(UUID educationId,
+                                             CreateEducationRequest request) {
+
+        Education education = educationRepository.findById(educationId)
+                .orElseThrow(() ->
+                        new RuntimeException("Education not found"));
+
+        education.setSchoolName(request.getSchoolName());
+        education.setDegree(request.getDegree());
+        education.setFieldOfStudy(request.getFieldOfStudy());
+        education.setStartYear(request.getStartYear());
+        education.setEndYear(request.getEndYear());
+
+        Education updated = educationRepository.save(education);
+
+        return educationMapper.toResponse(updated);
+    }
+
+    @Override
+    public void deleteEducation(UUID educationId) {
+
+        Education education = educationRepository.findById(educationId)
+                .orElseThrow(() ->
+                        new RuntimeException("Education not found"));
+
+        educationRepository.delete(education);
     }
 }

@@ -11,6 +11,7 @@ import com.itclinkedin.userprofile.service.ExperienceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,24 +26,17 @@ public class ExperienceServiceImpl implements ExperienceService {
     @Override
     public ExperienceResponse addExperience(CreateExperienceRequest request) {
 
-        // 1. Find profile from DB
         UserProfile profile = userProfileRepository.findById(request.getProfileId())
                 .orElseThrow(() -> new RuntimeException(
                         "Profile not found with id: " + request.getProfileId()
                 ));
-        System.out.println("Request Profile ID in experience = " + request.getProfileId());
-        System.out.println(profile+ " hwjwkjh");
 
-        // 2. Convert DTO → Entity
         Experience experience = experienceMapper.toEntity(request);
 
-        // 3. Set relationship manually
         experience.setUserProfile(profile);
 
-        // 4. Save to DB
         Experience saved = experienceRepository.save(experience);
 
-        // 5. Convert Entity → Response DTO
         return experienceMapper.toResponse(saved);
     }
 
@@ -53,5 +47,39 @@ public class ExperienceServiceImpl implements ExperienceService {
                 .stream()
                 .map(experienceMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public ExperienceResponse updateExperience(
+            UUID experienceId,
+            CreateExperienceRequest request
+    ) {
+
+        Experience experience = experienceRepository.findById(experienceId)
+                .orElseThrow(() ->
+                        new RuntimeException("Experience not found"));
+
+        experience.setCompanyName(request.getCompanyName());
+        experience.setTitle(request.getTitle());
+        experience.setDescription(request.getDescription());
+
+        experience.setStartDate(request.getStartDate());
+        experience.setEndDate(request.getEndDate());
+
+        experience.setCurrent(request.getCurrent());
+
+        Experience updated = experienceRepository.save(experience);
+
+        return experienceMapper.toResponse(updated);
+    }
+
+    @Override
+    public void deleteExperience(UUID experienceId) {
+
+        Experience experience = experienceRepository.findById(experienceId)
+                .orElseThrow(() ->
+                        new RuntimeException("Experience not found"));
+
+        experienceRepository.delete(experience);
     }
 }

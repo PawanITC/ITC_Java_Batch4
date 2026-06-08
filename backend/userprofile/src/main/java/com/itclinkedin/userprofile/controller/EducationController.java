@@ -25,4 +25,21 @@ public class EducationController {
     public List<EducationResponse> getByProfile(@PathVariable UUID profileId) {
         return educationService.getByProfileId(profileId);
     }
+
+    @PutMapping("/{educationId}")
+    public EducationResponse update(
+            @PathVariable UUID educationId,
+            @RequestBody CreateEducationRequest request) {
+
+        return educationService.updateEducation(
+                educationId,
+                request
+        );
+    }
+
+    @DeleteMapping("/{educationId}")
+    public void delete(@PathVariable UUID educationId) {
+
+        educationService.deleteEducation(educationId);
+    }
 }

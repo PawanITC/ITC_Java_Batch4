@@ -11,4 +11,11 @@ public interface ExperienceService {
     ExperienceResponse addExperience(CreateExperienceRequest request);
 
     List<ExperienceResponse> getByProfileId(UUID profileId);
+
+    ExperienceResponse updateExperience(
+            UUID experienceId,
+            CreateExperienceRequest request
+    );
+
+    void deleteExperience(UUID experienceId);
 }

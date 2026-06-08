@@ -11,4 +11,9 @@ public interface EducationService {
     EducationResponse addEducation(CreateEducationRequest request);
 
     List<EducationResponse> getByProfileId(UUID profileId);
+
+    EducationResponse updateEducation(UUID educationId,
+                                      CreateEducationRequest request);
+
+    void deleteEducation(UUID educationId);
 }
