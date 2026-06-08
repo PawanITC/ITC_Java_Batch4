@@ -1,6 +1,12 @@
+server:
+  port: 8086
+
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/linkedin-app
+  application:
+    name: search-discovery-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
