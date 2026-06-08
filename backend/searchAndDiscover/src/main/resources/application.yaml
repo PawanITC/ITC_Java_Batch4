@@ -1,12 +1,46 @@
+<<<<<<< HEAD
 server:
   port: 8086
 
 spring:
   application:
     name: search-discovery-service
+=======
+spring:
+  application:
+    name: searchAndDiscover
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/searchdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+server:
+  port: 8085
+>>>>>>> main
 
 management:
   endpoints:
     web:
       exposure:
+<<<<<<< HEAD
         include: health,info
+=======
+        include: health,info,metrics
+
+logging:
+  level:
+    org.springframework.data.elasticsearch: DEBUG
+>>>>>>> main
