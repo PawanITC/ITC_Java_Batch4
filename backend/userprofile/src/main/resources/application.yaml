@@ -17,4 +17,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
+<<<<<<< HEAD
   port: 8082
+=======
+  port: 8080
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579

@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
+<<<<<<< HEAD
 import { login, logout } from "../store/authSlice";
+=======
+import { login, logout } from "../features/auth/authSlice";
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
 
 export default function LoginTest() {
   const dispatch = useAppDispatch();
@@ -8,6 +12,7 @@ export default function LoginTest() {
   const navigate = useNavigate(); 
 
   const handleLogin = () => {
+<<<<<<< HEAD
     dispatch(
   login({
     user: {
@@ -19,6 +24,9 @@ export default function LoginTest() {
     accessToken: "test-token",
   })
 );
+=======
+    dispatch(login({ name: "Hasnain", email: "test@mail.com" }));
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
 
     // 👇 redirect after login
     navigate("/profile");

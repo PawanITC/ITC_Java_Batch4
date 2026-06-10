@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
 
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: linkedin-keycloak
@@ -72,11 +73,13 @@ services:
       REDIS_HOST: redis
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
 
+
   client:
     build: ./frontend
     container_name: linkedin-frontend
     ports:
       - "3000:3000"
+
     depends_on:
       - keycloak
       - api-gateway
@@ -85,3 +88,9 @@ services:
 
 volumes:
   search_postgres_data:
+
+
+
+
+
+

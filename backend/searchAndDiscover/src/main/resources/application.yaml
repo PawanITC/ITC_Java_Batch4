@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 server:
   port: 8086
 
@@ -19,10 +20,14 @@ spring:
   elasticsearch:
     uris: ${ELASTICSEARCH_URI:http://localhost:9200}
 
+=======
+spring:
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
   security:
     oauth2:
       resourceserver:
         jwt:
+<<<<<<< HEAD
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
 
 management:
@@ -30,3 +35,6 @@ management:
     web:
       exposure:
         include: health,info,metrics
+=======
+          issuer-uri: http://localhost:8080/realms/linkedin-app
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579

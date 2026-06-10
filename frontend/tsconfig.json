@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2020",
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
+=======
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -9,12 +18,23 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+<<<<<<< HEAD
     "module": "ESNext",
+=======
+    "module": "esnext",
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
+<<<<<<< HEAD
   "include": ["src"]
 }
+=======
+  "include": [
+    "src"
+  ]
+}
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579

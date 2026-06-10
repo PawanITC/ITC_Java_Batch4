@@ -42,13 +42,19 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+<<<<<<< HEAD
 
+=======
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
