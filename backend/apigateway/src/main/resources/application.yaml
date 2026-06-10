@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: apigateway
@@ -5,24 +8,12 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: connection-service
-          uri: http://connectionservice:8081
+        - id: connectionservice
+          uri: http://connectionservice:8080
           predicates:
-            - Path=/connections/**
+            - Path=/api/connections/**
 
-        - id: messaging-service
-          uri: http://messagingservice:8082
+        - id: messageservice
+          uri: http://messageservice:8080
           predicates:
-            - Path=/messaging/**
-
-server:
-  port: 8989
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
+            - Path=/api/messages/**
