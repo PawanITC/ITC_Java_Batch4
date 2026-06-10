@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 public class RelayUserHeaderFilter {
@@ -21,34 +22,35 @@ public class RelayUserHeaderFilter {
 
                             String userId = jwt.getSubject();
                             String email = jwt.getClaimAsString("email");
-                            String username = jwt.getClaimAsString("username");
+                            String username = jwt.getClaimAsString("preferred_username");
 
-                            List<String> roles = jwt.getClaimAsStringList("roles");
-                            if (roles == null && jwt.getClaim("realm_access") != null) {
-                                Object realm_access = jwt.getClaim("realm_access");
-                                roles = List.of(realm_access.toString());
+                            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+
+                            List<String> roles = List.of();
+
+                            if (realmAccess != null && realmAccess.get("roles") instanceof List<?> roleList) {
+                                roles = roleList.stream()
+                                        .map(Object::toString)
+                                        .toList();
                             }
 
                             List<String> finalRoles = roles;
 
                             return exchange.mutate()
                                     .request(request -> request.headers(headers -> {
-                                        headers.add("X-User_Id", userId);
+                                        headers.set("X-User-Id", userId);
 
                                         if (email != null) {
-                                            headers.add("X-User-Email", email);
+                                            headers.set("X-User-Email", email);
                                         }
 
                                         if (username != null) {
-                                            headers.add("X-Username", username);
+                                            headers.set("X-Username", username);
                                         }
 
-                                        if (finalRoles != null) {
-                                            headers.add("X-User-Roles", String.join(",", finalRoles));
-                                        }
+                                        headers.set("X-User-Roles", String.join(",", finalRoles));
                                     }))
                                     .build();
-
                         })
                         .defaultIfEmpty(exchange)
                         .flatMap(chain::filter);

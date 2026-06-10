@@ -2,17 +2,6 @@ version: "3.8"
 
 services:
 
-  client:
-    build: ./frontend
-    container_name: linkedin-frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: linkedin-keycloak
@@ -31,14 +20,68 @@ services:
     ports:
       - "6379:6379"
 
+  postgres-search:
+    image: postgres:16
+    container_name: linkedin-search-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: searchdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - search_postgres_data:/var/lib/postgresql/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.8
+    container_name: linkedin-elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+  search-discovery-service:
+    build: ./backend/searchAndDiscover
+    container_name: linkedin-search-discovery-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      - postgres-search
+      - elasticsearch
+      - keycloak
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      ELASTICSEARCH_URI: http://elasticsearch:9200
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+
   api-gateway:
-    build: ./backend/api-gateway
+    build: backend/api-gateway
     container_name: linkedin-api-gateway
     ports:
       - "8085:8085"
     depends_on:
       - keycloak
       - redis
+      - search-discovery-service
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
       REDIS_HOST: redis
+      SEARCH_SERVICE_URI: http://search-discovery-service:8086
+
+  client:
+    build: ./frontend
+    container_name: linkedin-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - keycloak
+      - api-gateway
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+volumes:
+  search_postgres_data:

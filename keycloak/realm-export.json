@@ -6,9 +6,11 @@
   "resetPasswordAllowed": true,
   "rememberMe": true,
 
-  "attributes": {
-  "pkce.code.challenge.method": "S256"
-},
+  "accessTokenLifespan": 600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
 
   "roles": {
     "realm": [
@@ -24,30 +26,12 @@
   "defaultRoles": ["USER"],
 
   "groups": [
-    {
-      "name": "users",
-      "realmRoles": ["USER"]
-    },
-    {
-      "name": "recruiters",
-      "realmRoles": ["RECRUITER"]
-    },
-    {
-      "name": "admins",
-      "realmRoles": ["ADMIN"]
-    },
-    {
-      "name": "company-admins",
-      "realmRoles": ["COMPANY_ADMIN"]
-    },
-    {
-      "name": "premium-users",
-      "realmRoles": ["PREMIUM_USER"]
-    },
-    {
-      "name": "moderators",
-      "realmRoles": ["MODERATOR"]
-    }
+    { "name": "users", "realmRoles": ["USER"] },
+    { "name": "recruiters", "realmRoles": ["RECRUITER"] },
+    { "name": "admins", "realmRoles": ["ADMIN"] },
+    { "name": "company-admins", "realmRoles": ["COMPANY_ADMIN"] },
+    { "name": "premium-users", "realmRoles": ["PREMIUM_USER"] },
+    { "name": "moderators", "realmRoles": ["MODERATOR"] }
   ],
 
   "clients": [
@@ -56,12 +40,8 @@
       "enabled": true,
       "publicClient": true,
       "protocol": "openid-connect",
-      "redirectUris": [
-        "http://localhost:3000/*"
-      ],
-      "webOrigins": [
-        "http://localhost:3000"
-      ],
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -70,7 +50,6 @@
         "pkce.code.challenge.method": "S256"
       }
     },
-
     {
       "clientId": "api-gateway",
       "enabled": true,

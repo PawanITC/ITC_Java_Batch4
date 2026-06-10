@@ -6,28 +6,27 @@ spring:
     name: search-discovery-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/searchdb
-    username: postgres
-    password: postgres
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/searchdb}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
   elasticsearch:
-    uris: http://localhost:9200
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
-
-logging:
-  level:
-    org.springframework.data.elasticsearch: DEBUG

@@ -7,11 +7,7 @@ import {
   logoutSuccess,
 } from "../../store/authSlice";
 
-type Props = {
-  children: ReactNode;
-};
-
-export default function AuthProvider({ children }: Props) {
+export default function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
   const initialized = useRef(false);
 
@@ -36,28 +32,23 @@ export default function AuthProvider({ children }: Props) {
         } else {
           dispatch(authLoaded());
         }
-      })
-      .catch(() => {
-        dispatch(authLoaded());
       });
 
     keycloak.onTokenExpired = () => {
       keycloak
         .updateToken(30)
-        .then((refreshed) => {
-          if (refreshed) {
-            dispatch(
-              loginSuccess({
-                token: keycloak.token || "",
-                username: keycloak.tokenParsed?.preferred_username || "",
-                roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
-              })
-            );
-          }
+        .then(() => {
+          dispatch(
+            loginSuccess({
+              token: keycloak.token || "",
+              username: keycloak.tokenParsed?.preferred_username || "",
+              roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
+            })
+          );
         })
         .catch(() => {
           dispatch(logoutSuccess());
-          keycloak.logout();
+          keycloak.logout({ redirectUri: "http://localhost:3000" });
         });
     };
   }, [dispatch]);

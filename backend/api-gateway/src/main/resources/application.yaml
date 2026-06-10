@@ -9,7 +9,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/linkedin-clone
+          issuer-uri: http://localhost:8080/realms/linkedin-app
 
   data:
     redis:
@@ -20,7 +20,7 @@ spring:
     gateway:
       routes:
         - id: search-discovery-service-route
-          uri: http://search-discovery-service:8086
+          uri: http://localhost:8086
           predicates:
             - Path=/api/search/**,/api/discovery/**
           filters:
@@ -37,32 +37,6 @@ spring:
 
             - AddResponseHeader=X-Service-Name, search-discovery-service
             - AddResponseHeader=X-Gateway-Cache-Strategy, redis-cache-for-public-search-results
-
-        - id: profile-service-route
-          uri: http://profile-service:8081
-          predicates:
-            - Path=/api/profiles/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: profileCircuitBreaker
-                fallbackUri: forward:/fallback/profile
-
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
-                redis-rate-limiter.requestedTokens: 1
-
-        - id: post-service-route
-          uri: http://post-service:8082
-          predicates:
-            - Path=/api/posts/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: postCircuitBreaker
-                fallbackUri: forward:/fallback/posts
 
 management:
   endpoints:

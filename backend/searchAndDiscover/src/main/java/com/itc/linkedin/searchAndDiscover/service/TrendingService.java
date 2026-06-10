@@ -8,7 +8,7 @@ import java.util.List;
 @Service
 public class TrendingService {
 
-    public List<TrendingTopicResponse> getTrendingTopics() {
+    public List<TrendingTopicResponse> getTrendingTopics(String userId) {
         return List.of(
                 new TrendingTopicResponse("Spring Boot", 1500, "Technology"),
                 new TrendingTopicResponse("Kubernetes", 980, "DevOps"),
