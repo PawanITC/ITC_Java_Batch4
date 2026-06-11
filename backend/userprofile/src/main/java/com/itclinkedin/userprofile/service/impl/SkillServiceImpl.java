@@ -1,5 +1,4 @@
 package com.itclinkedin.userprofile.service.impl;
-
 import com.itclinkedin.userprofile.dto.request.CreateSkillRequest;
 import com.itclinkedin.userprofile.dto.response.SkillResponse;
 import com.itclinkedin.userprofile.entity.Skill;
@@ -45,5 +44,28 @@ public class SkillServiceImpl implements SkillService {
                 .stream()
                 .map(skillMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public SkillResponse updateSkill(UUID skillId, CreateSkillRequest request) {
+
+        Skill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new RuntimeException("Skill not found"));
+
+        skill.setSkillName(request.getSkillName());
+        skill.setEndorsementCount(request.getEndorsementCount());
+
+        Skill updated = skillRepository.save(skill);
+
+        return skillMapper.toResponse(updated);
+    }
+
+    @Override
+    public void deleteSkill(UUID skillId) {
+
+        Skill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new RuntimeException("Skill not found"));
+
+        skillRepository.delete(skill);
     }
 }

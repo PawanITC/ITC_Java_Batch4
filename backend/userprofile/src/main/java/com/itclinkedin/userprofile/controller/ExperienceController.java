@@ -4,6 +4,8 @@ import com.itclinkedin.userprofile.dto.request.CreateExperienceRequest;
 import com.itclinkedin.userprofile.dto.response.ExperienceResponse;
 import com.itclinkedin.userprofile.service.ExperienceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,10 +19,13 @@ public class ExperienceController {
     private final ExperienceService experienceService;
 
     @PostMapping
-    public ExperienceResponse add(
-            @RequestBody CreateExperienceRequest request
-    ) {
-        return experienceService.addExperience(request);
+    public ResponseEntity<ExperienceResponse> add(@RequestBody CreateExperienceRequest request) {
+
+        ExperienceResponse response = experienceService.addExperience(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/profile/{profileId}")
@@ -42,9 +47,8 @@ public class ExperienceController {
     }
 
     @DeleteMapping("/{experienceId}")
-    public void delete(
-            @PathVariable UUID experienceId
-    ) {
+    public ResponseEntity<Void> delete(@PathVariable UUID experienceId) {
         experienceService.deleteExperience(experienceId);
+        return ResponseEntity.noContent().build();
     }
 }

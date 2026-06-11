@@ -1,5 +1,4 @@
 package com.itclinkedin.userprofile.service.impl;
-
 import com.itclinkedin.userprofile.dto.request.CreateEducationRequest;
 import com.itclinkedin.userprofile.dto.response.EducationResponse;
 import com.itclinkedin.userprofile.entity.Education;
@@ -10,7 +9,6 @@ import com.itclinkedin.userprofile.repository.UserProfileRepository;
 import com.itclinkedin.userprofile.service.EducationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
 

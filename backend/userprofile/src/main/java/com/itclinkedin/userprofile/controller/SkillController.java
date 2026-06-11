@@ -4,6 +4,7 @@ import com.itclinkedin.userprofile.dto.request.CreateSkillRequest;
 import com.itclinkedin.userprofile.dto.response.SkillResponse;
 import com.itclinkedin.userprofile.service.SkillService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,5 +29,19 @@ public class SkillController {
             @PathVariable UUID profileId) {
 
         return skillService.getByProfileId(profileId);
+    }
+
+    @PutMapping("/{skillId}")
+    public SkillResponse updateSkill(
+            @PathVariable UUID skillId,
+            @RequestBody CreateSkillRequest request
+    ) {
+        return skillService.updateSkill(skillId, request);
+    }
+
+    @DeleteMapping("/{skillId}")
+    public ResponseEntity<Void> deleteSkill(@PathVariable UUID skillId) {
+        skillService.deleteSkill(skillId);
+        return ResponseEntity.noContent().build();
     }
 }

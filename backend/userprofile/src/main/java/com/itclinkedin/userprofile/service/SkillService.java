@@ -11,4 +11,10 @@ public interface SkillService {
     SkillResponse addSkill(CreateSkillRequest request);
 
     List<SkillResponse> getByProfileId(UUID profileId);
+
+    SkillResponse updateSkill(UUID skillId, CreateSkillRequest request);
+
+    void deleteSkill(UUID skillId);
+
+
 }
