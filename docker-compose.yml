@@ -41,7 +41,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
   search-discovery-service:
     build: ./backend/searchAndDiscover
@@ -71,6 +71,7 @@ services:
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
       REDIS_HOST: redis
+      USERPROFILE_SERVICE_URI: http://userprofile-service:8082
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
 
 

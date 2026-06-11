@@ -29,6 +29,16 @@ spring:
                 name: searchDiscoveryCircuitBreaker
                 fallbackUri: forward:/fallback/search-discovery
 
+        - id: userprofile-service-route
+          uri: ${USERPROFILE_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/profiles/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userProfileCircuitBreaker
+                fallbackUri: forward:/fallback/profile
+
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
