@@ -12,10 +12,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-<<<<<<< HEAD
     "keycloak-js": "^24.0.5",
-=======
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
