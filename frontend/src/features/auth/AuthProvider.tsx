@@ -16,23 +16,23 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     initialized.current = true;
 
     keycloak
-      .init({
-        onLoad: "check-sso",
-        pkceMethod: "S256",
-      })
-      .then((authenticated) => {
-        if (authenticated) {
-          dispatch(
-            loginSuccess({
-              token: keycloak.token || "",
-              username: keycloak.tokenParsed?.preferred_username || "",
-              roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
-            })
-          );
-        } else {
-          dispatch(authLoaded());
-        }
-      });
+  .init({
+    onLoad: "check-sso",
+    pkceMethod: "S256",
+  })
+  .then((authenticated: boolean) => {
+    if (authenticated) {
+      dispatch(
+        loginSuccess({
+          token: keycloak.token || "",
+          username: keycloak.tokenParsed?.preferred_username || "",
+          roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
+        })
+      );
+    } else {
+      dispatch(authLoaded());
+    }
+  });
 
     keycloak.onTokenExpired = () => {
       keycloak
