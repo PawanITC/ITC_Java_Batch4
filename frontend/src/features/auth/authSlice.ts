@@ -5,6 +5,8 @@ import { AuthState } from "../../types/auth.types";
 const initialState: AuthState = {
   user: null,
   isLoggedIn: false,
+  accessToken: null,
+  loading: false,
 };
 
 const authSlice = createSlice({
