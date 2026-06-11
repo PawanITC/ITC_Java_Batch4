@@ -1,4 +1,3 @@
-
 package com.itclinkedin.userprofile.entity;
 
 import com.itclinkedin.userprofile.entity.Education;

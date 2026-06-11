@@ -1,7 +1,4 @@
-//package com.itclinkedin.userprofile.dto.response;
-//
-//public class ProfileResponse {
-//}
+
 package com.itclinkedin.userprofile.dto.response;
 
 import lombok.Builder;
