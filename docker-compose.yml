@@ -52,15 +52,18 @@ services:
       - postgres-search
       - elasticsearch
       - keycloak
+      - redis
     environment:
       POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       ELASTICSEARCH_URI: http://elasticsearch:9200
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
 
   api-gateway:
-    build: backend/api-gateway
+    build: ./backend/api-gateway
     container_name: linkedin-api-gateway
     ports:
       - "8085:8085"
@@ -73,6 +76,9 @@ services:
       REDIS_HOST: redis
       USERPROFILE_SERVICE_URI: http://userprofile-service:8082
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
+      FEED_SERVICE_URI: http://feed-timeline-service:8081
+
+  
 
 
   client:
