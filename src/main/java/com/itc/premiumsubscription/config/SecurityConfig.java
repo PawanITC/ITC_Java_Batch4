@@ -18,15 +18,16 @@ public class SecurityConfig {
 
     private final JwtAuthConverter jwtAuthConverter;
 
-    @Bean
+   @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Explicitly securing the endpoints to ADMIN role
-                        .requestMatchers(org.springframework.http.HttpMethod.GET,"/api/v1/subscription/**").authenticated()
+                       /* .requestMatchers(org.springframework.http.HttpMethod.GET,"/api/v1/subscription/**").authenticated()
                         .requestMatchers("/api/v1/subscription/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() */
+                        .requestMatchers("/api/v1/**").permitAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
