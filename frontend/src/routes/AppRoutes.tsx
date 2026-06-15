@@ -5,6 +5,7 @@ import Profile from "../pages/Profile";
 import UserProfile from "../pages/UserProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
+import { PremiumPage } from '../pages/PremiumPage';
 
 export default function AppRoutes() {
   return (
@@ -17,6 +18,7 @@ export default function AppRoutes() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/user-profile" element={<UserProfile />} />
         </Route>
+         <Route path="/premium" element={<PremiumPage />} />
       </Routes>
     </BrowserRouter>
   );
