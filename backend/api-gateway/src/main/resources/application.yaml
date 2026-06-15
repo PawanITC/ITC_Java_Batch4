@@ -47,6 +47,12 @@ spring:
               predicates:
                 - Path=/api/feed/**
 
+              # User Profile
+            - id: userprofile-service-route
+              uri: http://userprofile-service:8083
+              predicates:
+                - Path=/api/profiles/**,/api/experiences/**
+
 management:
   endpoint:
     gateway:

@@ -16,6 +16,11 @@ public class ProfileController {
 
     private final ProfileService service;
 
+    @GetMapping("/test")
+    public String home() {
+        return "Hello World";
+    }
+
     @PostMapping
     public ProfileResponse create(@RequestBody CreateProfileRequest request) {
         return service.create(request);
