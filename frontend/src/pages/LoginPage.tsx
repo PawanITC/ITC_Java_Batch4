@@ -13,7 +13,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="flex justify-between items-center px-10 py-6">
         <div className="text-4xl font-bold text-[#0A66C2]">
           Linked
@@ -23,17 +22,11 @@ export default function LoginPage() {
         </div>
 
         <div className="flex gap-4">
-          <button
-            onClick={register}
-            className="text-gray-700 font-semibold hover:text-black"
-          >
+          <button onClick={register} className="text-gray-700 font-semibold hover:text-black">
             Join now
           </button>
 
-          <button
-            onClick={login}
-            className="border border-[#0A66C2] text-[#0A66C2] px-5 py-2 rounded-full font-semibold hover:bg-blue-50"
-          >
+          <button onClick={login} className="border border-[#0A66C2] text-[#0A66C2] px-5 py-2 rounded-full font-semibold hover:bg-blue-50">
             Sign in
           </button>
         </div>
@@ -50,10 +43,7 @@ export default function LoginPage() {
             </h1>
 
             <div className="w-full max-w-md">
-              <button
-                onClick={login}
-                className="w-full bg-[#0A66C2] text-white py-3 rounded-full font-semibold hover:bg-[#004182]"
-              >
+              <button onClick={login} className="w-full bg-[#0A66C2] text-white py-3 rounded-full font-semibold hover:bg-[#004182]">
                 Sign in with Keycloak
               </button>
 
@@ -63,10 +53,7 @@ export default function LoginPage() {
                 <div className="border-t flex-1"></div>
               </div>
 
-              <button
-                onClick={register}
-                className="w-full border border-gray-500 py-3 rounded-full font-semibold hover:bg-gray-100"
-              >
+              <button onClick={register} className="w-full border border-gray-500 py-3 rounded-full font-semibold hover:bg-gray-100">
                 Create account
               </button>
 
