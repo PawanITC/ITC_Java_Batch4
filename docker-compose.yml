@@ -76,9 +76,32 @@ services:
       REDIS_HOST: redis
       USERPROFILE_SERVICE_URI: http://userprofile-service:8082
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
-      FEED_SERVICE_URI: http://feed-timeline-service:8081
+      FEED_SERVICE_URI: http://feed-timeline-service:8087
 
-  
+  postgres-feed:
+    image: postgres:16
+    container_name: linkedin-feed-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - feed_postgres_data:/var/lib/postgresql/data
+
+  feed-and-timeline-service:
+    build: ./backend/feedAndTimeline
+    container_name: linkedin-feed-and-timeline-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - postgres-feed
+      - keycloak
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres-feed:5432/feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
 
   client:
@@ -94,6 +117,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
 
 volumes:
+  feed_postgres_data:
   search_postgres_data:
 
 

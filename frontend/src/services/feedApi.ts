@@ -3,6 +3,8 @@ import keycloak from "../features/auth/keycloak";
 const API_BASE = "http://localhost:8085/api/feed";
 
 async function getAuthHeaders() {
+  console.log("Authenticated:", keycloak.authenticated);
+  console.log("Token:", keycloak.token);
   if (!keycloak.authenticated) {
     throw new Error("User is not authenticated");
   }
