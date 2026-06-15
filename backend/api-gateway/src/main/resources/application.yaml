@@ -26,6 +26,21 @@ spring:
               uri: http://feed-and-timeline-service:8087
               predicates:
                 - Path=/api/feed
+        - id: userprofile-service-route
+          uri: ${USERPROFILE_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/profiles/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userProfileCircuitBreaker
+                fallbackUri: forward:/fallback/profile
+
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
 
             - id: feed-posts-route
               uri: http://feed-and-timeline-service:8087
