@@ -71,12 +71,38 @@ services:
       - keycloak
       - redis
       - search-discovery-service
+      - userprofile-service
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
       REDIS_HOST: redis
-      USERPROFILE_SERVICE_URI: http://userprofile-service:8082
+      USERPROFILE_SERVICE_URI: http://userprofile-service:8083
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
-      FEED_SERVICE_URI: http://feed-timeline-service:8087
+      FEED_SERVICE_URI: http://feed-and-timeline-service:8087
+
+  userprofile-postgres:
+    image: postgres:16
+    container_name: linkedin-userprofile-postgres
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: userprofile
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hasnain4890
+    volumes:
+      - userprofile_postgres_data:/var/lib/postgresql/data
+
+
+  userprofile-service:
+    build: ./backend/userprofile
+    container_name: linkedin-userprofile-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - userprofile-postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofile
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: hasnain4890
 
   postgres-feed:
     image: postgres:16
@@ -119,6 +145,7 @@ services:
 volumes:
   feed_postgres_data:
   search_postgres_data:
+  userprofile_postgres_data:
 
 
 
