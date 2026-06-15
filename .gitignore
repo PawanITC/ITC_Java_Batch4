@@ -36,4 +36,7 @@ yarn-error.log*
 coverage/
 
 # Docker volumes
-docker-data/
+docker-data/.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
