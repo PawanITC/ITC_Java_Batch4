@@ -14,7 +14,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+<<<<<<< Updated upstream
                         .anyRequest().permitAll()
+=======
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
+                        .anyRequest().authenticated()
+>>>>>>> Stashed changes
                 );
 
         return http.build();

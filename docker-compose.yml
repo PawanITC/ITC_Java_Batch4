@@ -25,7 +25,7 @@ services:
     image: postgres:16
     container_name: linkedin-search-postgres
     ports:
-      - "5432:5432"
+      - "5436:5432"
     environment:
       POSTGRES_DB: searchdb
       POSTGRES_USER: postgres

@@ -7,9 +7,17 @@ import ProtectedRoute from "./ProtectedRoute";
 import UserProfile from "../pages/UserProfile";
 
 export default function AppRoutes() {
+
+
   return (
     <BrowserRouter>
       <Routes>
+<<<<<<< Updated upstream
+=======
+        
+        <Route path="/login" element={<LoginPage />} />
+          <Route path="/user-profile" element={<UserProfile />} />
+>>>>>>> Stashed changes
 
         {/* Public Routes */}
         <Route path="/login" element={<Login />}/>
