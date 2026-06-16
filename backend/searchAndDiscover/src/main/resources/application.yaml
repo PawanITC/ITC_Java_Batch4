@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 server:
   port: 8086
 
@@ -7,9 +6,9 @@ spring:
     name: search-discovery-service
 
   datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/searchdb}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -18,23 +17,27 @@ spring:
     show-sql: true
 
   elasticsearch:
-    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+    uris: ${ELASTICSEARCH_URI}
 
-=======
-spring:
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-<<<<<<< HEAD
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  spring:
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://localhost:8080/realms/linkedin-app
+            jwk-set-uri: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
 management:
+  endpoint:
+    health:
+      show-details: always
+
   endpoints:
     web:
       exposure:
         include: health,info,metrics
-=======
-          issuer-uri: http://localhost:8080/realms/linkedin-app
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579

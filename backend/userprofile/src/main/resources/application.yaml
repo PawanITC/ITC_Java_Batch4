@@ -1,24 +1,27 @@
+server:
+  port: 8083
+
 spring:
   application:
-    name: userprofile
+    name: userprofile-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/userprofile
-    username: postgres
-    password: hasnain4890
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-server:
-<<<<<<< HEAD
-  port: 8082
-=======
-  port: 8080
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+  endpoint:
+    health:
+      show-details: always

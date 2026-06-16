@@ -10,35 +10,39 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080/realms/linkedin-app
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
+          jwk-set-uri: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
 
   cloud:
     gateway:
-      routes:
-        - id: search-discovery-service-route
-          uri: http://localhost:8086
-          predicates:
-            - Path=/api/search/**,/api/discovery/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: searchDiscoveryCircuitBreaker
-                fallbackUri: forward:/fallback/search-discovery
+      server:
+        webflux:
+          routes:
+            - id: search-discovery-service-route
+              uri: http://search-discovery-service:8086
+              predicates:
+                - Path=/api/search/**,/api/discovery/**
 
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
+            - id: feed-root-route
+              uri: http://feed-and-timeline-service:8087
+              predicates:
+                - Path=/api/feed
 
-            - AddResponseHeader=X-Service-Name, search-discovery-service
-            - AddResponseHeader=X-Gateway-Cache-Strategy, redis-cache-for-public-search-results
+            - id: feed-posts-route
+              uri: http://feed-and-timeline-service:8087
+              predicates:
+                - Path=/api/feed/**
+
+              # User Profile
+            - id: userprofile-service-route
+              uri: http://userprofile-service:8083
+              predicates:
+                - Path=/api/profiles/**,/api/experiences/**
 
 management:
+  endpoint:
+    gateway:
+      access: unrestricted
+
   endpoints:
     web:
       exposure:

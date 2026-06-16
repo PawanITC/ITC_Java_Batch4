@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "../pages/LoginPage";
 import Home from "../pages/Home";
-
-import Login from "../pages/LoginPage";
 import Profile from "../pages/Profile";
-import ProtectedRoute from "./ProtectedRoute";
 import UserProfile from "../pages/UserProfile";
+import ProtectedRoute from "./ProtectedRoute";
+import FeedTimelinePage from "../pages/FeedTimelinePage";
+import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
 
 export default function AppRoutes() {
 
@@ -12,23 +13,18 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-<<<<<<< Updated upstream
-=======
         
         <Route path="/login" element={<LoginPage />} />
-          <Route path="/user-profile" element={<UserProfile />} />
->>>>>>> Stashed changes
 
         {/* Public Routes */}
-        <Route path="/login" element={<Login />}/>
         <Route path="/user-profile" element={<UserProfile/>} />
 
-        {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<FeedTimelinePage />} />
+          <Route path="/search" element={<SearchDiscoveryPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/user-profile" element={<UserProfile />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   );

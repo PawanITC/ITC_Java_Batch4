@@ -2,9 +2,11 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../hooks/reduxHooks";
 
 export default function ProtectedRoute() {
-  const user = useAppSelector((state) => state.auth.user);
+  const { isLoggedIn, loading } = useAppSelector((state) => state.auth);
 
-  console.log(user,"kjshkjhd")
+  if (loading) {
+    return <div>Loading authentication...</div>;
+  }
 
-  return user ? <Outlet /> : <Navigate to="/login" />;
+  return isLoggedIn ? <Outlet /> : <Navigate to="/login" replace />;
 }

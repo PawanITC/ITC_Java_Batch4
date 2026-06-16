@@ -41,7 +41,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
   search-discovery-service:
     build: ./backend/searchAndDiscover
@@ -52,15 +52,18 @@ services:
       - postgres-search
       - elasticsearch
       - keycloak
+      - redis
     environment:
       POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       ELASTICSEARCH_URI: http://elasticsearch:9200
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
 
   api-gateway:
-    build: backend/api-gateway
+    build: ./backend/api-gateway
     container_name: linkedin-api-gateway
     ports:
       - "8085:8085"
@@ -68,10 +71,63 @@ services:
       - keycloak
       - redis
       - search-discovery-service
+      - userprofile-service
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
       REDIS_HOST: redis
+      USERPROFILE_SERVICE_URI: http://userprofile-service:8083
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
+      FEED_SERVICE_URI: http://feed-and-timeline-service:8087
+
+  userprofile-postgres:
+    image: postgres:16
+    container_name: linkedin-userprofile-postgres
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: userprofile
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hasnain4890
+    volumes:
+      - userprofile_postgres_data:/var/lib/postgresql/data
+
+
+  userprofile-service:
+    build: ./backend/userprofile
+    container_name: linkedin-userprofile-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - userprofile-postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofile
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: hasnain4890
+
+  postgres-feed:
+    image: postgres:16
+    container_name: linkedin-feed-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - feed_postgres_data:/var/lib/postgresql/data
+
+  feed-and-timeline-service:
+    build: ./backend/feedAndTimeline
+    container_name: linkedin-feed-and-timeline-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - postgres-feed
+      - keycloak
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres-feed:5432/feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
 
   client:
@@ -87,7 +143,9 @@ services:
       - CHOKIDAR_USEPOLLING=true
 
 volumes:
+  feed_postgres_data:
   search_postgres_data:
+  userprofile_postgres_data:
 
 
 
