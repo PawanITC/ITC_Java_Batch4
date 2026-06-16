@@ -5,41 +5,34 @@ import profileimage from "../../../assets/profile.jpeg";
 import coverimage from "../../../assets/cover.jpeg";
 
 const HeroSection = () => {
-  // State to manage modal visibility
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   
-  // State holding the active cover photo string (can be an imported file path or a base64 DataURL string)
   const [currentCover, setCurrentCover] = useState<string>(coverimage);
 
-  // Use a DOM ref to target our hidden file input element programmatically
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handler triggered when a user selects a file from their gallery/explorer
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Update state with the uploaded image's base64 data string
         setCurrentCover(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Triggers the device gallery explorer window
   const triggerGallery = () => {
     fileInputRef.current?.click();
   };
 
-  // Clears out the current cover photo back to a dark background default placeholder
   const handleDeletePhoto = () => {
-    setCurrentCover(""); // Empty string will drop back to background color
+    setCurrentCover(""); 
     setIsModalOpen(false);
   };
 
   return (
-    <div className="relative">
+    <div className="relative bg-white rounded-md">
       {/* Hidden File Input element tracking image uploads */}
       <input
         type="file"
@@ -78,17 +71,13 @@ const HeroSection = () => {
         </button>
       </div>
 
-      {/* Extra spacer layout helper supporting the absolute floating profile height */}
       <div className="h-28" />
 
-      {/* ========================================== */}
-      {/* COVER PHOTO EDIT OVERLAY MODAL      */}
-      {/* ========================================== */}
+     
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
           <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
             
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Cover photo</h2>
               <button 
@@ -99,7 +88,6 @@ const HeroSection = () => {
               </button>
             </div>
 
-            {/* Modal Central Image Dark Preview Canvas */}
             <div className="bg-[#111] p-12 flex items-center justify-center min-h-[260px] relative">
               {currentCover ? (
                 <img 
@@ -112,10 +100,8 @@ const HeroSection = () => {
               )}
             </div>
 
-            {/* Modal Action Controls Footer Row */}
             <div className="flex items-center justify-around bg-white border-t border-gray-100 py-4">
               
-              {/* Change/Edit Photo Option */}
               <button
                 onClick={triggerGallery}
                 className="flex flex-col items-center gap-1 group text-gray-600 hover:text-blue-600 font-medium text-sm transition"
@@ -126,7 +112,6 @@ const HeroSection = () => {
                 <span>Change photo</span>
               </button>
 
-              {/* Delete Option */}
               <button
                 onClick={handleDeletePhoto}
                 className="flex flex-col items-center gap-1 group text-gray-600 hover:text-red-600 font-medium text-sm transition"
