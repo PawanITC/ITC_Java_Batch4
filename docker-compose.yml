@@ -50,8 +50,8 @@ services:
     volumes:
       - ./observability/opentelemetry/otel-collector-config.yml:/etc/otelcol/otel-collector-config.yml:ro
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "4319:4317"
+      - "4320:4318"
     depends_on:
       - jaeger
 
@@ -85,6 +85,7 @@ services:
       - elasticsearch
       - keycloak
       - redis
+      - otel-collector
     volumes:
       - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
@@ -105,6 +106,12 @@ services:
     container_name: linkedin-api-gateway
     ports:
       - "8085:8085"
+    depends_on:
+      - keycloak
+      - redis
+      - search-discovery-service
+      - userprofile-service
+      - otel-collector
     volumes:
       - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
@@ -160,6 +167,7 @@ services:
     depends_on:
       - postgres-feed
       - keycloak
+      - otel-collector
     volumes:
       - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
