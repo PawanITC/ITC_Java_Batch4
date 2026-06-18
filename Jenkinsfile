@@ -27,5 +27,13 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Feed Service') {
+            steps {
+                dir('ITC_Java_Batch4/backend/feedAndTimeline') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
     }
 }
