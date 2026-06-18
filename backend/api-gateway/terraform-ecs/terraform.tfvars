@@ -1,5 +1,5 @@
 # Customize these values for your project
-aws_region     = "ap-south-1"
+aws_region     = "eu-west-2"
 app_name       = "springboot-app"
 container_port = 8080
 spring_profile = "prod"
