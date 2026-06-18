@@ -1,9 +1,7 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    build: ./observability/prometheus
     container_name: prometheus
-    volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 

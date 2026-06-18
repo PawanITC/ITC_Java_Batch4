@@ -44,10 +44,8 @@ services:
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
   prometheus:
-    image: prom/prometheus
+    build: ./observability/prometheus
     container_name: prometheus
-    volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 
