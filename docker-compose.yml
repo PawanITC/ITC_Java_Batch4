@@ -46,12 +46,12 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
-    command: [ "--config=/etc/otel-collector-config.yml" ]
+    command: [ "--config=/etc/otelcol/otel-collector-config.yml" ]
     volumes:
-      - ./observability/opentelemetry/otel-collector-config.yml:/etc/otel-collector-config.yml
+      - ./observability/opentelemetry/otel-collector-config.yml:/etc/otelcol/otel-collector-config.yml:ro
     ports:
-      - "4319:4317"
-      - "4320:4318"
+      - "4317:4317"
+      - "4318:4318"
     depends_on:
       - jaeger
 
