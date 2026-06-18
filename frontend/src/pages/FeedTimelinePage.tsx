@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { FeedPost } from "../types/feed";
-import { createPost, getFeed, likePost } from "../services/feedApi";
+import {
+  createPost,
+  getFeed,
+  likePost,
+  unlikePost,
+  deletePost,
+  addComment,
+} from "../services/feedApi";
+
 import FeedNavbar from "../components/feed/FeedNavbar";
 import LeftProfileCard from "../components/feed/LeftProfileCard";
 import CreatePostCard from "../components/feed/CreatePostCard";
@@ -18,6 +26,7 @@ export default function FeedTimelinePage() {
       setPosts(data);
     } catch (error) {
       console.error("Feed loading error", error);
+      setPosts([]);
     } finally {
       setLoading(false);
     }
@@ -30,6 +39,21 @@ export default function FeedTimelinePage() {
 
   const handleLikePost = async (postId: number) => {
     await likePost(postId);
+    await loadFeed();
+  };
+
+  const handleUnlikePost = async (postId: number) => {
+    await unlikePost(postId);
+    await loadFeed();
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    await deletePost(postId);
+    await loadFeed();
+  };
+
+  const handleAddComment = async (postId: number, content: string) => {
+    await addComment(postId, content);
     await loadFeed();
   };
 
@@ -63,6 +87,9 @@ export default function FeedTimelinePage() {
                 key={post.id}
                 post={post}
                 onLike={handleLikePost}
+                onUnlike={handleUnlikePost}
+                onDelete={handleDeletePost}
+                onComment={handleAddComment}
               />
             ))
           )}

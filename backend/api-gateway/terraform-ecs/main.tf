@@ -2,6 +2,10 @@ provider "aws" {
   region = var.aws_region
 }
 
+locals {
+  availability_zones = ["eu-west-2a", "eu-west-2b"]
+}
+
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
@@ -16,13 +20,13 @@ resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet("10.0.0.0/16", 8, count.index)
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  availability_zone       = local.availability_zones[count.index]
   map_public_ip_on_launch = true
 
   tags = { Name = "${var.app_name}-public-${count.index}" }
 }
 
-data "aws_availability_zones" "available" {}
+
 
 # Internet Gateway
 resource "aws_internet_gateway" "main" {

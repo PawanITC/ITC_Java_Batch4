@@ -20,7 +20,15 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL}
 
 management:
   endpoints:

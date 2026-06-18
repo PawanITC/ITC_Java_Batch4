@@ -4,11 +4,14 @@ import com.itc.linkedin.feedAndTimeline.dto.*;
 import com.itc.linkedin.feedAndTimeline.entity.Comment;
 import com.itc.linkedin.feedAndTimeline.entity.Post;
 import com.itc.linkedin.feedAndTimeline.entity.PostLike;
+import com.itc.linkedin.feedAndTimeline.exception.ForbiddenActionException;
+import com.itc.linkedin.feedAndTimeline.exception.ResourceNotFoundException;
 import com.itc.linkedin.feedAndTimeline.repository.CommentRepository;
 import com.itc.linkedin.feedAndTimeline.repository.PostLikeRepository;
 import com.itc.linkedin.feedAndTimeline.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,11 +31,7 @@ public class FeedService {
                 .toList();
     }
 
-    public FeedPostResponse createPost(
-            String userId,
-            String username,
-            CreatePostRequest request
-    ) {
+    public FeedPostResponse createPost(String userId, String username, CreatePostRequest request) {
         Post post = Post.builder()
                 .authorId(userId)
                 .authorName(username)
@@ -48,20 +47,23 @@ public class FeedService {
     }
 
     public FeedPostResponse getPost(Long postId) {
-        Post post = findPost(postId);
-        return mapPost(post);
+        return mapPost(findPost(postId));
     }
 
+    @Transactional
     public void deletePost(Long postId, String userId) {
         Post post = findPost(postId);
 
         if (!post.getAuthorId().equals(userId)) {
-            throw new RuntimeException("You can only delete your own post");
+            throw new ForbiddenActionException("You can only delete your own post");
         }
 
+        commentRepository.deleteByPostId(postId);
+        postLikeRepository.deleteByPostId(postId);
         postRepository.delete(post);
     }
 
+    @Transactional
     public FeedPostResponse likePost(Long postId, String userId) {
         Post post = findPost(postId);
 
@@ -73,7 +75,6 @@ public class FeedService {
                     .build();
 
             postLikeRepository.save(like);
-
             post.setLikesCount(post.getLikesCount() + 1);
             postRepository.save(post);
         }
@@ -81,6 +82,7 @@ public class FeedService {
         return mapPost(post);
     }
 
+    @Transactional
     public FeedPostResponse unlikePost(Long postId, String userId) {
         Post post = findPost(postId);
 
@@ -95,18 +97,16 @@ public class FeedService {
     }
 
     public List<CommentResponse> getComments(Long postId) {
+        findPost(postId);
+
         return commentRepository.findByPostIdOrderByCreatedAtAsc(postId)
                 .stream()
                 .map(this::mapComment)
                 .toList();
     }
 
-    public CommentResponse addComment(
-            Long postId,
-            String userId,
-            String username,
-            CreateCommentRequest request
-    ) {
+    @Transactional
+    public CommentResponse addComment(Long postId, String userId, String username, CreateCommentRequest request) {
         Post post = findPost(postId);
 
         Comment comment = Comment.builder()
@@ -123,12 +123,13 @@ public class FeedService {
         return mapComment(commentRepository.save(comment));
     }
 
+    @Transactional
     public void deleteComment(Long commentId, String userId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
 
         if (!comment.getAuthorId().equals(userId)) {
-            throw new RuntimeException("You can only delete your own comment");
+            throw new ForbiddenActionException("You can only delete your own comment");
         }
 
         Post post = findPost(comment.getPostId());
@@ -140,7 +141,7 @@ public class FeedService {
 
     private Post findPost(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
     }
 
     private FeedPostResponse mapPost(Post post) {
@@ -162,7 +163,8 @@ public class FeedService {
                 .postId(comment.getPostId())
                 .authorId(comment.getAuthorId())
                 .authorName(comment.getAuthorName())
-                .content(comment.getContent())
+                .content(comment.getContent()
+                )
                 .createdAt(comment.getCreatedAt())
                 .build();
     }
