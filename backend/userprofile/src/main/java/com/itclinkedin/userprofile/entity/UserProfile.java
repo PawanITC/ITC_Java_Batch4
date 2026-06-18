@@ -1,7 +1,5 @@
 package com.itclinkedin.userprofile.entity;
 
-import com.itclinkedin.userprofile.entity.Education;
-import com.itclinkedin.userprofile.entity.Experience;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,12 +25,28 @@ public class UserProfile {
     private String email;
     private String headline;
 
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
     @Column(length = 5000)
     private String about;
 
     private String city;
     private String country;
+
     private String profilePictureUrl;
+    private String coverPhotoUrl;
+
+    private String industry;
+    private String currentCompany;
+    private String currentPosition;
+
+    private String website;
+    private String githubUrl;
+    private String linkedinUrl;
+
+    private Boolean openToWork = false;
+    private Boolean profilePublic = true;
 
     @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL)
     private List<Experience> experiences = new ArrayList<>();
@@ -45,5 +59,4 @@ public class UserProfile {
 
     @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL)
     private List<Language> languages = new ArrayList<>();
-
 }
