@@ -1,5 +1,6 @@
 package com.itc.linkedin.feedAndTimeline.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -9,11 +10,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 public class JwtDecoderConfig {
 
     @Bean
-    public JwtDecoder jwtDecoder() {
+    public JwtDecoder jwtDecoder(
+            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+            String jwkSetUri
+    ) {
         return NimbusJwtDecoder
-                .withJwkSetUri(
-                        "http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs"
-                )
+                .withJwkSetUri(jwkSetUri)
                 .build();
     }
 }

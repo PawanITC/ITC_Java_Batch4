@@ -54,13 +54,16 @@ services:
       - keycloak
       - redis
     environment:
-      POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      ELASTICSEARCH_URI: http://elasticsearch:9200
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ELASTICSEARCH_URI: ${ELASTICSEARCH_URI}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
+      SWAGGER_OAUTH_REDIRECT_URL: ${SEARCH_SWAGGER_OAUTH_REDIRECT_URL}
 
   api-gateway:
     build: ./backend/api-gateway
@@ -128,6 +131,10 @@ services:
       POSTGRES_URL: jdbc:postgresql://postgres-feed:5432/feeddb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
+      SWAGGER_OAUTH_CLIENT_ID: linkedin-frontend
+      SWAGGER_OAUTH_REDIRECT_URL: http://localhost:8087/swagger-ui/oauth2-redirect.html
 
 
   client:
