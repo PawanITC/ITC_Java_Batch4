@@ -43,4 +43,40 @@ pipeline {
             }
         }
     }
+    stage('Docker Login') {
+        steps {
+            withCredentials([usernamePassword(
+                credentialsId: 'dockerhub-credentials',
+                usernameVariable: 'DOCKER_USER',
+                passwordVariable: 'DOCKER_PASS'
+            )]) {
+                sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+            }
+        }
+    }
+
+    stage('Tag Docker Images') {
+        steps {
+            sh 'docker tag api-gateway:latest shubhratripathi16/api-gateway:latest'
+            sh 'docker tag search-service:latest shubhratripathi16/search-service:latest'
+            sh 'docker tag feed-service:latest shubhratripathi16/feed-service:latest'
+        }
+    }
+
+    stage('Push Docker Images') {
+        steps {
+            sh 'docker push shubhratripathi16/api-gateway:latest'
+            sh 'docker push shubhratripathi16/search-service:latest'
+            sh 'docker push shubhratripathi16/feed-service:latest'
+        }
+    }
+
+    stage('Deploy with Docker Compose') {
+        steps {
+            dir('ITC_Java_Batch4') {
+                sh 'docker compose down || true'
+                sh 'docker compose up -d --build'
+            }
+        }
+    }
 }
