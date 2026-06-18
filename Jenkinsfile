@@ -79,4 +79,11 @@ pipeline {
             }
         }
     }
+    stage('Health Check') {
+        steps {
+            sh 'sleep 30'
+            sh 'curl -f http://localhost:8085/actuator/health'
+            sh 'curl -f http://localhost:8086/actuator/health'
+            sh 'curl -f http://localhost:8087/actuator/health'
+        }
 }
