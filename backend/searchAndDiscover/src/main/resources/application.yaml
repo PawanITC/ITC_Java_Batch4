@@ -39,11 +39,12 @@ springdoc:
     oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL}
 
 management:
-  endpoint:
-    health:
-      show-details: always
+
 
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always

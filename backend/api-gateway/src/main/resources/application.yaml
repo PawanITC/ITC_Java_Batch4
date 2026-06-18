@@ -39,11 +39,12 @@ spring:
                 - Path=/api/profiles/**,/api/experiences/**
 
 management:
-  endpoint:
-    gateway:
-      access: unrestricted
+
 
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,metrics,prometheus
+  endpoint:
+    gateway:
+      access: unrestricted
