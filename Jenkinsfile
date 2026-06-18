@@ -35,5 +35,12 @@ pipeline {
                 }
             }
         }
+        stage('Build Docker Images') {
+            steps {
+                sh 'docker build -t api-gateway:latest ITC_Java_Batch4/backend/api-gateway'
+                sh 'docker build -t search-service:latest ITC_Java_Batch4/backend/searchAndDiscover'
+                sh 'docker build -t feed-service:latest ITC_Java_Batch4/backend/feedAndTimeline'
+            }
+        }
     }
 }
