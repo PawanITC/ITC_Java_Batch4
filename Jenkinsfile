@@ -19,5 +19,13 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Search Service') {
+            steps {
+                dir('ITC_Java_Batch4/backend/searchAndDiscover') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
     }
 }
