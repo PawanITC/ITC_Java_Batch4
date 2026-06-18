@@ -47,7 +47,7 @@ services:
     image: prom/prometheus
     container_name: prometheus
     volumes:
-      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 
@@ -75,7 +75,10 @@ services:
       - elasticsearch
       - keycloak
       - redis
+    volumes:
+      - ./observability/otel-collector/opentelemetry-javaagent.jar:/otel/opentelemetry-javaagent.jar
     environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Dotel.service.name=search-discovery-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
       POSTGRES_URL: ${POSTGRES_URL}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -92,12 +95,10 @@ services:
     container_name: linkedin-api-gateway
     ports:
       - "8085:8085"
-    depends_on:
-      - keycloak
-      - redis
-      - search-discovery-service
-      - userprofile-service
+    volumes:
+      - ./observability/otel-collector/opentelemetry-javaagent.jar:/otel/opentelemetry-javaagent.jar
     environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Dotel.service.name=api-gateway -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
       REDIS_HOST: redis
       USERPROFILE_SERVICE_URI: http://userprofile-service:8083
@@ -149,7 +150,10 @@ services:
     depends_on:
       - postgres-feed
       - keycloak
+    volumes:
+      - ./observability/otel-collector/opentelemetry-javaagent.jar:/otel/opentelemetry-javaagent.jar
     environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/otel/opentelemetry-javaagent.jar -Dotel.service.name=feed-and-timeline-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
       POSTGRES_URL: jdbc:postgresql://postgres-feed:5432/feeddb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
