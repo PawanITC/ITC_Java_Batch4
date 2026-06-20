@@ -12,6 +12,16 @@ public class Notification {
     private String type;
     private String content;
 
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
+    }
+
+    @Column(unique = true)
+    private String eventId;
 
     public String getType() {
         return type;

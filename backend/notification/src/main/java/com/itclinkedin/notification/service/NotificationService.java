@@ -1,9 +1,13 @@
 
 package com.itclinkedin.notification.service;
 
+import com.itclinkedin.notification.event.NotificationEvent;
 import com.itclinkedin.notification.model.Notification;
 import com.itclinkedin.notification.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
+
+
+import java.util.List;
 
 @Service
 public class NotificationService {
@@ -21,4 +25,25 @@ public class NotificationService {
         n.setContent(message);
         return repository.save(n);           // ← saves to Postgres!
     }
+
+    public Notification createFromEvent(NotificationEvent event){
+        Notification n = new Notification();
+        n.setRecipientUserId(event.recipientUserId());
+        n.setType(event.type());
+        n.setContent(event.content());
+        n.setEventId(event.eventId());
+        return repository.save(n);
+
+    }
+
+    public List<Notification>getNotificationsForUser(String userId){
+        return repository.findByRecipientUserId(userId);
+    }
+
+    public Notification markAsRead(Long id){
+        Notification n = repository.findById(id).orElseThrow();
+        n.setRead(true);
+        return repository.save(n);
+    }
+
 }
