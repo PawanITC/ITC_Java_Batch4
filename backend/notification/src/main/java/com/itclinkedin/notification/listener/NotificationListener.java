@@ -7,6 +7,7 @@ import com.itclinkedin.notification.service.NotificationService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.kafka.support.Acknowledgment;
 
 
 @Service
@@ -21,7 +22,7 @@ public class NotificationListener {
     }
 
     @KafkaListener(topics = "notifications", groupId = "notification-service")
-    public void onEvent(String message)throws  Exception {
+    public void onEvent(String message,Acknowledgment acknowledgment)throws  Exception {
         NotificationEvent event = objectMapper.readValue(message,NotificationEvent.class);
         try {
             Notification saved = notificationService.createFromEvent(event);
@@ -29,7 +30,6 @@ public class NotificationListener {
         } catch (DataIntegrityViolationException e) {
             System.out.println("⏭️  Duplicate event " + event.eventId() + " — skipping (already processed)");
         }
-
-
+        acknowledgment.acknowledge();
     }
 }

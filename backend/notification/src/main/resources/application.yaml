@@ -13,5 +13,8 @@ spring:
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
+      enable-auto-commit: false      # ← merged in (under consumer)
+    listener:
+      ack-mode: MANUAL               # ← merged in (under kafka)
 server:
   port: 8088
