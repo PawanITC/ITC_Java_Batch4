@@ -23,6 +23,7 @@ public class NotificationListener {
 
     @KafkaListener(topics = "notifications", groupId = "notification-service")
     public void onEvent(String message,Acknowledgment acknowledgment)throws  Exception {
+        System.out.println("📥 ATTEMPT to process: " + message);
         NotificationEvent event = objectMapper.readValue(message,NotificationEvent.class);
         try {
             Notification saved = notificationService.createFromEvent(event);
