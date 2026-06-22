@@ -24,6 +24,10 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public ProfileResponse create(CreateProfileRequest request) {
 
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("A profile with this email already exists.");
+        }
+
         UserProfile profile = mapper.toEntity(request);
 
         return mapper.toResponse(repository.save(profile));
