@@ -6,9 +6,9 @@ spring:
     name: userprofile-service
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://userprofile-postgres:5432/userprofile
+    username: postgres
+    password: hasnain4890
     driver-class-name: org.postgresql.Driver
 
   flyway:

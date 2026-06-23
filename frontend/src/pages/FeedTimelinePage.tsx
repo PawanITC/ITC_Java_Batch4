@@ -3,7 +3,6 @@ import { FeedPost } from "../types/feed";
 import { getTimeline } from "../services/timelineApi";
 import { createPost } from "../services/postApi";
 
-import FeedNavbar from "../components/feed/FeedNavbar";
 import CreatePostCard from "../components/feed/CreatePostCard";
 import LeftProfileCard from "../components/feed/LeftProfileCard";
 import FeedPostCard from "../components/feed/FeedPostCard";
@@ -42,8 +41,6 @@ export default function FeedTimelinePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] pb-16 text-[#191919] md:pb-0">
-      <FeedNavbar />
-
       <main className="mx-auto grid max-w-[1128px] grid-cols-1 gap-6 px-3 py-6 sm:px-4 md:grid-cols-[225px_minmax(0,1fr)] xl:grid-cols-[225px_minmax(0,555px)_300px]">
         <div className="hidden md:block">
           <LeftProfileCard />

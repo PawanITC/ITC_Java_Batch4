@@ -41,7 +41,7 @@ const followSuggestions = [
 export default function RightNewsCard() {
   return (
     <aside className="sticky top-[68px] space-y-2">
-      <div className="rounded-lg border border-[#dfdeda] bg-white p-3">
+      <div className="rounded-lg border border-[#d6d6d6] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-base font-semibold">LinkedIn News</h3>
           <Info size={17} className="text-gray-500" />
@@ -50,7 +50,7 @@ export default function RightNewsCard() {
         <ul className="space-y-1">
           {newsItems.map((item) => (
             <li key={item.title}>
-              <button className="w-full rounded px-1 py-2 text-left hover:bg-gray-100">
+              <button className="w-full rounded px-1 py-2 text-left hover:bg-[#f3f6f8]">
                 <p className="text-sm font-semibold leading-5">{item.title}</p>
                 <p className="mt-0.5 text-xs text-gray-500">{item.meta}</p>
               </button>
@@ -59,7 +59,7 @@ export default function RightNewsCard() {
         </ul>
       </div>
 
-      <div className="rounded-lg border border-[#dfdeda] bg-white p-3">
+      <div className="rounded-lg border border-[#d6d6d6] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-base font-semibold">Add to your feed</h3>
           <Info size={17} className="text-gray-500" />
@@ -78,7 +78,7 @@ export default function RightNewsCard() {
                 <p className="line-clamp-2 text-xs leading-4 text-gray-500">
                   {suggestion.meta}
                 </p>
-                <button className="mt-2 flex h-8 items-center gap-1 rounded-full border border-gray-500 px-3 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:bg-gray-100">
+                <button className="mt-2 flex h-8 items-center gap-1 rounded-full border border-[#0a66c2] px-3 text-sm font-semibold text-[#0a66c2] hover:border-[#004182] hover:bg-[#edf3f8] hover:text-[#004182]">
                   <Plus size={16} />
                   Follow
                 </button>
@@ -87,14 +87,14 @@ export default function RightNewsCard() {
           ))}
         </div>
 
-        <button className="mt-3 flex items-center gap-1 rounded px-1 py-1 text-sm font-semibold text-gray-600 hover:bg-gray-100">
+        <button className="mt-3 flex items-center gap-1 rounded px-1 py-1 text-sm font-semibold text-gray-600 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
           View all recommendations
           <ArrowRight size={16} />
         </button>
       </div>
 
       <div
-        className="relative h-[250px] overflow-hidden rounded-lg border border-[#dfdeda] bg-cover bg-center"
+        className="relative h-[250px] overflow-hidden rounded-lg border border-[#d6d6d6] bg-cover bg-center shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
         style={{ backgroundImage: `url(${coverImage})` }}
       >
         <div className="absolute inset-0 bg-black/25" />
