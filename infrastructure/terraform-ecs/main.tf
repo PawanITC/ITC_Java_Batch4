@@ -26,7 +26,17 @@ resource "aws_subnet" "public" {
   tags = { Name = "${var.app_name}-public-${count.index}" }
 }
 
+# Private Subnets for RDS and MSK
+resource "aws_subnet" "private" {
+  count             = 2
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet("10.0.0.0/16", 8, count.index + 10)
+  availability_zone = local.availability_zones[count.index]
 
+  tags = {
+    Name = "${var.app_name}-private-${count.index}"
+  }
+}
 
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
@@ -91,6 +101,26 @@ resource "aws_security_group" "ecs_tasks" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_security_group" "rds" {
+  name   = "${var.app_name}-rds-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 
 # ECR Repository (to store Docker images)
 resource "aws_ecr_repository" "app" {
@@ -158,7 +188,16 @@ resource "aws_ecs_task_definition" "app" {
 
     environment = [
       { name = "SPRING_PROFILES_ACTIVE", value = var.spring_profile },
-      { name = "SERVER_PORT", value = tostring(var.container_port) }
+      { name = "SERVER_PORT", value = tostring(var.container_port) },
+
+      { name = "SPRING_R2DBC_URL", value = "r2dbc:postgresql://${aws_db_instance.postgres.address}:5432/linkedindb" },
+      { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
+      { name = "SPRING_DATASOURCE_PASSWORD", value = var.db_password },
+      { name = "SPRING_KAFKA_BOOTSTRAP_SERVERS", value = aws_msk_cluster.main.bootstrap_brokers_tls },
+      { name = "SPRING_KAFKA_SECURITY_PROTOCOL", value = "SSL" },
+      { name = "SPRING_KAFKA_SCHEMA_REGISTRY_URL", value = var.kafka_schema_registry_url },
+      { name = "KEYCLOAK_ISSUER_URI", value = "http://keycloak-url/realms/linkedin-app" },
+      { name = "KEYCLOAK_JWK_SET_URI", value = "http://keycloak-url/realms/linkedin-app/protocol/openid-connect/certs" }
     ]
 
     logConfiguration = {

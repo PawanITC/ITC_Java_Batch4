@@ -6,9 +6,9 @@ spring:
     name: feed-and-timeline-service
 
   datasource:
-    url: ${POSTGRES_URL}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: ${POSTGRES_URL:jdbc:postgresql://feed-postgres:5432/feeddb}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -16,19 +16,36 @@ spring:
       ddl-auto: update
     show-sql: true
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI}
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    schema-registry-url: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+    consumer:
+      group-id: feed-timeline-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      repositories:
+        enabled: false
 
 springdoc:
   swagger-ui:
     oauth:
-      client-id: ${SWAGGER_OAUTH_CLIENT_ID}
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:linkedin-frontend}
       use-pkce-with-authorization-code-grant: true
-    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL}
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:http://localhost:8087/swagger-ui/oauth2-redirect.html}
 
 management:
   endpoints:
@@ -38,3 +55,12 @@ management:
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: feed-and-timeline-service
+
+  logging:
+    level:
+      org.springframework.kafka: DEBUG
+      org.apache.kafka.clients.consumer: INFO
+      com.itc.linkedin.feedAndTimeline.kafka.consumer: DEBUG

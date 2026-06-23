@@ -40,3 +40,16 @@ variable "desired_count" {
   type        = number
   default     = 1
 }
+variable "db_username" {
+  default = "postgres"
+}
+
+variable "db_password" {
+  sensitive = true
+}
+
+variable "kafka_schema_registry_url" {
+  description = "Schema Registry URL used by Kafka Avro serializer/deserializer"
+  type        = string
+  default     = ""
+}

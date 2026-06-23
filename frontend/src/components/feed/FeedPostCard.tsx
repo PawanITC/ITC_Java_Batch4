@@ -1,107 +1,167 @@
+import {
+  Globe2,
+  MessageCircle,
+  MoreHorizontal,
+  Repeat2,
+  Send,
+  ThumbsUp,
+} from "lucide-react";
 import { useState } from "react";
 import { FeedPost } from "../../types/feed";
 
 type Props = {
   post: FeedPost;
-  onLike: (postId: number) => Promise<void>;
-  onUnlike: (postId: number) => Promise<void>;
-  onDelete: (postId: number) => Promise<void>;
-  onComment: (postId: number, content: string) => Promise<void>;
+  onLike?: (postId: number) => Promise<void>;
+  onUnlike?: (postId: number) => Promise<void>;
+  onDelete?: (postId: number) => Promise<void>;
+  onComment?: (postId: number, content: string) => Promise<void>;
+  readOnly?: boolean;
 };
 
-export default function FeedPostCard({
-  post,
-  onLike,
-  onUnlike,
-  onDelete,
-  onComment,
-}: Props) {
-  const [comment, setComment] = useState("");
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export default function FeedPostCard({ post, onLike, readOnly = false }: Props) {
+  const postId = post.postId ?? post.id;
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [comment, setComment] = useState("");
 
-  const handleCommentSubmit = async () => {
+  const handleLike = async () => {
+    if (readOnly) return;
+
+    setLiked((current) => !current);
+    setLikesCount((current) => current + (liked ? -1 : 1));
+    await onLike?.(postId);
+  };
+
+  const submitComment = () => {
     if (!comment.trim()) return;
-
-    await onComment(post.id, comment);
+    setCommentsCount((current) => current + 1);
     setComment("");
     setShowCommentBox(false);
   };
 
   return (
-    <article className="bg-white rounded-lg shadow p-4">
-      <div className="flex justify-between">
-        <div className="flex gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-            👤
+    <article className="rounded-lg border border-[#dfdeda] bg-white">
+      <div className="flex justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dbe6f1] text-sm font-semibold text-[#0a66c2]">
+            {initials(post.authorName) || "IN"}
           </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-900">{post.authorName}</h3>
-            <p className="text-sm text-gray-500">{post.authorHeadline}</p>
-            <p className="text-xs text-gray-400">
-              {new Date(post.createdAt).toLocaleString()}
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-[#191919] hover:text-[#0a66c2] hover:underline">
+              {post.authorName}
+            </h3>
+            <p className="truncate text-xs text-gray-500">
+              {post.authorHeadline}
+            </p>
+            <p className="flex items-center gap-1 text-xs text-gray-500">
+              {formatDate(post.createdAt)}
+              <span aria-hidden="true">-</span>
+              <Globe2 size={12} />
             </p>
           </div>
         </div>
 
         <button
-          onClick={() => onDelete(post.id)}
-          className="text-sm text-gray-400 hover:text-red-600"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          title="More"
         >
-          Delete
+          <MoreHorizontal size={20} />
         </button>
       </div>
 
-      <p className="mt-4 text-gray-800 leading-relaxed whitespace-pre-wrap">
+      <p className="whitespace-pre-wrap px-4 py-3 text-sm leading-relaxed text-[#191919]">
         {post.content}
       </p>
 
-      <div className="text-sm text-gray-500 mt-4">
-        👍 {post.likesCount} · 💬 {post.commentsCount} comments
+      <div className="flex items-center justify-between border-b border-[#edf0f3] px-4 pb-2 text-xs text-gray-500">
+        <span className="flex items-center gap-1">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#0a66c2] text-[10px] text-white">
+            <ThumbsUp size={10} fill="currentColor" />
+          </span>
+          {likesCount} reactions
+        </span>
+        <span>{commentsCount} comments</span>
       </div>
 
-      <div className="border-t mt-3 pt-3 grid grid-cols-4 text-sm text-gray-600">
+      <div className="grid grid-cols-4 px-2 py-1 text-sm font-semibold text-gray-600">
         <button
-          onClick={() => onLike(post.id)}
-          className="hover:bg-gray-100 py-2 rounded"
+          onClick={handleLike}
+          className={`flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100 ${
+            liked ? "text-[#0a66c2]" : ""
+          }`}
         >
-          👍 Like
+          <ThumbsUp size={18} fill={liked ? "currentColor" : "none"} />
+          <span className="hidden sm:inline">Like</span>
         </button>
 
         <button
-          onClick={() => onUnlike(post.id)}
-          className="hover:bg-gray-100 py-2 rounded"
+          onClick={() => setShowCommentBox((current) => !current)}
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100"
         >
-          👎 Unlike
+          <MessageCircle size={18} />
+          <span className="hidden sm:inline">Comment</span>
         </button>
 
-        <button
-          onClick={() => setShowCommentBox(!showCommentBox)}
-          className="hover:bg-gray-100 py-2 rounded"
-        >
-          💬 Comment
+        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+          <Repeat2 size={18} />
+          <span className="hidden sm:inline">Repost</span>
         </button>
 
-        <button className="hover:bg-gray-100 py-2 rounded">
-          ↗ Share
+        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+          <Send size={18} />
+          <span className="hidden sm:inline">Send</span>
         </button>
       </div>
 
       {showCommentBox && (
-        <div className="mt-3 flex gap-2">
-          <input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Write a comment..."
-            className="flex-1 border rounded-full px-4 py-2 text-sm"
-          />
-
-          <button
-            onClick={handleCommentSubmit}
-            className="bg-[#0A66C2] text-white px-4 py-2 rounded-full text-sm"
-          >
-            Post
-          </button>
+        <div className="flex gap-2 border-t border-[#edf0f3] px-4 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#c7d1d8] text-xs font-semibold text-[#38434f]">
+            ST
+          </div>
+          <div className="flex min-w-0 flex-1 items-center rounded-full border border-[#b2b2b2] px-3">
+            <input
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") submitComment();
+              }}
+              placeholder="Add a comment..."
+              className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
+            />
+            <button
+              onClick={submitComment}
+              disabled={!comment.trim()}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#0a66c2] hover:bg-[#edf3f8] disabled:text-gray-300"
+              title="Post comment"
+            >
+              <Send size={16} />
+            </button>
+          </div>
         </div>
       )}
     </article>

@@ -19,10 +19,8 @@ public class DiscoveryController {
 
     @GetMapping("/suggestions")
     public ApiResponse<List<DiscoverySuggestionResponse>> getSuggestions(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
 
         return ApiResponse.success(
                 discoveryService.getSuggestions(userId)
@@ -31,10 +29,9 @@ public class DiscoveryController {
 
     @GetMapping("/connections")
     public ApiResponse<List<DiscoverySuggestionResponse>> getConnectionSuggestions(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
+
 
         return ApiResponse.success(
                 discoveryService.getConnectionSuggestions(userId)

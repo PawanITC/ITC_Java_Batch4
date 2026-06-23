@@ -13,6 +13,17 @@ output "ecs_cluster_name" {
   value       = aws_ecs_cluster.main.name
 }
 
+output "rds_endpoint" {
+  value = aws_db_instance.postgres.endpoint
+}
+
+output "msk_bootstrap_brokers" {
+  value = aws_msk_cluster.main.bootstrap_brokers_tls
+}
+
+output "schema_registry_url" {
+  value = var.kafka_schema_registry_url
+}
 output "docker_push_commands" {
   description = "Commands to push your Docker image to ECR"
   value       = <<-EOT
