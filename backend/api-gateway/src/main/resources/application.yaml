@@ -5,29 +5,70 @@ spring:
   application:
     name: api-gateway
 
-  spring:
-    security:
-      oauth2:
-        resourceserver:
-          jwt:
-            issuer-uri: http://localhost:8080/realms/linkedin-app
-            jwk-set-uri: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   cloud:
     gateway:
-      routes:
-        - id: search-discovery-service-route
-          uri: http://search-discovery-service:8086
-          predicates:
-            - Path=/api/search/**,/api/discovery/**
+      server:
+        webflux:
+          routes:
+            - id: userprofile-service
+              uri: ${USERPROFILE_SERVICE_URI:http://localhost:8083}
+              predicates:
+                - Path=/api/profiles/**
+
+            - id: search-discovery-service
+              uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
+              predicates:
+                - Path=/api/search/**,/api/discovery/**
+
+            - id: trending-service
+              uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
+              predicates:
+                - Path=/api/trending/**
+              filters:
+                - RewritePath=/api/trending/(?<segment>.*), /api/discovery/trending/${segment}
+
+            - id: feed-and-timeline-service
+              uri: ${FEED_SERVICE_URI:http://localhost:8087}
+              predicates:
+                - Path=/api/timeline,/api/timeline/**
+              filters:
+                - RewritePath=/api/timeline$, /api/timeline/
+
+            - id: post-and-timeline-service
+              uri: ${POST_SERVICE_URI:http://localhost:8088}
+              predicates:
+                - Path=/api/posts/**
+
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,metrics,prometheus,gateway
+
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      access: read_only
+
+  metrics:
+    tags:
+      application: api-gateway
+
+  logging:
+    level:
+      org.springframework.cloud.gateway: INFO
+      org.springframework.security: INFO
+      com.itc.linkedin.apigateway: DEBUG

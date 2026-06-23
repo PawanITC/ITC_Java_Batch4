@@ -1,10 +1,24 @@
 {
   "realm": "linkedin-app",
   "enabled": true,
+
   "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
   "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
   "rememberMe": true,
+  "verifyEmail": false,
+
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
 
   "accessTokenLifespan": 600,
   "ssoSessionIdleTimeout": 1800,
@@ -37,28 +51,108 @@
   "clients": [
     {
       "clientId": "linkedin-frontend",
+      "name": "LinkedIn Frontend",
       "enabled": true,
       "publicClient": true,
       "protocol": "openid-connect",
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:8086/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8087/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8083/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8085/swagger-ui/oauth2-redirect.html"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:8086",
+        "http://localhost:8087",
+        "http://localhost:8083",
+        "http://localhost:8085"
+      ],
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "attributes": {
-        "pkce.code.challenge.method": "S256"
-      }
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     },
     {
       "clientId": "api-gateway",
+      "name": "API Gateway",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "serviceAccountsEnabled": true,
+      "bearerOnly": true,
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    }
+  ],
+
+  "users": [
+    {
+      "username": "user.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "user.demo@example.com",
+      "realmRoles": ["USER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "recruiter.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Recruiter",
+      "email": "recruiter.demo@example.com",
+      "realmRoles": ["RECRUITER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Admin",
+      "email": "admin.demo@example.com",
+      "realmRoles": ["ADMIN"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

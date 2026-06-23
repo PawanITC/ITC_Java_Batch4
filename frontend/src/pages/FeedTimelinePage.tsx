@@ -1,35 +1,37 @@
 import { useEffect, useState } from "react";
 import { FeedPost } from "../types/feed";
-import { createPost, getFeed, likePost } from "../services/feedApi";
-import FeedNavbar from "../components/feed/FeedNavbar";
-import LeftProfileCard from "../components/feed/LeftProfileCard";
+import { getTimeline } from "../services/timelineApi";
+import { createPost } from "../services/postApi";
+
 import CreatePostCard from "../components/feed/CreatePostCard";
+import LeftProfileCard from "../components/feed/LeftProfileCard";
 import FeedPostCard from "../components/feed/FeedPostCard";
 import RightNewsCard from "../components/feed/RightNewsCard";
 
 export default function FeedTimelinePage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const loadFeed = async () => {
     try {
       setLoading(true);
-      const data = await getFeed();
+      setError("");
+      const data = await getTimeline();
       setPosts(data);
     } catch (error) {
       console.error("Feed loading error", error);
+      setError("We couldn't load your timeline. Check that the gateway and timeline service are running.");
+      setPosts([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreatePost = async (content: string) => {
-    await createPost(content);
-    await loadFeed();
-  };
-
-  const handleLikePost = async (postId: number) => {
-    await likePost(postId);
+    setError("");
+    const created = await createPost(content);
+    setPosts((currentPosts) => [created, ...currentPosts]);
     await loadFeed();
   };
 
@@ -38,37 +40,52 @@ export default function FeedTimelinePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f3f2ef]">
-      <FeedNavbar />
-
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 px-4 py-6">
-        <div className="hidden lg:block">
+    <div className="min-h-screen bg-[#f4f2ee] pb-16 text-[#191919] md:pb-0">
+      <main className="mx-auto grid max-w-[1128px] grid-cols-1 gap-6 px-3 py-6 sm:px-4 md:grid-cols-[225px_minmax(0,1fr)] xl:grid-cols-[225px_minmax(0,555px)_300px]">
+        <div className="hidden md:block">
           <LeftProfileCard />
         </div>
 
-        <section className="lg:col-span-2 space-y-4">
+        <section className="space-y-3">
           <CreatePostCard onCreate={handleCreatePost} />
 
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="h-px flex-1 bg-[#d6d6d6]" />
+            <button className="whitespace-nowrap hover:text-gray-900">
+              Sort by: <span className="font-semibold text-gray-800">Top</span>
+            </button>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           {loading ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+            <div className="rounded-lg border border-[#dfdeda] bg-white p-6 text-center text-sm text-gray-500">
               Loading feed...
             </div>
           ) : posts.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-              No posts yet. Start the conversation.
+            <div className="rounded-lg border border-[#dfdeda] bg-white p-8 text-center">
+              <h2 className="text-base font-semibold text-gray-900">
+                Your timeline is ready
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Create the first post or wait for posts from your network.
+              </p>
             </div>
           ) : (
             posts.map((post) => (
               <FeedPostCard
-                key={post.id}
+                key={post.postId ?? post.id}
                 post={post}
-                onLike={handleLikePost}
               />
             ))
           )}
         </section>
 
-        <div className="hidden lg:block">
+        <div className="hidden xl:block">
           <RightNewsCard />
         </div>
       </main>

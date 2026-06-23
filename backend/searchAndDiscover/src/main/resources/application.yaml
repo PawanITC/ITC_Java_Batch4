@@ -24,20 +24,22 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
-  spring:
-    security:
-      oauth2:
-        resourceserver:
-          jwt:
-            issuer-uri: http://localhost:8080/realms/linkedin-app
-            jwk-set-uri: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
+
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL}
 
 management:
-  endpoint:
-    health:
-      show-details: always
+
 
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always

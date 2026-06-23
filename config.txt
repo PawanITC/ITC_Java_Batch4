@@ -1,0 +1,249 @@
+name: itc_javabatch4
+services:
+  api-gateway:
+    build:
+      context: C:\Users\Shubh\java\ITC_JavaBatch4\backend\api-gateway
+      dockerfile: Dockerfile
+    container_name: linkedin-api-gateway
+    depends_on:
+      keycloak:
+        condition: service_started
+        required: true
+      redis:
+        condition: service_started
+        required: true
+      search-discovery-service:
+        condition: service_started
+        required: true
+      userprofile-service:
+        condition: service_started
+        required: true
+    environment:
+      FEED_SERVICE_URI: http://feed-and-timeline-service:8087
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      REDIS_HOST: redis
+      SEARCH_SERVICE_URI: http://search-discovery-service:8086
+      USERPROFILE_SERVICE_URI: http://userprofile-service:8083
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8085
+        published: "8085"
+        protocol: tcp
+  client:
+    build:
+      context: C:\Users\Shubh\java\ITC_JavaBatch4\frontend
+      dockerfile: Dockerfile
+    container_name: linkedin-frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+        required: true
+      keycloak:
+        condition: service_started
+        required: true
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "3000"
+        protocol: tcp
+  elasticsearch:
+    container_name: linkedin-elasticsearch
+    environment:
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.8
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9200
+        published: "9200"
+        protocol: tcp
+  feed-and-timeline-service:
+    build:
+      context: C:\Users\Shubh\java\ITC_JavaBatch4\backend\feedAndTimeline
+      dockerfile: Dockerfile
+    container_name: linkedin-feed-and-timeline-service
+    depends_on:
+      keycloak:
+        condition: service_started
+        required: true
+      postgres-feed:
+        condition: service_started
+        required: true
+    environment:
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_URL: jdbc:postgresql://postgres-feed:5436/feeddb
+      POSTGRES_USER: postgres
+      SWAGGER_OAUTH_CLIENT_ID: linkedin-frontend
+      SWAGGER_OAUTH_REDIRECT_URL: http://localhost:8087/swagger-ui/oauth2-redirect.html
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8087
+        published: "8087"
+        protocol: tcp
+  keycloak:
+    command:
+      - start-dev
+      - --import-realm
+    container_name: linkedin-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_PASSWORD: linkedin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+    image: quay.io/keycloak/keycloak:26.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: C:\Users\Shubh\java\ITC_JavaBatch4\keycloak\realm-export.json
+        target: /opt/keycloak/data/import/realm-export.json
+        bind: {}
+  postgres-feed:
+    container_name: linkedin-feed-postgres
+    environment:
+      POSTGRES_DB: feeddb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    image: postgres:16
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "5434"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: feed_postgres_data
+        target: /var/lib/postgresql/data
+        volume: {}
+  postgres-search:
+    container_name: linkedin-search-postgres
+    environment:
+      POSTGRES_DB: searchdb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    image: postgres:16
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "5432"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: search_postgres_data
+        target: /var/lib/postgresql/data
+        volume: {}
+  redis:
+    container_name: linkedin-redis
+    image: redis:7
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 6379
+        published: "6379"
+        protocol: tcp
+  search-discovery-service:
+    build:
+      context: C:\Users\Shubh\java\ITC_JavaBatch4\backend\searchAndDiscover
+      dockerfile: Dockerfile
+    container_name: linkedin-search-discovery-service
+    depends_on:
+      elasticsearch:
+        condition: service_started
+        required: true
+      keycloak:
+        condition: service_started
+        required: true
+      postgres-search:
+        condition: service_started
+        required: true
+      redis:
+        condition: service_started
+        required: true
+    environment:
+      ELASTICSEARCH_URI: http://elasticsearch:9200
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
+      POSTGRES_USER: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SWAGGER_OAUTH_CLIENT_ID: linkedin-frontend
+      SWAGGER_OAUTH_REDIRECT_URL: http://localhost:8086/swagger-ui/oauth2-redirect.html
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8086
+        published: "8086"
+        protocol: tcp
+  userprofile-postgres:
+    container_name: linkedin-userprofile-postgres
+    environment:
+      POSTGRES_DB: userprofile
+      POSTGRES_PASSWORD: hasnain4890
+      POSTGRES_USER: postgres
+    image: postgres:16
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "5435"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: userprofile_postgres_data
+        target: /var/lib/postgresql/data
+        volume: {}
+  userprofile-service:
+    build:
+      context: C:\Users\Shubh\java\ITC_JavaBatch4\backend\userprofile
+      dockerfile: Dockerfile
+    container_name: linkedin-userprofile-service
+    depends_on:
+      userprofile-postgres:
+        condition: service_started
+        required: true
+    environment:
+      SPRING_DATASOURCE_PASSWORD: hasnain4890
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofile
+      SPRING_DATASOURCE_USERNAME: postgres
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8083
+        published: "8083"
+        protocol: tcp
+networks:
+  default:
+    name: itc_javabatch4_default
+volumes:
+  feed_postgres_data:
+    name: itc_javabatch4_feed_postgres_data
+  search_postgres_data:
+    name: itc_javabatch4_search_postgres_data
+  userprofile_postgres_data:
+    name: itc_javabatch4_userprofile_postgres_data

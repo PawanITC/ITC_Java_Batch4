@@ -1,0 +1,17 @@
+package com.itc.linkedin.postandtimeline.kafka.event;
+
+import java.time.LocalDateTime;
+
+public record PostCreatedEvent(
+        String eventId,
+        String eventType,
+        int eventVersion,
+        LocalDateTime occurredAt,
+        Long postId,
+        String authorId,
+        String authorName,
+        String authorHeadline,
+        String content,
+        LocalDateTime createdAt
+) {
+}

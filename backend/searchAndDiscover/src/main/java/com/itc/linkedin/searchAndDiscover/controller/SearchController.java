@@ -25,36 +25,36 @@ public class SearchController {
     @GetMapping("/people")
     public ApiResponse<List<PeopleSearchResponse>> searchPeople(
             @RequestParam String q,
-            @AuthenticationPrincipal Jwt jwt
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
+
         return ApiResponse.success(searchService.searchPeople(q, userId));
     }
 
     @GetMapping("/posts")
     public ApiResponse<List<PostSearchResponse>> searchPosts(
             @RequestParam String q,
-            @AuthenticationPrincipal Jwt jwt
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
+
         return ApiResponse.success(searchService.searchPosts(q, userId));
     }
 
     @GetMapping("/jobs")
     public ApiResponse<List<JobSearchResponse>> searchJobs(
             @RequestParam String q,
-            @AuthenticationPrincipal Jwt jwt
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
+
         return ApiResponse.success(searchService.searchJobs(q, userId));
     }
 
     @GetMapping("/companies")
     public ApiResponse<List<CompanySearchResponse>> searchCompanies(
             @RequestParam String q,
-            @AuthenticationPrincipal Jwt jwt
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
+
         return ApiResponse.success(searchService.searchCompanies(q, userId));
     }
 }

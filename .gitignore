@@ -40,3 +40,4 @@ docker-data/**/.terraform/*
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+terraform

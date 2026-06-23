@@ -10,8 +10,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: linkedin
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
@@ -25,7 +25,7 @@ services:
     image: postgres:16
     container_name: linkedin-search-postgres
     ports:
-      - "5432:5432"
+      - "5436:5432"
     environment:
       POSTGRES_DB: searchdb
       POSTGRES_USER: postgres
@@ -42,10 +42,75 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: linkedin-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.7.1
+    container_name: linkedin-schema-registry
+    ports:
+      - "8081:8081"
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: [ "--config=/etc/otelcol/otel-collector-config.yml" ]
+    volumes:
+      - ./observability/opentelemetry/otel-collector-config.yml:/etc/otelcol/otel-collector-config.yml:ro
+    ports:
+      - "4319:4317"
+      - "4320:4318"
+    depends_on:
+      - jaeger
+
+  prometheus:
+    build: ./observability/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
 
   search-discovery-service:
     build: ./backend/searchAndDiscover
     container_name: linkedin-search-discovery-service
+    restart: on-failure
     ports:
       - "8086:8086"
     depends_on:
@@ -53,14 +118,19 @@ services:
       - elasticsearch
       - keycloak
       - redis
+      - otel-collector
+    volumes:
+      - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
-      POSTGRES_URL: jdbc:postgresql://postgres-search:5432/searchdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      ELASTICSEARCH_URI: http://elasticsearch:9200
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=search-discovery-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ELASTICSEARCH_URI: ${ELASTICSEARCH_URI}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
+      SWAGGER_OAUTH_REDIRECT_URL: ${SEARCH_SWAGGER_OAUTH_REDIRECT_URL}
 
   api-gateway:
     build: ./backend/api-gateway
@@ -71,14 +141,160 @@ services:
       - keycloak
       - redis
       - search-discovery-service
+      - userprofile-service
+      - feed-and-timeline-service
+      - post-service
+      - otel-collector
+    volumes:
+      - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=search-discovery-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
       REDIS_HOST: redis
-      USERPROFILE_SERVICE_URI: http://userprofile-service:8082
+      USERPROFILE_SERVICE_URI: http://userprofile-service:8083
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
-      FEED_SERVICE_URI: http://feed-timeline-service:8081
+      FEED_SERVICE_URI: http://feed-and-timeline-service:8087
+      POST_SERVICE_URI: http://post-service:8088
 
-  
+  userprofile-postgres:
+    image: postgres:16
+    container_name: linkedin-userprofile-postgres
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: userprofile
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hasnain4890
+    volumes:
+      - userprofile_postgres_data:/var/lib/postgresql/data
+
+
+  userprofile-service:
+    build: ./backend/userprofile
+    container_name: linkedin-userprofile-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - userprofile-postgres
+      - kafka-broker
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofile
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: hasnain4890
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-broker:9092
+
+  kafka-broker:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: linkedin-kafka-broker
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-broker:9093'
+
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka-broker:9092,EXTERNAL://localhost:9094'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  postgres-feed:
+    image: postgres:16
+    container_name: linkedin-feed-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - feed_postgres_data:/var/lib/postgresql/data
+
+  post-postgres:
+    image: postgres:16
+    container_name: linkedin-post-postgres
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: postdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - post_postgres_data:/var/lib/postgresql/data
+
+  feed-and-timeline-service:
+    build: ./backend/feedAndTimeline
+    container_name: linkedin-feed-and-timeline-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - postgres-feed
+      - otel-collector
+      - redis
+      - kafka
+      - schema-registry
+    volumes:
+      - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
+    environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=feed-and-timeline-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      POSTGRES_URL: jdbc:postgresql://postgres-feed:5432/feeddb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      SWAGGER_OAUTH_CLIENT_ID: linkedin-frontend
+      SWAGGER_OAUTH_REDIRECT_URL: http://localhost:8087/swagger-ui/oauth2-redirect.html
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+  post-service:
+    build: ./backend/postAndTimeline
+    container_name: linkedin-post-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      - post-postgres
+      - kafka
+      - schema-registry
+      - keycloak
+      - otel-collector
+    volumes:
+      - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
+    environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=post-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      POSTGRES_URL: jdbc:postgresql://post-postgres:5432/postdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    depends_on:
+      - kafka
+    command:
+      - --kafka.server=kafka:9092
+
 
 
   client:
@@ -94,7 +310,10 @@ services:
       - CHOKIDAR_USEPOLLING=true
 
 volumes:
+  feed_postgres_data:
   search_postgres_data:
+  userprofile_postgres_data:
+  post_postgres_data:
 
 
 

@@ -1,17 +1,66 @@
+server:
+  port: 8087
+
 spring:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/linkedin-app
-<<<<<<< HEAD
-=======
   application:
-    name: feedAndTimeline
->>>>>>> main
-=======
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
+    name: feed-and-timeline-service
+
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://feed-postgres:5432/feeddb}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    schema-registry-url: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+    consumer:
+      group-id: feed-timeline-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:linkedin-frontend}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:http://localhost:8087/swagger-ui/oauth2-redirect.html}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: feed-and-timeline-service
+
+  logging:
+    level:
+      org.springframework.kafka: DEBUG
+      org.apache.kafka.clients.consumer: INFO
+      com.itc.linkedin.feedAndTimeline.kafka.consumer: DEBUG

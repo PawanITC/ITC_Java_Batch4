@@ -8,10 +8,16 @@ import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
 
 export default function AppRoutes() {
+
+
   return (
     <BrowserRouter>
       <Routes>
+        
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Public Routes */}
+        <Route path="/user-profile" element={<UserProfile/>} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<FeedTimelinePage />} />
