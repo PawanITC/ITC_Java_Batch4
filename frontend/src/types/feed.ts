@@ -1,5 +1,6 @@
 export type FeedPost = {
   id: number;
+  postId?: number;
   authorId: string;
   authorName: string;
   authorHeadline: string;
@@ -8,3 +9,5 @@ export type FeedPost = {
   commentsCount: number;
   createdAt: string;
 };
+
+export type CreatePostResponse = FeedPost;

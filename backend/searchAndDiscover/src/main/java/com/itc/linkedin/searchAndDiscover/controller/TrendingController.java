@@ -19,9 +19,8 @@ public class TrendingController {
 
     @GetMapping("/topics")
     public ApiResponse<List<TrendingTopicResponse>> getTrendingTopic(
-            @AuthenticationPrincipal Jwt jwt
+            @RequestHeader("X-User-Id") String userId
     ) {
-        String userId = jwt.getSubject();
         return ApiResponse.success(trendingService.getTrendingTopics(userId));
     }
 }
