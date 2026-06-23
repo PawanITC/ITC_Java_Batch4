@@ -29,9 +29,9 @@ export default function CreatePostCard({ onCreate }: Props) {
   };
 
   return (
-    <div className="rounded-lg border border-[#dfdeda] bg-white p-3">
+    <div className="rounded-lg border border-[#d6d6d6] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
       <div className="flex gap-2">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#c7d1d8] text-sm font-semibold text-[#38434f]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0a66c2] text-sm font-semibold text-white">
           ST
         </div>
 
@@ -42,7 +42,7 @@ export default function CreatePostCard({ onCreate }: Props) {
           placeholder="Start a post"
           rows={expanded || content ? 3 : 1}
           maxLength={5000}
-          className="min-h-[48px] flex-1 resize-none rounded-3xl border border-[#b2b2b2] px-4 py-3 text-sm font-semibold outline-none transition placeholder:text-gray-600 hover:bg-gray-50 focus:border-[#0a66c2] focus:bg-white focus:font-normal focus:ring-1 focus:ring-[#0a66c2]"
+          className="min-h-[48px] flex-1 resize-none rounded-3xl border border-[#b2b2b2] px-4 py-3 text-sm font-semibold outline-none transition placeholder:text-gray-600 hover:bg-[#f3f6f8] focus:border-[#0a66c2] focus:bg-white focus:font-normal focus:ring-1 focus:ring-[#0a66c2]"
         />
       </div>
 

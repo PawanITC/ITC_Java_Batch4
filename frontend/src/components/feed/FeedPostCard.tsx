@@ -64,7 +64,7 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
   };
 
   return (
-    <article className="rounded-lg border border-[#dfdeda] bg-white">
+    <article className="rounded-lg border border-[#d6d6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
       <div className="flex justify-between gap-3 px-4 pt-4">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dbe6f1] text-sm font-semibold text-[#0a66c2]">
@@ -87,7 +87,7 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
         </div>
 
         <button
-          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
           title="More"
         >
           <MoreHorizontal size={20} />
@@ -111,7 +111,7 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
       <div className="grid grid-cols-4 px-2 py-1 text-sm font-semibold text-gray-600">
         <button
           onClick={handleLike}
-          className={`flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100 ${
+          className={`flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2] ${
             liked ? "text-[#0a66c2]" : ""
           }`}
         >
@@ -121,18 +121,18 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
 
         <button
           onClick={() => setShowCommentBox((current) => !current)}
-          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100"
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
         >
           <MessageCircle size={18} />
           <span className="hidden sm:inline">Comment</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
           <Repeat2 size={18} />
           <span className="hidden sm:inline">Repost</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
           <Send size={18} />
           <span className="hidden sm:inline">Send</span>
         </button>
