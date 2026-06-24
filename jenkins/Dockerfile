@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && node -v \
+    && npm -v
+
 USER jenkins
-
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-
-RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
