@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(EducationController.class)
 class EducationControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -43,7 +44,6 @@ class EducationControllerTest {
 
     @BeforeEach
     void setUp() {
-
         profileId = UUID.randomUUID();
         educationId = UUID.randomUUID();
 
@@ -64,7 +64,6 @@ class EducationControllerTest {
 
     @Test
     void shouldCreateEducationSuccessfully() throws Exception {
-
         given(educationService.addEducation(any()))
                 .willReturn(response);
 
@@ -72,13 +71,11 @@ class EducationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schoolName")
-                        .value("MIT"));
+                .andExpect(jsonPath("$.schoolName").value("MIT"));
     }
 
     @Test
     void shouldReturnServerErrorWhenCreateFails() throws Exception {
-
         given(educationService.addEducation(any()))
                 .willThrow(new RuntimeException("Profile not found"));
 
@@ -86,81 +83,64 @@ class EducationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Profile not found"));
+                // Assert against the JSON structure message property
+                .andExpect(jsonPath("$.message").value("Profile not found"));
     }
 
     @Test
     void shouldGetEducationsByProfile() throws Exception {
-
         given(educationService.getByProfileId(profileId))
                 .willReturn(List.of(response));
 
-        mockMvc.perform(get(
-                        "/api/educations/profile/{profileId}",
-                        profileId))
+        mockMvc.perform(get("/api/educations/profile/{profileId}", profileId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].schoolName")
-                        .value("MIT"));
+                .andExpect(jsonPath("$[0].schoolName").value("MIT"));
     }
 
     @Test
     void shouldUpdateEducationSuccessfully() throws Exception {
-
-        given(educationService.updateEducation(
-                eq(educationId),
-                any(CreateEducationRequest.class)))
+        given(educationService.updateEducation(eq(educationId), any(CreateEducationRequest.class)))
                 .willReturn(response);
 
-        mockMvc.perform(put("/api/educations/{educationId}",
-                        educationId)
+        mockMvc.perform(put("/api/educations/{educationId}", educationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schoolName")
-                        .value("MIT"));
+                .andExpect(jsonPath("$.schoolName").value("MIT"));
     }
 
     @Test
     void shouldReturnServerErrorWhenUpdateFails() throws Exception {
-
-        given(educationService.updateEducation(
-                eq(educationId),
-                any(CreateEducationRequest.class)))
+        given(educationService.updateEducation(eq(educationId), any(CreateEducationRequest.class)))
                 .willThrow(new RuntimeException("Education not found"));
 
-        mockMvc.perform(put("/api/educations/{educationId}",
-                        educationId)
+        mockMvc.perform(put("/api/educations/{educationId}", educationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Education not found"));
+                // Assert against the JSON structure message property
+                .andExpect(jsonPath("$.message").value("Education not found"));
     }
 
     @Test
     void shouldDeleteEducationSuccessfully() throws Exception {
-
         willDoNothing()
                 .given(educationService)
                 .deleteEducation(educationId);
 
-        mockMvc.perform(delete(
-                        "/api/educations/{educationId}",
-                        educationId))
+        mockMvc.perform(delete("/api/educations/{educationId}", educationId))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void shouldReturnServerErrorWhenDeleteFails() throws Exception {
-
         willThrow(new RuntimeException("Education not found"))
                 .given(educationService)
                 .deleteEducation(educationId);
 
-        mockMvc.perform(delete(
-                        "/api/educations/{educationId}",
-                        educationId))
+        mockMvc.perform(delete("/api/educations/{educationId}", educationId))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Education not found"));
+                // Assert against the JSON structure message property
+                .andExpect(jsonPath("$.message").value("Education not found"));
     }
-
 }
