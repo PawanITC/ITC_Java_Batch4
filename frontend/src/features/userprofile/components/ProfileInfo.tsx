@@ -53,7 +53,7 @@ function ProfileInfo({ profile }: any) {
       <div className="w-80 ml-10 space-y-8">
         
         <div className="flex items-center gap-4">
-          <img src={companyphoto} className="w-16 h-16 rounded-full" />
+          <img src={companyphoto} alt="Company" className="w-16 h-16 rounded-full" />
           <h3 className="text-xl font-semibold">Fiverr</h3>
         </div>
 
