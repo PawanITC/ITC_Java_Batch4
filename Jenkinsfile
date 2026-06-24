@@ -103,7 +103,7 @@ pipeline {
         stage('Frontend Tests And Build') {
             steps {
                 dir('frontend') {
-                    sh 'npm ci'
+                    sh 'npm install'
                     sh 'CI=true npm test -- --watchAll=false'
                     sh 'npm run build'
                 }
