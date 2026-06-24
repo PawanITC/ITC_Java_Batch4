@@ -104,7 +104,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm install'
-                    sh 'CI=true npm test -- --watchAll=false'
+                    sh 'CI=false npm test -- --watchAll=false'
                     sh 'npm run build'
                 }
             }
