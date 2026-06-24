@@ -96,15 +96,7 @@ pipeline {
                     }
                 }
 
-                stage('User Profile Service') {
-                    steps {
-                        dir('backend/userprofile') {
-                            sh 'mvn clean package -DskipTests'
-                        }
-                    }
 
-                    }
-                }
             }
         }
 
@@ -112,7 +104,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'CI=true npm test -- --watch=false'
+                    sh 'CI=true npm test -- --watchAll=false'
                     sh 'npm run build'
                 }
             }
@@ -152,13 +144,7 @@ pipeline {
                     }
                 }
 
-                stage('Package User Profile Service') {
-                    steps {
-                        dir('backend/userprofile') {
-                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
-                        }
-                    }
-                }
+
             }
         }
 
@@ -169,7 +155,6 @@ pipeline {
                     env.SEARCH_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/search-service:${IMAGE_TAG}"
                     env.FEED_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:${IMAGE_TAG}"
                     env.POST_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/post-service:${IMAGE_TAG}"
-                    env.USERPROFILE_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
                 }
 
@@ -177,7 +162,6 @@ pipeline {
                 sh 'docker build -t ${SEARCH_SERVICE_IMAGE} backend/searchAndDiscover'
                 sh 'docker build -t ${FEED_SERVICE_IMAGE} backend/feedAndTimeline'
                 sh 'docker build -t ${POST_SERVICE_IMAGE} backend/postAndTimeline'
-                sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }

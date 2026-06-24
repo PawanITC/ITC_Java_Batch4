@@ -36,8 +36,28 @@ yarn-error.log*
 coverage/
 
 # Docker volumes
-docker-data/**/.terraform/*
+docker-data/
+# Terraform
+**/.terraform/*
 *.tfstate
 *.tfstate.*
+terraform.tfvars
 .terraform.lock.hcl
-terraform
+EOF
+
+# AWS
+*.pem
+
+# Maven
+target/
+
+
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+.agents
+
