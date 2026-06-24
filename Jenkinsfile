@@ -9,16 +9,8 @@ pipeline {
     }
 
     parameters {
-        booleanParam(
-            name: 'PUSH_IMAGES',
-            defaultValue: true,
-            description: 'Push Docker images when building the main branch.'
-        )
-        booleanParam(
-            name: 'DEPLOY_TO_EKS',
-            defaultValue: false,
-            description: 'Reserved for a future Kubernetes/EKS deployment stage.'
-        )
+        booleanParam(name: 'PUSH_IMAGES', defaultValue: true, description: 'Push Docker images.')
+        booleanParam(name: 'DEPLOY_TO_EKS', defaultValue: false, description: 'Future EKS deployment.')
     }
 
     environment {
@@ -44,7 +36,7 @@ pipeline {
 
         stage('Backend Tests') {
             parallel {
-                stage('API Gateway') {
+                stage('API Gateway Tests') {
                     steps {
                         dir('backend/api-gateway') {
                             sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
@@ -57,7 +49,7 @@ pipeline {
                     }
                 }
 
-                stage('Search Service') {
+                stage('Search Service Tests') {
                     steps {
                         dir('backend/searchAndDiscover') {
                             sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
@@ -70,7 +62,7 @@ pipeline {
                     }
                 }
 
-                stage('Feed Service') {
+                stage('Feed Service Tests') {
                     steps {
                         dir('backend/feedAndTimeline') {
                             sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
@@ -83,7 +75,7 @@ pipeline {
                     }
                 }
 
-                stage('Post Service') {
+                stage('Post Service Tests') {
                     steps {
                         dir('backend/postAndTimeline') {
                             sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
@@ -95,8 +87,6 @@ pipeline {
                         }
                     }
                 }
-
-
             }
         }
 
@@ -105,7 +95,7 @@ pipeline {
                 dir('frontend') {
                     sh 'npm install'
                     sh 'CI=false npm test -- --watchAll=false'
-                    sh 'npm run build'
+                    sh 'CI=false npm run build'
                 }
             }
         }
@@ -144,7 +134,13 @@ pipeline {
                     }
                 }
 
-
+                stage('Package UserProfile Service') {
+                    steps {
+                        dir('backend/userprofile') {
+                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                }
             }
         }
 
@@ -155,6 +151,7 @@ pipeline {
                     env.SEARCH_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/search-service:${IMAGE_TAG}"
                     env.FEED_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:${IMAGE_TAG}"
                     env.POST_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/post-service:${IMAGE_TAG}"
+                    env.USERPROFILE_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
                 }
 
@@ -162,6 +159,7 @@ pipeline {
                 sh 'docker build -t ${SEARCH_SERVICE_IMAGE} backend/searchAndDiscover'
                 sh 'docker build -t ${FEED_SERVICE_IMAGE} backend/feedAndTimeline'
                 sh 'docker build -t ${POST_SERVICE_IMAGE} backend/postAndTimeline'
+                sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }
@@ -179,6 +177,7 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin ${REGISTRY}'
+
                     sh 'docker push ${API_GATEWAY_IMAGE}'
                     sh 'docker push ${SEARCH_SERVICE_IMAGE}'
                     sh 'docker push ${FEED_SERVICE_IMAGE}'
@@ -212,10 +211,10 @@ pipeline {
             steps {
                 script {
                     if (!fileExists('k8s') && !fileExists('helm')) {
-                        error('DEPLOY_TO_EKS was requested, but no Kubernetes manifests or Helm charts exist in this repository yet.')
+                        error('DEPLOY_TO_EKS requested, but no Kubernetes manifests or Helm charts exist yet.')
                     }
                 }
-                echo 'Add your kubectl or Helm deployment commands here once the Kubernetes deployment assets are in the repository.'
+                echo 'EKS deployment placeholder.'
             }
         }
     }
