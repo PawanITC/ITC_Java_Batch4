@@ -39,6 +39,8 @@ class ProfileControllerTest {
 
         CreateProfileRequest request = new CreateProfileRequest();
         request.setFirstName("Hasnain");
+        request.setLastName("Ahmad");
+        request.setGender(com.itclinkedin.userprofile.entity.Gender.MALE);
         request.setEmail("hasnain@test.com");
 
         ProfileResponse response = ProfileResponse.builder()
