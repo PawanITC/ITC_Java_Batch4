@@ -58,7 +58,7 @@ function ProfileInfo({ profile }: any) {
         </div>
 
         <div className="flex items-center gap-4">
-          <img src={companyphoto} className="w-16 h-16 rounded-full" />
+          <img src={companyphoto} alt="company" className="w-16 h-16 rounded-full" />
           <h3 className="text-xl font-semibold">
             COMSATS University Islamabad
           </h3>
