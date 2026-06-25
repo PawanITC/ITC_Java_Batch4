@@ -3,11 +3,19 @@ package com.itc.linkedin.postandtimeline.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.itc.linkedin.postandtimeline.dto.request.CreatePostRequest;
+import com.itc.linkedin.postandtimeline.dto.request.CreateCommentRequest;
 import com.itc.linkedin.postandtimeline.dto.response.PostResponse;
+import com.itc.linkedin.postandtimeline.entity.Comment;
 import com.itc.linkedin.postandtimeline.entity.Post;
+import com.itc.linkedin.postandtimeline.entity.PostLike;
+import com.itc.linkedin.postandtimeline.kafka.event.CommentCreatedEvent;
 import com.itc.linkedin.postandtimeline.kafka.event.PostCreatedEvent;
+import com.itc.linkedin.postandtimeline.kafka.event.PostDeletedEvent;
+import com.itc.linkedin.postandtimeline.kafka.event.PostLikedEvent;
 import com.itc.linkedin.postandtimeline.outbox.OutboxEvent;
 import com.itc.linkedin.postandtimeline.outbox.OutboxEventRepository;
+import com.itc.linkedin.postandtimeline.repository.CommentRepository;
+import com.itc.linkedin.postandtimeline.repository.PostLikeRepository;
 import com.itc.linkedin.postandtimeline.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,11 +27,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -33,6 +41,12 @@ class PostServiceTest {
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
+
+    @Mock
+    private PostLikeRepository postLikeRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Captor
     private ArgumentCaptor<Post> postCaptor;
@@ -47,7 +61,13 @@ class PostServiceTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        postService = new PostService(postRepository, outboxEventRepository, objectMapper);
+        postService = new PostService(
+                postRepository,
+                postLikeRepository,
+                commentRepository,
+                outboxEventRepository,
+                objectMapper
+        );
     }
 
     @Test
@@ -93,5 +113,122 @@ class PostServiceTest {
         assertThat(event.authorId()).isEqualTo("user.demo");
         assertThat(event.authorName()).isEqualTo("user.demo");
         assertThat(event.content()).isEqualTo("Kafka outbox test post");
+    }
+
+    @Test
+    void shouldLikeAndUnlikePostAndPublishEvents() throws Exception {
+        Post post = Post.builder()
+                .id(11L)
+                .authorId("author-1")
+                .authorName("Author")
+                .authorHeadline("Headline")
+                .content("content")
+                .likesCount(0)
+                .commentsCount(0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(postRepository.findById(11L)).thenReturn(Optional.of(post));
+        when(postLikeRepository.existsByPostIdAndUserId(11L, "user-1")).thenReturn(false);
+        when(postLikeRepository.countByPostId(11L)).thenReturn(1L, 0L);
+
+        postService.likePost(11L, "user-1");
+        postService.unlikePost(11L, "user-1");
+
+        verify(postLikeRepository).save(any(PostLike.class));
+        verify(postLikeRepository).deleteByPostIdAndUserId(11L, "user-1");
+
+        ArgumentCaptor<OutboxEvent> outboxEvents = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventRepository, times(2)).save(outboxEvents.capture());
+
+        PostLikedEvent likeEvent = objectMapper.readValue(
+                outboxEvents.getAllValues().get(0).getPayload(),
+                PostLikedEvent.class
+        );
+        PostLikedEvent unlikeEvent = objectMapper.readValue(
+                outboxEvents.getAllValues().get(1).getPayload(),
+                PostLikedEvent.class
+        );
+
+        assertThat(likeEvent.likesCount()).isEqualTo(1);
+        assertThat(unlikeEvent.likesCount()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldAddCommentAndPublishEvent() throws Exception {
+        LocalDateTime now = LocalDateTime.of(2026, 6, 25, 18, 30);
+        Post post = Post.builder()
+                .id(12L)
+                .authorId("author-1")
+                .authorName("Author")
+                .authorHeadline("Headline")
+                .content("content")
+                .likesCount(0)
+                .commentsCount(0)
+                .createdAt(now.minusHours(1))
+                .updatedAt(now.minusHours(1))
+                .build();
+
+        when(postRepository.findById(12L)).thenReturn(Optional.of(post));
+        when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+            Comment comment = invocation.getArgument(0);
+            comment.setId(55L);
+            comment.setCreatedAt(now);
+            return comment;
+        });
+        when(commentRepository.countByPostId(12L)).thenReturn(1L);
+
+        PostResponse response = postService.addComment(
+                12L,
+                "user-1",
+                "User One",
+                new CreateCommentRequest("Nice post")
+        );
+
+        assertThat(response.commentsCount()).isEqualTo(1);
+
+        ArgumentCaptor<OutboxEvent> outboxCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventRepository).save(outboxCaptor.capture());
+
+        CommentCreatedEvent event = objectMapper.readValue(
+                outboxCaptor.getValue().getPayload(),
+                CommentCreatedEvent.class
+        );
+
+        assertThat(event.commentId()).isEqualTo(55L);
+        assertThat(event.postId()).isEqualTo(12L);
+        assertThat(event.authorName()).isEqualTo("User One");
+        assertThat(event.commentsCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldDeletePostAndPublishDeleteEvent() throws Exception {
+        Post post = Post.builder()
+                .id(13L)
+                .authorId("author-1")
+                .authorName("Author")
+                .authorHeadline("Headline")
+                .content("content")
+                .build();
+
+        when(postRepository.findById(13L)).thenReturn(Optional.of(post));
+
+        postService.deletePost(13L, "author-1");
+
+        verify(postLikeRepository).deleteByPostId(13L);
+        verify(commentRepository).deleteByPostId(13L);
+        verify(postRepository).delete(post);
+
+        ArgumentCaptor<OutboxEvent> outboxCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventRepository).save(outboxCaptor.capture());
+
+        PostDeletedEvent event = objectMapper.readValue(
+                outboxCaptor.getValue().getPayload(),
+                PostDeletedEvent.class
+        );
+
+        assertThat(event.postId()).isEqualTo(13L);
+        assertThat(event.authorId()).isEqualTo("author-1");
     }
 }

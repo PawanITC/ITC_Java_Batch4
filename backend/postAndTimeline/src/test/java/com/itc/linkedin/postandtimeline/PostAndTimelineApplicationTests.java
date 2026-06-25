@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.flyway.enabled=false",
         "spring.kafka.bootstrap-servers=localhost:9092",
         "spring.kafka.schema-registry-url=mock://post-service-test",
         "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/does-not-matter"

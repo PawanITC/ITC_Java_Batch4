@@ -1,0 +1,1 @@
+http://localhost:8080/realms/linkedin-app/protocol/openid-connect/auth?client_id=linkedin-frontend&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2F&response_type=code&scope=openid%20profile%20email&state=20e6495221f5492592196d17d94d56d0&nonce=c5cfeebee21f40568c2cfe8b41574579&code_challenge=KzUucTElK3P9ZipwsbJuTFsfJKtb1Ov3eO2a9eNdaGk&code_challenge_method=S256

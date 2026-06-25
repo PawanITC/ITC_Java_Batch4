@@ -21,6 +21,7 @@ public class Post {
     private String authorId;
     private String authorName;
     private String authorHeadline;
+    private String authorAvatarUrl;
 
     @Column(length = 5000)
     private String content;

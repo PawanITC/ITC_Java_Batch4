@@ -1,8 +1,11 @@
 import keycloak from "../features/auth/keycloak";
+import { apiBaseUrl } from "../config/runtimeConfig";
 import { FeedPost } from "../types/feed";
+import { readJsonBody } from "./responseUtils";
 
-const API_BASE =
-  process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8085";
+const API_BASE = apiBaseUrl;
+
+export type TimelineSortMode = "top" | "recent";
 
 async function authHeaders() {
   await keycloak.updateToken(30);
@@ -20,6 +23,7 @@ function toFeedPost(item: any): FeedPost {
     authorId: item.authorId ?? "",
     authorName: item.authorName ?? "LinkedIn Member",
     authorHeadline: item.authorHeadline ?? "Professional",
+    authorAvatarUrl: item.authorAvatarUrl ?? undefined,
     content: item.content ?? "",
     likesCount: item.likesCount ?? 0,
     commentsCount: item.commentsCount ?? 0,
@@ -27,8 +31,10 @@ function toFeedPost(item: any): FeedPost {
   };
 }
 
-export async function getTimeline(): Promise<FeedPost[]> {
-  const res = await fetch(`${API_BASE}/api/timeline`, {
+export async function getTimeline(
+  sort: TimelineSortMode = "top"
+): Promise<FeedPost[]> {
+  const res = await fetch(`${API_BASE}/api/timeline?sort=${sort}`, {
     headers: await authHeaders(),
   });
 
@@ -36,7 +42,7 @@ export async function getTimeline(): Promise<FeedPost[]> {
     throw new Error(`Timeline failed: ${res.status}`);
   }
 
-  const data = await res.json();
+  const data = await readJsonBody<any>(res, []);
   const items = Array.isArray(data) ? data : data.data ?? [];
 
   return items.map(toFeedPost);

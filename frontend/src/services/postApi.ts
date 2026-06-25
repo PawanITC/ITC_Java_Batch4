@@ -1,8 +1,8 @@
 import keycloak from "../features/auth/keycloak";
+import { apiBaseUrl } from "../config/runtimeConfig";
 import { CreatePostResponse } from "../types/feed";
 
-const API_BASE =
-  process.env.REACT_APP_API_BASE_URL ?? "http://localhost:8085";
+const API_BASE = apiBaseUrl;
 
 async function authHeaders() {
   await keycloak.updateToken(30);
@@ -20,6 +20,7 @@ function toPost(item: any): CreatePostResponse {
     authorId: item.authorId ?? "",
     authorName: item.authorName ?? "LinkedIn Member",
     authorHeadline: item.authorHeadline ?? "Professional",
+    authorAvatarUrl: item.authorAvatarUrl ?? undefined,
     content: item.content ?? "",
     likesCount: item.likesCount ?? 0,
     commentsCount: item.commentsCount ?? 0,
@@ -49,7 +50,7 @@ export async function likePost(postId: number) {
   if (!res.ok) throw new Error(`Like failed: ${res.status}`);
 
   const data = await res.json();
-  return data.data ?? data;
+  return toPost(data.data ?? data);
 }
 
 export async function unlikePost(postId: number) {
@@ -61,7 +62,7 @@ export async function unlikePost(postId: number) {
   if (!res.ok) throw new Error(`Unlike failed: ${res.status}`);
 
   const data = await res.json();
-  return data.data ?? data;
+  return toPost(data.data ?? data);
 }
 
 export async function deletePost(postId: number) {
@@ -85,5 +86,5 @@ export async function addComment(postId: number, content: string) {
   if (!res.ok) throw new Error(`Add comment failed: ${res.status}`);
 
   const data = await res.json();
-  return data.data ?? data;
+  return toPost(data.data ?? data);
 }

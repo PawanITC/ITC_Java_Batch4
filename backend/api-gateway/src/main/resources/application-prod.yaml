@@ -1,0 +1,25 @@
+spring:
+  data:
+    redis:
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:true}
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MILLIS:5000}
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:10s}
+
+app:
+  gateway:
+    security:
+      allowed-origins:
+        - ${GATEWAY_ALLOWED_ORIGIN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

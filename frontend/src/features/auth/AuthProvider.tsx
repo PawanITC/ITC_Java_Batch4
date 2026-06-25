@@ -6,6 +6,7 @@ import {
   authLoaded,
   logoutSuccess,
 } from "../../store/authSlice";
+import { logoutRedirectUri } from "../../config/runtimeConfig";
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
@@ -48,7 +49,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {
           dispatch(logoutSuccess());
-          keycloak.logout({ redirectUri: "http://localhost:3000" });
+          keycloak.logout({ redirectUri: logoutRedirectUri });
         });
     };
   }, [dispatch]);

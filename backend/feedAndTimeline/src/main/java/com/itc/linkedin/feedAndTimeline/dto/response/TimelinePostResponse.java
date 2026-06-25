@@ -10,6 +10,7 @@ public record TimelinePostResponse(
         String authorId,
         String authorName,
         String authorHeadline,
+        String authorAvatarUrl,
         String content,
         int likesCount,
         int commentsCount,

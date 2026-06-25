@@ -7,6 +7,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { useState } from "react";
+import Avatar from "../common/Avatar";
 import { FeedPost } from "../../types/feed";
 
 type Props = {
@@ -17,16 +18,6 @@ type Props = {
   onComment?: (postId: number, content: string) => Promise<void>;
   readOnly?: boolean;
 };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -40,24 +31,39 @@ function formatDate(value: string) {
   });
 }
 
-export default function FeedPostCard({ post, onLike, readOnly = false }: Props) {
+export default function FeedPostCard({
+  post,
+  onLike,
+  onUnlike,
+  onDelete,
+  onComment,
+  readOnly = false,
+}: Props) {
   const postId = post.postId ?? post.id;
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [comment, setComment] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLike = async () => {
     if (readOnly) return;
 
-    setLiked((current) => !current);
-    setLikesCount((current) => current + (liked ? -1 : 1));
-    await onLike?.(postId);
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    setLikesCount((current) => current + (nextLiked ? 1 : -1));
+
+    if (nextLiked) {
+      await onLike?.(postId);
+    } else {
+      await onUnlike?.(postId);
+    }
   };
 
-  const submitComment = () => {
+  const submitComment = async () => {
     if (!comment.trim()) return;
+    await onComment?.(postId, comment.trim());
     setCommentsCount((current) => current + 1);
     setComment("");
     setShowCommentBox(false);
@@ -67,9 +73,12 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
     <article className="rounded-lg border border-[#d6d6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
       <div className="flex justify-between gap-3 px-4 pt-4">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dbe6f1] text-sm font-semibold text-[#0a66c2]">
-            {initials(post.authorName) || "IN"}
-          </div>
+          <Avatar
+            name={post.authorName}
+            src={post.authorAvatarUrl}
+            sizeClassName="h-12 w-12"
+            textClassName="text-sm"
+          />
 
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold text-[#191919] hover:text-[#0a66c2] hover:underline">
@@ -86,12 +95,28 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
           </div>
         </div>
 
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
-          title="More"
-        >
-          <MoreHorizontal size={20} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((current) => !current)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
+            title="More"
+          >
+            <MoreHorizontal size={20} />
+          </button>
+          {onDelete && !readOnly && menuOpen && (
+            <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-md border border-[#d6d6d6] bg-white p-1 shadow-lg">
+              <button
+                onClick={async () => {
+                  setMenuOpen(false);
+                  await onDelete(postId);
+                }}
+                className="w-full rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              >
+                Delete post
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <p className="whitespace-pre-wrap px-4 py-3 text-sm leading-relaxed text-[#191919]">
@@ -140,9 +165,11 @@ export default function FeedPostCard({ post, onLike, readOnly = false }: Props) 
 
       {showCommentBox && (
         <div className="flex gap-2 border-t border-[#edf0f3] px-4 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#c7d1d8] text-xs font-semibold text-[#38434f]">
-            ST
-          </div>
+          <Avatar
+            name="Shubhra Tripathi"
+            sizeClassName="h-9 w-9"
+            textClassName="text-xs"
+          />
           <div className="flex min-w-0 flex-1 items-center rounded-full border border-[#b2b2b2] px-3">
             <input
               value={comment}

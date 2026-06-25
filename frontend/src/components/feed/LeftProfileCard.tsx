@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import Avatar from "../common/Avatar";
 import profileImage from "../../assets/profile.jpeg";
 
 export default function LeftProfileCard() {
@@ -21,11 +22,14 @@ export default function LeftProfileCard() {
         </div>
 
         <div className="px-3 pb-4 text-center">
-          <img
-            src={profileImage}
-            alt=""
-            className="mx-auto -mt-10 h-20 w-20 rounded-full border-4 border-white object-cover shadow-sm"
-          />
+          <div className="mx-auto -mt-10 w-fit rounded-full border-4 border-white shadow-sm">
+            <Avatar
+              name="Shubhra Tripathi"
+              src={profileImage}
+              sizeClassName="h-20 w-20"
+              textClassName="text-lg"
+            />
+          </div>
 
           <Link
             to="/profile"

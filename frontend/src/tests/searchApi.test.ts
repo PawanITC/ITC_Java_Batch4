@@ -29,7 +29,9 @@ describe("searchApi", () => {
   test("searchByType calls encoded search endpoint", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({ data: [{ id: "person-1" }] }),
+      text: jest.fn().mockResolvedValue(
+        JSON.stringify({ data: [{ id: "person-1" }] })
+      ),
     });
 
     const result = await searchByType("people", "sam rivera");
@@ -50,11 +52,15 @@ describe("searchApi", () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue({ data: [{ id: "suggestion-1" }] }),
+        text: jest.fn().mockResolvedValue(
+          JSON.stringify({ data: [{ id: "suggestion-1" }] })
+        ),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue({ data: [{ topic: "react" }] }),
+        text: jest.fn().mockResolvedValue(
+          JSON.stringify({ data: [{ topic: "react" }] })
+        ),
       });
 
     expect(await getDiscoverySuggestions()).toEqual([{ id: "suggestion-1" }]);
@@ -90,5 +96,28 @@ describe("searchApi", () => {
     await expect(searchByType("jobs", "engineer")).rejects.toThrow(
       "Search failed: 401"
     );
+  });
+
+  test("returns empty arrays when successful responses have no body", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: jest.fn().mockResolvedValue(""),
+      });
+
+    await expect(searchByType("people", "sam")).resolves.toEqual([]);
+    await expect(getDiscoverySuggestions()).resolves.toEqual([]);
+    await expect(getTrendingTopics()).resolves.toEqual([]);
   });
 });

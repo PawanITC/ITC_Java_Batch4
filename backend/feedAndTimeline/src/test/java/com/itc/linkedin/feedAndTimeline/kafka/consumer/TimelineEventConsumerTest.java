@@ -3,7 +3,11 @@ package com.itc.linkedin.feedAndTimeline.kafka.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.itc.linkedin.feedAndTimeline.kafka.avro.PostCreatedAvroMapper;
+import com.itc.linkedin.feedAndTimeline.kafka.event.CommentCreatedEvent;
 import com.itc.linkedin.feedAndTimeline.kafka.event.PostCreatedEvent;
+import com.itc.linkedin.feedAndTimeline.kafka.event.PostDeletedEvent;
+import com.itc.linkedin.feedAndTimeline.kafka.event.PostLikedEvent;
+import com.itc.linkedin.feedAndTimeline.kafka.event.UserFollowedEvent;
 import com.itc.linkedin.feedAndTimeline.service.ProcessedEventService;
 import com.itc.linkedin.feedAndTimeline.service.TimelineService;
 import org.apache.avro.generic.GenericRecord;
@@ -110,5 +114,54 @@ class TimelineEventConsumerTest {
 
         verify(timelineService, never()).handlePostCreated(event);
         verify(processedEventService, never()).markProcessed("post.created", "evt-3", 2);
+    }
+
+    @Test
+    void shouldProcessAndMarkUserFollowedEvent() throws Exception {
+        UserFollowedEvent event = new UserFollowedEvent(
+                "follow-evt-1",
+                "follower-1",
+                "author-1",
+                "Follower",
+                "One",
+                "follower@example.com",
+                "Author",
+                "One",
+                "author@example.com",
+                "2026-06-25T12:00:00"
+        );
+
+        when(processedEventService.isAlreadyProcessed("follow-evt-1")).thenReturn(false);
+
+        timelineEventConsumer.consumeUserFollowed(objectMapper.writeValueAsString(event));
+
+        verify(timelineService).handleUserFollowed(event);
+        verify(processedEventService).markProcessed("social-follow-events", "follow-evt-1", null);
+    }
+
+    @Test
+    void shouldProcessPostInteractionEventsWithWireFormatPrefix() throws Exception {
+        PostLikedEvent likedEvent = new PostLikedEvent(101L, 77L, "user.demo", 4, LocalDateTime.now());
+        CommentCreatedEvent commentEvent = new CommentCreatedEvent(102L, 88L, 77L, "user.demo", "Demo User", 2, LocalDateTime.now());
+        PostDeletedEvent deletedEvent = new PostDeletedEvent(103L, 77L, "user.demo", LocalDateTime.now());
+
+        when(processedEventService.isAlreadyProcessed("101")).thenReturn(false);
+        when(processedEventService.isAlreadyProcessed("102")).thenReturn(false);
+        when(processedEventService.isAlreadyProcessed("103")).thenReturn(false);
+
+        timelineEventConsumer.consumePostLiked(withWirePrefix(objectMapper.writeValueAsString(likedEvent)));
+        timelineEventConsumer.consumeCommentCreated(withWirePrefix(objectMapper.writeValueAsString(commentEvent)));
+        timelineEventConsumer.consumePostDeleted(withWirePrefix(objectMapper.writeValueAsString(deletedEvent)));
+
+        verify(timelineService).handlePostLiked(likedEvent);
+        verify(timelineService).handleCommentCreated(commentEvent);
+        verify(timelineService).handlePostDeleted(deletedEvent);
+        verify(processedEventService).markProcessed("post.liked", "101", null);
+        verify(processedEventService).markProcessed("comment.created", "102", null);
+        verify(processedEventService).markProcessed("post.deleted", "103", null);
+    }
+
+    private String withWirePrefix(String json) {
+        return "\u0000\u0000\u0000\u0002" + json;
     }
 }

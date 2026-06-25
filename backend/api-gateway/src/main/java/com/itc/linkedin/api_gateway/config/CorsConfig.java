@@ -13,16 +13,23 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    private final GatewaySecurityProperties gatewaySecurityProperties;
+
+    public CorsConfig(GatewaySecurityProperties gatewaySecurityProperties) {
+        this.gatewaySecurityProperties = gatewaySecurityProperties;
+    }
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOrigins(gatewaySecurityProperties.getAllowedOrigins());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-User-Id", "X-Username", "X-Email"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();

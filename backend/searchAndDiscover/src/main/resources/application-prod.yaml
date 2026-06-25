@@ -1,0 +1,15 @@
+spring:
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+app:
+  search:
+    seed-demo-data: ${SEARCH_SEED_DEMO_DATA:true}

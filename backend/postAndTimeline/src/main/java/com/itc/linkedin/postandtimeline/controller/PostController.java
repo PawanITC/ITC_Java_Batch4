@@ -1,5 +1,6 @@
 package com.itc.linkedin.postandtimeline.controller;
 
+import com.itc.linkedin.postandtimeline.dto.request.CreateCommentRequest;
 import com.itc.linkedin.postandtimeline.dto.request.CreatePostRequest;
 import com.itc.linkedin.postandtimeline.dto.response.PostResponse;
 import com.itc.linkedin.postandtimeline.security.CurrentUserService;
@@ -23,26 +24,73 @@ public class PostController {
 
     @PostMapping
     public PostResponse createPost(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
-            @RequestHeader(value = "X-Username", required = false) String usernameHeader,
             Authentication authentication,
             @Valid @RequestBody CreatePostRequest request
     ) {
-        String userId = StringUtils.hasText(userIdHeader)
-                ? userIdHeader
-                : currentUserService.getUserId(authentication);
-
-        String username = StringUtils.hasText(usernameHeader)
-                ? usernameHeader
-                : currentUserService.getUsername(authentication);
+        String userId = currentUserService.getUserId(authentication);
+        String username = currentUserService.getUsername(authentication);
 
         if (!StringUtils.hasText(userId) || !StringUtils.hasText(username)) {
             throw new ResponseStatusException(
                     UNAUTHORIZED,
-                    "Missing user identity. Provide X-User-Id/X-Username headers or a valid JWT."
+                    "Missing user identity in JWT."
             );
         }
 
         return postService.createPost(userId, username, request);
+    }
+
+    @PostMapping("/{postId}/like")
+    public PostResponse likePost(
+            Authentication authentication,
+            @PathVariable Long postId
+    ) {
+        return postService.likePost(postId, requiredUserId(authentication));
+    }
+
+    @DeleteMapping("/{postId}/like")
+    public PostResponse unlikePost(
+            Authentication authentication,
+            @PathVariable Long postId
+    ) {
+        return postService.unlikePost(postId, requiredUserId(authentication));
+    }
+
+    @PostMapping("/{postId}/comments")
+    public PostResponse addComment(
+            Authentication authentication,
+            @PathVariable Long postId,
+            @Valid @RequestBody CreateCommentRequest request
+    ) {
+        return postService.addComment(
+                postId,
+                requiredUserId(authentication),
+                requiredUsername(authentication),
+                request
+        );
+    }
+
+    @DeleteMapping("/{postId}")
+    public void deletePost(
+            Authentication authentication,
+            @PathVariable Long postId
+    ) {
+        postService.deletePost(postId, requiredUserId(authentication));
+    }
+
+    private String requiredUserId(Authentication authentication) {
+        String userId = currentUserService.getUserId(authentication);
+        if (!StringUtils.hasText(userId)) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing user identity in JWT.");
+        }
+        return userId;
+    }
+
+    private String requiredUsername(Authentication authentication) {
+        String username = currentUserService.getUsername(authentication);
+        if (!StringUtils.hasText(username)) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing user identity in JWT.");
+        }
+        return username;
     }
 }

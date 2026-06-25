@@ -6,6 +6,7 @@ import com.itc.linkedin.feedAndTimeline.kafka.event.CommentCreatedEvent;
 import com.itc.linkedin.feedAndTimeline.kafka.event.PostCreatedEvent;
 import com.itc.linkedin.feedAndTimeline.kafka.event.PostDeletedEvent;
 import com.itc.linkedin.feedAndTimeline.kafka.event.PostLikedEvent;
+import com.itc.linkedin.feedAndTimeline.kafka.event.UserFollowedEvent;
 import com.itc.linkedin.feedAndTimeline.service.ProcessedEventService;
 import com.itc.linkedin.feedAndTimeline.service.TimelineService;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +57,7 @@ public class TimelineEventConsumer {
     public void consumePostDeleted(String message) throws Exception {
         log.info("Received post.deleted event: {}", message);
 
-        PostDeletedEvent event = objectMapper.readValue(message, PostDeletedEvent.class);
+        PostDeletedEvent event = objectMapper.readValue(extractJsonPayload(message), PostDeletedEvent.class);
         String eventId = String.valueOf(event.eventId());
 
         if (processedEventService.isAlreadyProcessed(eventId)) {
@@ -78,7 +79,7 @@ public class TimelineEventConsumer {
     public void consumePostLiked(String message) throws Exception {
         log.info("Received post.liked event: {}", message);
 
-        PostLikedEvent event = objectMapper.readValue(message, PostLikedEvent.class);
+        PostLikedEvent event = objectMapper.readValue(extractJsonPayload(message), PostLikedEvent.class);
         String eventId = String.valueOf(event.eventId());
 
         if (processedEventService.isAlreadyProcessed(eventId)) {
@@ -100,7 +101,7 @@ public class TimelineEventConsumer {
     public void consumeCommentCreated(String message) throws Exception {
         log.info("Received comment.created event: {}", message);
 
-        CommentCreatedEvent event = objectMapper.readValue(message, CommentCreatedEvent.class);
+        CommentCreatedEvent event = objectMapper.readValue(extractJsonPayload(message), CommentCreatedEvent.class);
         String eventId = String.valueOf(event.eventId());
 
         if (processedEventService.isAlreadyProcessed(eventId)) {
@@ -114,6 +115,32 @@ public class TimelineEventConsumer {
         log.info("Successfully processed comment.created event for postId={}", event.postId());
     }
 
+    @KafkaListener(
+            topics = "social-follow-events",
+            groupId = "feed-timeline-group",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void consumeUserFollowed(String message) throws Exception {
+        log.info("Received social-follow-events event: {}", message);
+
+        UserFollowedEvent event = objectMapper.readValue(message, UserFollowedEvent.class);
+
+        if (!StringUtils.hasText(event.eventId())) {
+            throw new IllegalArgumentException("social-follow-events eventId is required");
+        }
+
+        if (processedEventService.isAlreadyProcessed(event.eventId())) {
+            log.info("Skipping duplicate social-follow-events eventId={}", event.eventId());
+            return;
+        }
+
+        timelineService.handleUserFollowed(event);
+        processedEventService.markProcessed("social-follow-events", event.eventId(), null);
+
+        log.info("Successfully processed social-follow-events eventId={} followerId={} followingId={}",
+                event.eventId(), event.followerId(), event.followingId());
+    }
+
     private void validatePostCreatedEvent(PostCreatedEvent event) {
         if (!StringUtils.hasText(event.eventId())) {
             throw new IllegalArgumentException("post.created eventId is required");
@@ -124,5 +151,18 @@ public class TimelineEventConsumer {
         if (event.eventVersion() != SUPPORTED_POST_CREATED_VERSION) {
             throw new IllegalArgumentException("Unsupported post.created event version: " + event.eventVersion());
         }
+    }
+
+    private String extractJsonPayload(String message) {
+        if (!StringUtils.hasText(message)) {
+            throw new IllegalArgumentException("Kafka message payload is empty");
+        }
+
+        int jsonStart = message.indexOf('{');
+        if (jsonStart < 0) {
+            throw new IllegalArgumentException("Kafka message does not contain a JSON object payload");
+        }
+
+        return message.substring(jsonStart);
     }
 }

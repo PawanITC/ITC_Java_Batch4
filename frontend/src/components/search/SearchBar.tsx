@@ -10,6 +10,11 @@ export default function SearchBar({ query, onChange, onSearch }: Props) {
       <input
         value={query}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onSearch();
+          }
+        }}
         placeholder="Search people, jobs, posts, companies..."
         className="flex-1 bg-[#eef3f8] px-4 py-3 rounded-md outline-none"
       />

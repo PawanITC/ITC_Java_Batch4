@@ -4,6 +4,7 @@ export type FeedPost = {
   authorId: string;
   authorName: string;
   authorHeadline: string;
+  authorAvatarUrl?: string;
   content: string;
   likesCount: number;
   commentsCount: number;

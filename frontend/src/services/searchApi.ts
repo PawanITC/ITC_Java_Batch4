@@ -1,12 +1,11 @@
 import keycloak from "../features/auth/keycloak";
 import { SearchType } from "../types/search";
+import { apiBaseUrl } from "../config/runtimeConfig";
+import { readJsonBody } from "./responseUtils";
 
-const API_BASE = "http://localhost:8085/api";
+const API_BASE = `${apiBaseUrl}/api`;
 
 async function authHeaders() {
-  console.log("Authenticated:", keycloak.authenticated);
-  console.log("Token:", keycloak.token);
-
   if (!keycloak.authenticated || !keycloak.token) {
     throw new Error("User is not authenticated. Token is missing.");
   }
@@ -30,7 +29,7 @@ export async function searchByType(type: SearchType, query: string) {
     throw new Error(`Search failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await readJsonBody<any>(response, { data: [] });
   return data.data ?? [];
 }
 
@@ -43,7 +42,7 @@ export async function getDiscoverySuggestions() {
     throw new Error(`Suggestions failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await readJsonBody<any>(response, { data: [] });
   return data.data ?? [];
 }
 
@@ -56,6 +55,6 @@ export async function getTrendingTopics() {
     throw new Error(`Trending failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await readJsonBody<any>(response, { data: [] });
   return data.data ?? [];
 }

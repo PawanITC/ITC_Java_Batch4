@@ -10,9 +10,17 @@ public interface TimelinePostRepository extends JpaRepository<TimelinePost, Long
 
     List<TimelinePost> findByTimelineUserIdOrderByCreatedAtDesc(String timelineUserId);
 
+    List<TimelinePost> findTop200ByTimelineUserIdOrderByCreatedAtDesc(String timelineUserId);
+
+    List<TimelinePost> findTop50ByTimelineUserIdOrderByCreatedAtDesc(String timelineUserId);
+
     Optional<TimelinePost> findByTimelineUserIdAndPostId(String timelineUserId, Long postId);
 
     List<TimelinePost> findByPostId(Long postId);
 
+    List<TimelinePost> findTop50ByTimelineUserIdAndAuthorIdOrderByCreatedAtDesc(String timelineUserId, String authorId);
+
     void deleteByPostId(Long postId);
+
+    void deleteByTimelineUserIdIn(List<String> timelineUserIds);
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import keycloak from "../features/auth/keycloak";
 import { FeedPost } from "../types/feed";
-import { getTimeline } from "../services/timelineApi";
-import { createPost } from "../services/postApi";
+import { getTimeline, TimelineSortMode } from "../services/timelineApi";
+import { addComment, createPost, deletePost, likePost, unlikePost } from "../services/postApi";
 
 import CreatePostCard from "../components/feed/CreatePostCard";
 import LeftProfileCard from "../components/feed/LeftProfileCard";
@@ -12,12 +13,13 @@ export default function FeedTimelinePage() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortMode, setSortMode] = useState<TimelineSortMode>("top");
 
-  const loadFeed = async () => {
+  const loadFeed = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getTimeline();
+      const data = await getTimeline(sortMode);
       setPosts(data);
     } catch (error) {
       console.error("Feed loading error", error);
@@ -26,7 +28,7 @@ export default function FeedTimelinePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortMode]);
 
   const handleCreatePost = async (content: string) => {
     setError("");
@@ -35,9 +37,51 @@ export default function FeedTimelinePage() {
     await loadFeed();
   };
 
+  const handleLike = async (postId: number) => {
+    const updated = await likePost(postId);
+    setPosts((currentPosts) =>
+      currentPosts.map((post) =>
+        (post.postId ?? post.id) === postId
+          ? { ...post, likesCount: updated.likesCount }
+          : post
+      )
+    );
+  };
+
+  const handleUnlike = async (postId: number) => {
+    const updated = await unlikePost(postId);
+    setPosts((currentPosts) =>
+      currentPosts.map((post) =>
+        (post.postId ?? post.id) === postId
+          ? { ...post, likesCount: updated.likesCount }
+          : post
+      )
+    );
+  };
+
+  const handleComment = async (postId: number, content: string) => {
+    const updated = await addComment(postId, content);
+    setPosts((currentPosts) =>
+      currentPosts.map((post) =>
+        (post.postId ?? post.id) === postId
+          ? { ...post, commentsCount: updated.commentsCount }
+          : post
+      )
+    );
+  };
+
+  const handleDelete = async (postId: number) => {
+    await deletePost(postId);
+    setPosts((currentPosts) =>
+      currentPosts.filter((post) => (post.postId ?? post.id) !== postId)
+    );
+  };
+
   useEffect(() => {
     loadFeed();
-  }, []);
+  }, [sortMode]);
+
+  const currentUserId = keycloak.tokenParsed?.sub ?? "";
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] pb-16 text-[#191919] md:pb-0">
@@ -51,9 +95,31 @@ export default function FeedTimelinePage() {
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <div className="h-px flex-1 bg-[#d6d6d6]" />
-            <button className="whitespace-nowrap hover:text-gray-900">
-              Sort by: <span className="font-semibold text-gray-800">Top</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="whitespace-nowrap">Sort by:</span>
+              <div className="inline-flex overflow-hidden rounded-full border border-[#d0d0d0] bg-white">
+                <button
+                  onClick={() => setSortMode("top")}
+                  className={`px-3 py-1.5 font-semibold ${
+                    sortMode === "top"
+                      ? "bg-[#0a66c2] text-white"
+                      : "text-gray-700 hover:bg-[#f3f6f8]"
+                  }`}
+                >
+                  Top
+                </button>
+                <button
+                  onClick={() => setSortMode("recent")}
+                  className={`px-3 py-1.5 font-semibold ${
+                    sortMode === "recent"
+                      ? "bg-[#0a66c2] text-white"
+                      : "text-gray-700 hover:bg-[#f3f6f8]"
+                  }`}
+                >
+                  Recent
+                </button>
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -80,6 +146,12 @@ export default function FeedTimelinePage() {
               <FeedPostCard
                 key={post.postId ?? post.id}
                 post={post}
+                onLike={handleLike}
+                onUnlike={handleUnlike}
+                onComment={handleComment}
+                onDelete={
+                  post.authorId === currentUserId ? handleDelete : undefined
+                }
               />
             ))
           )}

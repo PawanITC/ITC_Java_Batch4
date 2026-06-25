@@ -1,5 +1,6 @@
 server:
   port: 8085
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -9,6 +10,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   data:
@@ -20,6 +22,19 @@ spring:
     gateway:
       server:
         webflux:
+          default-filters:
+            - SecureHeaders
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: ${GATEWAY_RATE_LIMIT_REPLENISH_RATE:10}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_LIMIT_BURST_CAPACITY:20}
+                redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 2
+                methods: GET
+                statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE
           routes:
             - id: userprofile-service
               uri: ${USERPROFILE_SERVICE_URI:http://localhost:8083}
@@ -50,18 +65,25 @@ spring:
               predicates:
                 - Path=/api/posts/**
 
+app:
+  gateway:
+    security:
+      allowed-origins:
+        - ${GATEWAY_ALLOWED_ORIGIN:http://localhost:3000}
+      allowed-token-clients:
+        - ${GATEWAY_ALLOWED_TOKEN_CLIENT:linkedin-frontend}
+        - ${GATEWAY_ADDITIONAL_ALLOWED_TOKEN_CLIENT:api-gateway}
+        - api-gateway
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,gateway
+        include: health,info,prometheus
 
   endpoint:
     health:
-      show-details: always
-    gateway:
-      access: read_only
+      show-details: when_authorized
 
   metrics:
     tags:
@@ -71,4 +93,4 @@ management:
     level:
       org.springframework.cloud.gateway: INFO
       org.springframework.security: INFO
-      com.itc.linkedin.apigateway: DEBUG
+      com.itc.linkedin.api_gateway: INFO

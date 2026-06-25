@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
-import { createPost } from "../services/postApi";
+import { addComment, createPost, deletePost, likePost, unlikePost } from "../services/postApi";
 import { getTimeline } from "../services/timelineApi";
 
 jest.mock("../services/timelineApi", () => ({
@@ -9,6 +9,14 @@ jest.mock("../services/timelineApi", () => ({
 
 jest.mock("../services/postApi", () => ({
   createPost: jest.fn(),
+  likePost: jest.fn(),
+  unlikePost: jest.fn(),
+  addComment: jest.fn(),
+  deletePost: jest.fn(),
+}));
+
+jest.mock("../features/auth/keycloak", () => ({
+  tokenParsed: { sub: "author-1" },
 }));
 
 jest.mock("../components/feed/LeftProfileCard", () => () => <aside>Left profile</aside>);
@@ -16,6 +24,10 @@ jest.mock("../components/feed/RightNewsCard", () => () => <aside>Right news</asi
 
 const mockGetTimeline = getTimeline as jest.Mock;
 const mockCreatePost = createPost as jest.Mock;
+const mockLikePost = likePost as jest.Mock;
+const mockUnlikePost = unlikePost as jest.Mock;
+const mockAddComment = addComment as jest.Mock;
+const mockDeletePost = deletePost as jest.Mock;
 
 const firstPost = {
   id: 1,
@@ -39,6 +51,7 @@ describe("FeedTimelinePage", () => {
 
     render(<FeedTimelinePage />);
 
+    expect(mockGetTimeline).toHaveBeenCalledWith("top");
     expect(screen.getByText(/loading feed/i)).toBeInTheDocument();
     expect(await screen.findByText("Existing feed post")).toBeInTheDocument();
     expect(screen.getByText("Feed Author")).toBeInTheDocument();
@@ -96,5 +109,56 @@ describe("FeedTimelinePage", () => {
     await waitFor(() => expect(mockCreatePost).toHaveBeenCalledWith("New post from composer"));
     expect(mockGetTimeline).toHaveBeenCalledTimes(2);
     expect(await screen.findByText("New post from composer")).toBeInTheDocument();
+  });
+
+  test("switches between top and recent timeline sorts", async () => {
+    mockGetTimeline
+      .mockResolvedValueOnce([firstPost])
+      .mockResolvedValueOnce([
+        {
+          ...firstPost,
+          id: 9,
+          postId: 9,
+          content: "Most recent post",
+        },
+      ]);
+
+    render(<FeedTimelinePage />);
+
+    expect(await screen.findByText("Existing feed post")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /recent/i }));
+
+    await waitFor(() => expect(mockGetTimeline).toHaveBeenLastCalledWith("recent"));
+    expect(await screen.findByText("Most recent post")).toBeInTheDocument();
+  });
+
+  test("likes, unlikes, comments, and deletes posts", async () => {
+    mockGetTimeline.mockResolvedValue([firstPost]);
+    mockLikePost.mockResolvedValue({ ...firstPost, likesCount: 3 });
+    mockUnlikePost.mockResolvedValue({ ...firstPost, likesCount: 2 });
+    mockAddComment.mockResolvedValue({ ...firstPost, commentsCount: 2 });
+    mockDeletePost.mockResolvedValue(true);
+
+    render(<FeedTimelinePage />);
+
+    expect(await screen.findByText("Existing feed post")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /like/i }));
+    await waitFor(() => expect(mockLikePost).toHaveBeenCalledWith(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /like/i }));
+    await waitFor(() => expect(mockUnlikePost).toHaveBeenCalledWith(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /comment/i }));
+    fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
+      target: { value: "Looks good" },
+    });
+    fireEvent.click(screen.getByTitle(/post comment/i));
+    await waitFor(() => expect(mockAddComment).toHaveBeenCalledWith(1, "Looks good"));
+
+    fireEvent.click(screen.getByTitle(/more/i));
+    fireEvent.click(screen.getByText(/delete post/i));
+    await waitFor(() => expect(mockDeletePost).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(screen.queryByText("Existing feed post")).not.toBeInTheDocument());
   });
 });

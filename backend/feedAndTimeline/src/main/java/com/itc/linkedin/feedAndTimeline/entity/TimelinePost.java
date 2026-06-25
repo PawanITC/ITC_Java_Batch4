@@ -40,6 +40,8 @@ public class TimelinePost {
 
     private String authorHeadline;
 
+    private String authorAvatarUrl;
+
     @Column(length = 5000)
     private String content;
 

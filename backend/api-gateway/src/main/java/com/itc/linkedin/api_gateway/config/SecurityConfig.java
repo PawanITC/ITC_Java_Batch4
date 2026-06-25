@@ -21,12 +21,12 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(
-                                "/actuator/**",
-                                "/fallback/**",
+                                "/actuator/health",
+                                "/actuator/health/**",
                                 "/gateway/health"
                         ).permitAll()
                         .pathMatchers("/api/**").authenticated()
-                        .anyExchange().permitAll()
+                        .anyExchange().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(Customizer.withDefaults())

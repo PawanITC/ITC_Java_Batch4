@@ -17,21 +17,23 @@ describe("timelineApi", () => {
   test("loads and normalizes timeline response data", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({
-        data: [
-          {
-            postId: 12,
-            authorName: "Timeline Author",
-            content: "Timeline content",
-          },
-        ],
-      }),
+      text: jest.fn().mockResolvedValue(
+        JSON.stringify({
+          data: [
+            {
+              postId: 12,
+              authorName: "Timeline Author",
+              content: "Timeline content",
+            },
+          ],
+        })
+      ),
     });
 
     const result = await getTimeline();
 
     expect(keycloak.updateToken).toHaveBeenCalledWith(30);
-    expect(mockFetch).toHaveBeenCalledWith("http://localhost:8085/api/timeline", {
+    expect(mockFetch).toHaveBeenCalledWith("http://localhost:8085/api/timeline?sort=top", {
       headers: {
         Authorization: "Bearer timeline-token",
         "Content-Type": "application/json",
@@ -52,13 +54,15 @@ describe("timelineApi", () => {
   test("supports array responses without a data wrapper", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue([
-        {
-          id: 3,
-          authorName: "Array Author",
-          content: "Array content",
-        },
-      ]),
+      text: jest.fn().mockResolvedValue(
+        JSON.stringify([
+          {
+            id: 3,
+            authorName: "Array Author",
+            content: "Array content",
+          },
+        ])
+      ),
     });
 
     const result = await getTimeline();
@@ -78,5 +82,31 @@ describe("timelineApi", () => {
     });
 
     await expect(getTimeline()).rejects.toThrow("Timeline failed: 503");
+  });
+
+  test("returns an empty array when timeline response body is empty", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: jest.fn().mockResolvedValue(""),
+    });
+
+    await expect(getTimeline()).resolves.toEqual([]);
+  });
+
+  test("supports recent timeline sorting", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      text: jest.fn().mockResolvedValue("[]"),
+    });
+
+    await getTimeline("recent");
+
+    expect(mockFetch).toHaveBeenCalledWith("http://localhost:8085/api/timeline?sort=recent", {
+      headers: {
+        Authorization: "Bearer timeline-token",
+        "Content-Type": "application/json",
+      },
+    });
   });
 });

@@ -5,26 +5,18 @@ spring:
   application:
     name: search-discovery-service
 
-  datasource:
-    url: ${POSTGRES_URL}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   elasticsearch:
     uris: ${ELASTICSEARCH_URI}
-
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-
-
+  
+  main:
+    lazy-initialization: true
 
 springdoc:
   swagger-ui:
@@ -34,8 +26,6 @@ springdoc:
     oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL}
 
 management:
-
-
   endpoints:
     web:
       exposure:

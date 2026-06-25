@@ -28,12 +28,17 @@ describe("FeedPostCard", () => {
 
   test("calls the like handler with the post id and updates the reaction count", async () => {
     const onLike = jest.fn().mockResolvedValue(undefined);
-    render(<FeedPostCard post={post} onLike={onLike} />);
+    const onUnlike = jest.fn().mockResolvedValue(undefined);
+    render(<FeedPostCard post={post} onLike={onLike} onUnlike={onUnlike} />);
 
     fireEvent.click(screen.getByRole("button", { name: /like/i }));
 
     expect(await screen.findByText(/4 reactions/i)).toBeInTheDocument();
     expect(onLike).toHaveBeenCalledWith(20);
+
+    fireEvent.click(screen.getByRole("button", { name: /like/i }));
+    expect(await screen.findByText(/3 reactions/i)).toBeInTheDocument();
+    expect(onUnlike).toHaveBeenCalledWith(20);
   });
 
   test("does not call like handler when read-only", () => {
@@ -46,8 +51,9 @@ describe("FeedPostCard", () => {
     expect(screen.getByText(/3 reactions/i)).toBeInTheDocument();
   });
 
-  test("opens the comment box and submits a non-empty comment", () => {
-    render(<FeedPostCard post={post} />);
+  test("opens the comment box and submits a non-empty comment", async () => {
+    const onComment = jest.fn().mockResolvedValue(undefined);
+    render(<FeedPostCard post={post} onComment={onComment} />);
 
     fireEvent.click(screen.getByRole("button", { name: /comment/i }));
     const input = screen.getByPlaceholderText(/add a comment/i);
@@ -55,8 +61,18 @@ describe("FeedPostCard", () => {
     fireEvent.change(input, { target: { value: "Nice update" } });
     fireEvent.click(screen.getByTitle(/post comment/i));
 
-    expect(screen.queryByPlaceholderText(/add a comment/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/3 comments/i)).toBeInTheDocument();
+    expect(await screen.findByText(/3 comments/i)).toBeInTheDocument();
+    expect(onComment).toHaveBeenCalledWith(20, "Nice update");
+  });
+
+  test("shows delete action when provided", async () => {
+    const onDelete = jest.fn().mockResolvedValue(undefined);
+    render(<FeedPostCard post={post} onDelete={onDelete} />);
+
+    fireEvent.click(screen.getByTitle(/more/i));
+    fireEvent.click(screen.getByText(/delete post/i));
+
+    expect(onDelete).toHaveBeenCalledWith(20);
   });
 
   test("keeps the comment box open for empty comments", () => {

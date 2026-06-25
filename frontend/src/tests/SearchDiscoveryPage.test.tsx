@@ -6,6 +6,33 @@ import {
   searchByType,
 } from "../services/searchApi";
 
+let mockSearchString = "";
+
+jest.mock(
+  "react-router-dom",
+  () => {
+    const React = require("react");
+
+    return {
+      useSearchParams: () => {
+        const [params, setParams] = React.useState(
+          () => new URLSearchParams(mockSearchString)
+        );
+
+        return [
+          params,
+          (next: string | URLSearchParams) => {
+            const nextParams = new URLSearchParams(next);
+            mockSearchString = nextParams.toString();
+            setParams(nextParams);
+          },
+        ] as const;
+      },
+    };
+  },
+  { virtual: true }
+);
+
 jest.mock("../services/searchApi", () => ({
   searchByType: jest.fn(),
   getDiscoverySuggestions: jest.fn(),
@@ -15,6 +42,12 @@ jest.mock("../services/searchApi", () => ({
 const mockSearchByType = searchByType as jest.Mock;
 const mockGetDiscoverySuggestions = getDiscoverySuggestions as jest.Mock;
 const mockGetTrendingTopics = getTrendingTopics as jest.Mock;
+
+function renderSearchPage(initialEntry = "/search") {
+  const searchIndex = initialEntry.indexOf("?");
+  mockSearchString = searchIndex >= 0 ? initialEntry.slice(searchIndex + 1) : "";
+  return render(<SearchDiscoveryPage />);
+}
 
 describe("SearchDiscoveryPage", () => {
   beforeEach(() => {
@@ -37,11 +70,13 @@ describe("SearchDiscoveryPage", () => {
   });
 
   test("loads discovery suggestions and trending topics", async () => {
-    render(<SearchDiscoveryPage />);
+    renderSearchPage();
 
     expect(await screen.findByText("Maya Patel")).toBeInTheDocument();
     expect(screen.getByText(/#cloud/i)).toBeInTheDocument();
-    expect(screen.getByText(/search for people, posts, jobs or companies/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/search for people, posts, jobs or companies/i)
+    ).toBeInTheDocument();
   });
 
   test("searches people by default and renders people results", async () => {
@@ -55,7 +90,7 @@ describe("SearchDiscoveryPage", () => {
       },
     ]);
 
-    render(<SearchDiscoveryPage />);
+    renderSearchPage();
 
     fireEvent.change(
       screen.getByPlaceholderText(/search people, jobs, posts, companies/i),
@@ -63,8 +98,11 @@ describe("SearchDiscoveryPage", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /^search$/i }));
 
-    expect(mockSearchByType).toHaveBeenCalledWith("people", "sam");
+    await waitFor(() => {
+      expect(mockSearchByType).toHaveBeenCalledWith("people", "sam");
+    });
     expect(await screen.findByText("Sam Rivera")).toBeInTheDocument();
+    expect(screen.getByText(/1 people results/i)).toBeInTheDocument();
   });
 
   test("switches tabs and searches posts", async () => {
@@ -78,21 +116,22 @@ describe("SearchDiscoveryPage", () => {
       },
     ]);
 
-    render(<SearchDiscoveryPage />);
+    renderSearchPage();
 
-    fireEvent.click(screen.getByRole("button", { name: /posts/i }));
     fireEvent.change(
       screen.getByPlaceholderText(/search people, jobs, posts, companies/i),
       { target: { value: "testing" } }
     );
-    fireEvent.click(screen.getByRole("button", { name: /^search$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /posts/i }));
 
-    expect(mockSearchByType).toHaveBeenCalledWith("posts", "testing");
+    await waitFor(() => {
+      expect(mockSearchByType).toHaveBeenCalledWith("posts", "testing");
+    });
     expect(await screen.findByText("Post search result")).toBeInTheDocument();
   });
 
   test("does not search when query is blank", async () => {
-    render(<SearchDiscoveryPage />);
+    renderSearchPage();
 
     await screen.findByText("Maya Patel");
     fireEvent.change(
@@ -104,6 +143,35 @@ describe("SearchDiscoveryPage", () => {
     expect(mockSearchByType).not.toHaveBeenCalled();
   });
 
+  test("loads from url params and shows quick filters", async () => {
+    mockSearchByType.mockResolvedValue([
+      {
+        id: "job-1",
+        title: "Java Backend Developer",
+        companyName: "LinkedIn Demo Company",
+        location: "London",
+        workplaceType: "Hybrid",
+      },
+      {
+        id: "job-2",
+        title: "Spring Boot Engineer",
+        companyName: "Tech Talent Ltd",
+        location: "Remote",
+        workplaceType: "Remote",
+      },
+    ]);
+
+    renderSearchPage("/search?type=jobs&q=java");
+
+    await waitFor(() => {
+      expect(mockSearchByType).toHaveBeenCalledWith("jobs", "java");
+    });
+
+    expect(await screen.findByText("Java Backend Developer")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hybrid" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remote" })).toBeInTheDocument();
+  });
+
   test("clears side panel data when discovery calls fail", async () => {
     const consoleError = jest
       .spyOn(console, "error")
@@ -111,7 +179,7 @@ describe("SearchDiscoveryPage", () => {
     mockGetDiscoverySuggestions.mockRejectedValue(new Error("Suggestions down"));
     mockGetTrendingTopics.mockRejectedValue(new Error("Trending down"));
 
-    render(<SearchDiscoveryPage />);
+    renderSearchPage();
 
     await waitFor(() => {
       expect(mockGetDiscoverySuggestions).toHaveBeenCalled();
