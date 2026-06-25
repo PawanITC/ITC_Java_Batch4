@@ -21,3 +21,7 @@ output "msk_cluster_arn" {
 output "msk_bootstrap_brokers" {
   value = aws_msk_cluster.linkedin_msk.bootstrap_brokers
 }
+
+output "opensearch_endpoint" {
+  value = aws_opensearch_domain.linkedin_opensearch.endpoint
+}
