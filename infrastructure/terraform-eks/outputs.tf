@@ -13,3 +13,11 @@ output "vpc_id" {
 output "rds_endpoint" {
   value = aws_db_instance.linkedin_postgres.address
 }
+
+output "msk_cluster_arn" {
+  value = aws_msk_cluster.linkedin_msk.arn
+}
+
+output "msk_bootstrap_brokers" {
+  value = aws_msk_cluster.linkedin_msk.bootstrap_brokers
+}

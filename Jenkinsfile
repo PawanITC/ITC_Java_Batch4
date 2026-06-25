@@ -87,6 +87,32 @@ pipeline {
                         }
                     }
                 }
+
+                stage('JobPosting Service Tests') {
+                    steps {
+                        dir('backend/jobPosting') {
+                            sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                    post {
+                        always {
+                            junit testResults: 'backend/jobPosting/target/surefire-reports/*.xml', allowEmptyResults: true
+                        }
+                    }
+                }
+
+                stage('Notification Service Tests') {
+                    steps {
+                        dir('backend/notification') {
+                            sh 'chmod +x mvnw && ./mvnw clean test ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                    post {
+                        always {
+                            junit testResults: 'backend/notification/target/surefire-reports/*.xml', allowEmptyResults: true
+                        }
+                    }
+                }
             }
         }
 
@@ -141,6 +167,22 @@ pipeline {
                         }
                     }
                 }
+
+                stage('Package JobPosting Service') {
+                    steps {
+                        dir('backend/jobPosting') {
+                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                }
+
+                stage('Package Notification Service') {
+                    steps {
+                        dir('backend/notification') {
+                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                }
             }
         }
 
@@ -152,6 +194,8 @@ pipeline {
                     env.FEED_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:${IMAGE_TAG}"
                     env.POST_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/post-service:${IMAGE_TAG}"
                     env.USERPROFILE_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:${IMAGE_TAG}"
+                    env.JOBPOSTING_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:${IMAGE_TAG}"
+                    env.NOTIFICATION_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
                 }
 
@@ -160,6 +204,8 @@ pipeline {
                 sh 'docker build -t ${FEED_SERVICE_IMAGE} backend/feedAndTimeline'
                 sh 'docker build -t ${POST_SERVICE_IMAGE} backend/postAndTimeline'
                 sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
+                sh 'docker build -t ${JOBPOSTING_SERVICE_IMAGE} backend/jobPosting'
+                sh 'docker build -t ${NOTIFICATION_SERVICE_IMAGE} backend/notification'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }
@@ -183,6 +229,8 @@ pipeline {
                     sh 'docker push ${FEED_SERVICE_IMAGE}'
                     sh 'docker push ${POST_SERVICE_IMAGE}'
                     sh 'docker push ${USERPROFILE_SERVICE_IMAGE}'
+                    sh 'docker push ${JOBPOSTING_SERVICE_IMAGE}'
+                    sh 'docker push ${NOTIFICATION_SERVICE_IMAGE}'
                     sh 'docker push ${FRONTEND_IMAGE}'
 
                     sh 'docker tag ${API_GATEWAY_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/api-gateway:latest'
@@ -190,6 +238,8 @@ pipeline {
                     sh 'docker tag ${FEED_SERVICE_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:latest'
                     sh 'docker tag ${POST_SERVICE_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/post-service:latest'
                     sh 'docker tag ${USERPROFILE_SERVICE_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:latest'
+                    sh 'docker tag ${JOBPOSTING_SERVICE_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:latest'
+                    sh 'docker tag ${NOTIFICATION_SERVICE_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:latest'
                     sh 'docker tag ${FRONTEND_IMAGE} ${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:latest'
 
                     sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/api-gateway:latest'
@@ -197,26 +247,60 @@ pipeline {
                     sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:latest'
                     sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/post-service:latest'
                     sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:latest'
+                    sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:latest'
+                    sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:latest'
                     sh 'docker push ${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:latest'
                 }
             }
         }
 
-        stage('Deploy To EKS') {
+        stage('Update GitOps Repository') {
             when {
                 expression {
-                    return params.DEPLOY_TO_EKS
+                    return params.PUSH_IMAGES && env.IS_MAIN_BRANCH == 'true'
                 }
             }
+
             steps {
-                script {
-                    if (!fileExists('k8s') && !fileExists('helm')) {
-                        error('DEPLOY_TO_EKS requested, but no Kubernetes manifests or Helm charts exist yet.')
-                    }
+                withCredentials([
+                    string(credentialsId: 'gitops-pat', variable: 'GITHUB_TOKEN')
+                ]) {
+
+                    sh '''
+                    rm -rf gitops
+
+                    git clone https://${GITHUB_TOKEN}@github.com/shubhra-tripathi/linkedin-clone-gitops.git gitops
+
+                    cd gitops
+
+                    git config user.name "Jenkins CI"
+                    git config user.email "jenkins@linkedin-clone.local"
+
+                    sed -i "s|image: shubhratripathi16/api-gateway:.*|image: shubhratripathi16/api-gateway:${IMAGE_TAG}|g" apps/api-gateway/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/search-service:.*|image: shubhratripathi16/search-service:${IMAGE_TAG}|g" apps/search-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/feed-service:.*|image: shubhratripathi16/feed-service:${IMAGE_TAG}|g" apps/feed-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/post-service:.*|image: shubhratripathi16/post-service:${IMAGE_TAG}|g" apps/post-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/userprofile-service:.*|image: shubhratripathi16/userprofile-service:${IMAGE_TAG}|g" apps/userprofile-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/jobposting-service:.*|image: shubhratripathi16/jobposting-service:${IMAGE_TAG}|g" apps/jobposting-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/notification-service:.*|image: shubhratripathi16/notification-service:${IMAGE_TAG}|g" apps/notification-service/deployment.yaml
+
+                    sed -i "s|image: shubhratripathi16/linkedin-frontend:.*|image: shubhratripathi16/linkedin-frontend:${IMAGE_TAG}|g" apps/frontend/deployment.yaml
+
+                    git add .
+
+                    git commit -m "Deploy build ${BUILD_NUMBER} (${IMAGE_TAG})" || true
+
+                    git push origin main
+                    '''
                 }
-                echo 'EKS deployment placeholder.'
             }
-        }
+
     }
 
     post {
