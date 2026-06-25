@@ -13,11 +13,12 @@ spring:
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
-      enable-auto-commit: false      # ← merged in (under consumer)
+      enable-auto-commit: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     listener:
-      ack-mode: MANUAL               # ← merged in (under kafka)
+      ack-mode: MANUAL
+      concurrency: 3
 server:
   port: 8088
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer

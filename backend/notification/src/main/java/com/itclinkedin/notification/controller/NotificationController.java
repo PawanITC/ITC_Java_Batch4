@@ -4,6 +4,7 @@ import com.itclinkedin.notification.service.NotificationService;
 import org.springframework.web.bind.annotation.*;
 
 import  java.util.List;
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/notifications")
 public class NotificationController {

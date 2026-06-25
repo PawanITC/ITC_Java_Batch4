@@ -17,6 +17,11 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<Object,Object>kafkaTemplat
     ExponentialBackOff backOff = new ExponentialBackOff(1000L,2.0);
     backOff.setMaxAttempts(3);
 
-    return new DefaultErrorHandler(recoverer,backOff);
+    DefaultErrorHandler handler =  new DefaultErrorHandler(recoverer,backOff);
+    handler.addNotRetryableExceptions(
+            IllegalArgumentException.class,
+            com.fasterxml.jackson.core.JsonProcessingException.class
+    );
+    return handler;
 }
 }

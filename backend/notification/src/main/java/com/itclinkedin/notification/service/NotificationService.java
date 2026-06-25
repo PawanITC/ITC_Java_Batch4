@@ -27,15 +27,23 @@ public class NotificationService {
     }
 
     public Notification createFromEvent(NotificationEvent event){
+        if (isBlank(event.eventId()))          throw new IllegalArgumentException("eventId is required");
+        if (isBlank(event.recipientUserId()))  throw new IllegalArgumentException("recipientUserId is required");
+        if (isBlank(event.type()))             throw new IllegalArgumentException("type is required");
+        if (isBlank(event.content()))          throw new IllegalArgumentException("content is required");
+
+
         Notification n = new Notification();
         n.setRecipientUserId(event.recipientUserId());
         n.setType(event.type());
         n.setContent(event.content());
         n.setEventId(event.eventId());
         return repository.save(n);
-
     }
 
+    private Boolean isBlank(String s){
+    return s == null || s.isBlank();
+    }
     public List<Notification>getNotificationsForUser(String userId){
         return repository.findByRecipientUserId(userId);
     }

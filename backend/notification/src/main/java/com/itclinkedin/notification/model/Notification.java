@@ -20,7 +20,7 @@ public class Notification {
         this.eventId = eventId;
     }
 
-    @Column(unique = true)
+    @Column(unique = true,nullable = false)
     private String eventId;
 
     public String getType() {
