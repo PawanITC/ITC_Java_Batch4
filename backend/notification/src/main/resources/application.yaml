@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: notification
+  datasource:
+    url: jdbc:postgresql://localhost:5433/notificationdb
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: MANUAL
+      concurrency: 3
+server:
+  port: 8088
