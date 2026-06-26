@@ -1,6 +1,5 @@
 package com.itc.linkedin.connections_service.exception;
-
-import com.itc.linkedin.connection_service.common.ApiResponse;
+import com.itc.linkedin.connections_service.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
