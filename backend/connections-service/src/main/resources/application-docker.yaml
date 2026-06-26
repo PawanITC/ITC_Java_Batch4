@@ -3,16 +3,17 @@ server:
 
 spring:
   application:
-    name: connections-service nnn
+    name: connections-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/connection_db
+    url: jdbc:postgresql://postgres:5432/connection_db
     username: connection_user
     password: connection_pass
     driver-class-name: org.postgresql.Driver
+
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
       timeout: 2s
 
@@ -29,7 +30,7 @@ spring:
     locations: classpath:db/migration
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -45,6 +46,7 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
 logging:
   level:
     root: INFO
@@ -61,6 +63,6 @@ connection-service:
       connection-request-cancelled: connection.request.cancelled
       user-blocked: connection.user.blocked
       user-unblocked: connection.user.unblocked
+
   outbox:
     publisher-delay-ms: 5000
-
