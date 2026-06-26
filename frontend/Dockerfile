@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18 AS build
 
 WORKDIR /app
 
@@ -8,6 +8,15 @@ RUN npm install
 
 COPY . .
 
+RUN npm run build
+
+FROM node:18-slim
+
+WORKDIR /app
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/server.js ./server.js
+
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

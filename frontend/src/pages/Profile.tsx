@@ -1,11 +1,5 @@
-import React from 'react'
+import UserProfile from "./UserProfile";
 
-const Profile = () => {
-  return (
-    <div>
-      Profile
-    </div>
-  )
+export default function Profile() {
+  return <UserProfile />;
 }
-
-export default Profile

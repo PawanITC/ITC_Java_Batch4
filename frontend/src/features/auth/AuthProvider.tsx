@@ -33,6 +33,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       dispatch(authLoaded());
     }
+  })
+  .catch((error: unknown) => {
+    console.error("Keycloak initialization failed", error);
+    dispatch(logoutSuccess());
+    dispatch(authLoaded());
   });
 
     keycloak.onTokenExpired = () => {
