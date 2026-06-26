@@ -3,7 +3,13 @@ server:
 
 spring:
   application:
-    name: connections-service nnn
+    name: connections-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   datasource:
     url: jdbc:postgresql://localhost:5432/connection_db
