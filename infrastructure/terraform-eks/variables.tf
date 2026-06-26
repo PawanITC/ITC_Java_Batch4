@@ -7,7 +7,7 @@ variable "cluster_name" {
 }
 
 variable "node_instance_type" {
-  default = "t2.small"
+  default = "t2.medium"
 }
 
 variable "db_password" {

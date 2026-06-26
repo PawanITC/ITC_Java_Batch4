@@ -6,9 +6,9 @@ spring:
     name: userprofile-service
 
   datasource:
-    url: jdbc:postgresql://userprofile-postgres:5432/userprofile
-    username: postgres
-    password: hasnain4890
+    url: ${POSTGRES_URL:jdbc:postgresql://userprofile-postgres:5432/userprofiledb}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   flyway:
@@ -18,7 +18,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
 
   kafka:
