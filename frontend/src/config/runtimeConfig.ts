@@ -41,7 +41,7 @@ export const apiBaseUrl =
 
 export const keycloakUrl = resolveRuntimeValue(
   "REACT_APP_KEYCLOAK_URL",
-  isLocalHost ? "http://localhost:8080" : defaultAppOrigin,
+  isLocalHost ? "http://a9099f2319da740c3b1c3e37813205aa-704837357.eu-west-2.elb.amazonaws.com" : defaultAppOrigin,
   true
 );
 
