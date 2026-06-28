@@ -29,12 +29,15 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.schema-registry-url}")
     private String schemaRegistryUrl;
 
+    @Value("${spring.kafka.consumer.group-id}")
+    private String consumerGroupId;
+
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "feed-timeline-group");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -48,7 +51,7 @@ public class KafkaConsumerConfig {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "feed-timeline-group");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
