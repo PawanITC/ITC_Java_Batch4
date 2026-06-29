@@ -5,6 +5,7 @@ import UserProfile from "../pages/UserProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
+import JobPosting from "../pages/JobPosting";
 
 export default function AppRoutes() {
 
@@ -14,6 +15,7 @@ export default function AppRoutes() {
       <Routes>
         
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/jobposting" element={<JobPosting/>} />
 
         {/* Public Routes */}
         <Route path="/user-profile" element={<UserProfile/>} />
