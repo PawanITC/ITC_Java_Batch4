@@ -18,6 +18,7 @@ pipeline {
         MAVEN_OPTS = '-Dmaven.repo.local=.m2/repository'
         MAVEN_CLI_OPTS = '--batch-mode --errors --fail-at-end --no-transfer-progress'
         GITOPS_REPO = 'github.com/shubhra-tripathi/linkedin-clone-gitops.git'
+        MSK_BOOTSTRAP_SERVERS = 'b-1.linkedinmsk.vnj8l2.c3.kafka.eu-west-2.amazonaws.com:9092,b-2.linkedinmsk.vnj8l2.c3.kafka.eu-west-2.amazonaws.com:9092'
     }
 
     stages {
@@ -91,6 +92,7 @@ pipeline {
                         }
                     }
                 }
+
 
                 stage('Notification Service') {
                     steps {
@@ -177,7 +179,16 @@ pipeline {
 
                     sed -i "s|image: .*search-service:.*|image: docker.io/shubhratripathi16/search-service:${IMAGE_TAG}|g" environments/prod/search-service/deployment.yaml
 
-                    sed -i "s|image: .*feed-service:.*|image: docker.io/shubhratripathi16/feed-service:${IMAGE_TAG}|g" environments/prod/feed-service/deployment.yaml
+                     sed -i "s|image: .*feed-service:.*|image: docker.io/shubhratripathi16/feed-service:${IMAGE_TAG}|g" environments/prod/feed-service/deployment.yaml
+
+                     if grep -q "name: MSK_BOOTSTRAP_SERVERS" environments/prod/feed-service/deployment.yaml; then
+                       sed -i "/name: MSK_BOOTSTRAP_SERVERS/{n;s|value:.*|value: ${MSK_BOOTSTRAP_SERVERS}|;}" environments/prod/feed-service/deployment.yaml
+                     else
+                       sed -i "/image: docker.io\\/shubhratripathi16\\/feed-service:${IMAGE_TAG}/a\\
+        env:\\
+        - name: MSK_BOOTSTRAP_SERVERS\\
+          value: ${MSK_BOOTSTRAP_SERVERS}" environments/prod/feed-service/deployment.yaml
+                     fi
 
                     sed -i "s|image: .*post-service:.*|image: docker.io/shubhratripathi16/post-service:${IMAGE_TAG}|g" environments/prod/post-service/deployment.yaml
 

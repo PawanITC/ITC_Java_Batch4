@@ -3,6 +3,7 @@ import { RootState } from "../store/store";
 import keycloak from "../features/auth/keycloak";
 import { useDispatch } from "react-redux";
 import { logoutSuccess } from "../store/authSlice";
+import { logoutRedirectUri } from "../config/runtimeConfig";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -11,7 +12,7 @@ export default function Dashboard() {
   const logout = () => {
     dispatch(logoutSuccess());
     keycloak.logout({
-      redirectUri: "http://localhost:3000",
+      redirectUri: logoutRedirectUri,
     });
   };
 

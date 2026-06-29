@@ -2,15 +2,23 @@ import React from "react";
 import { X } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { createSkill, updateSkill } from "../api";
 
 interface SkillFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: any; // expects { id: string, skillName: string } or null
+  profileId: string;
+  onSaved: () => Promise<void>;
 }
 
-export default function SkillFormModal({ isOpen, onClose, initialData }: SkillFormModalProps) {
-  
+export default function SkillFormModal({
+  isOpen,
+  onClose,
+  initialData,
+  profileId,
+  onSaved,
+}: SkillFormModalProps) {
   const validationSchema = Yup.object().shape({
     skillName: Yup.string()
       .trim()
@@ -23,22 +31,29 @@ export default function SkillFormModal({ isOpen, onClose, initialData }: SkillFo
       skillName: initialData?.skillName || "",
     },
     validationSchema: validationSchema,
-    onSubmit: (values, { resetForm }) => {
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
       const payload = {
-        ...(initialData?.id && { id: initialData.id }),
+        profileId,
         skillName: values.skillName,
+        endorsementCount: initialData?.endorsementCount || 0,
       };
 
-      if (initialData?.id) {
-        console.log("Submitting PUT request to update skill payload:", payload);
-        // Put your Axios API call here...
-      } else {
-        console.log("Submitting POST request to add new skill payload:", payload);
-        // Put your Axios API call here...
-      }
+      try {
+        if (initialData?.id) {
+          await updateSkill(initialData.id, payload);
+        } else {
+          await createSkill(payload);
+        }
 
-      resetForm();
-      onClose();
+        await onSaved();
+        resetForm();
+        onClose();
+      } catch (error) {
+        console.error(error);
+        window.alert("Unable to save the skill.");
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
@@ -99,9 +114,10 @@ export default function SkillFormModal({ isOpen, onClose, initialData }: SkillFo
           <button
             type="submit"
             onClick={() => formik.handleSubmit()}
+            disabled={formik.isSubmitting}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-full shadow transition-colors"
           >
-            Save
+            {formik.isSubmitting ? "Saving..." : "Save"}
           </button>
         </div>
 

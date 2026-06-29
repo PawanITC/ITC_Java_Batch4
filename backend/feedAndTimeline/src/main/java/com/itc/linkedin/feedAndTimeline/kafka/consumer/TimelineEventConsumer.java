@@ -30,7 +30,6 @@ public class TimelineEventConsumer {
 
     @KafkaListener(
             topics = "post.created",
-            groupId = "feed-timeline-group",
             containerFactory = "postCreatedKafkaListenerContainerFactory"
     )
     public void consumePostCreated(GenericRecord record) {
@@ -51,7 +50,6 @@ public class TimelineEventConsumer {
 
     @KafkaListener(
             topics = "post.deleted",
-            groupId = "feed-timeline-group",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumePostDeleted(String message) throws Exception {
@@ -73,7 +71,6 @@ public class TimelineEventConsumer {
 
     @KafkaListener(
             topics = "post.liked",
-            groupId = "feed-timeline-group",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumePostLiked(String message) throws Exception {
@@ -95,7 +92,6 @@ public class TimelineEventConsumer {
 
     @KafkaListener(
             topics = "comment.created",
-            groupId = "feed-timeline-group",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumeCommentCreated(String message) throws Exception {
@@ -117,7 +113,6 @@ public class TimelineEventConsumer {
 
     @KafkaListener(
             topics = "social-follow-events",
-            groupId = "feed-timeline-group",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumeUserFollowed(String message) throws Exception {

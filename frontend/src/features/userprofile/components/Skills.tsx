@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { Plus, ArrowRight, Pencil, Trash2 } from 'lucide-react';
-import SkillsModal2 from './SkillsModal2';
-import SkillFormModal from './SkillFormModal';
+import React, { useState } from "react";
+import { Plus, ArrowRight, Pencil, Trash2 } from "lucide-react";
+import { deleteSkill } from "../api";
+import SkillsModal2 from "./SkillsModal2";
+import SkillFormModal from "./SkillFormModal";
 
 interface SkillsProps {
   skills: any[];
+  profileId: string;
+  onRefresh: () => Promise<void>;
 }
 
-export default function Skills({ skills }: SkillsProps) {
+export default function Skills({ skills, profileId, onRefresh }: SkillsProps) {
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<any>(null);
@@ -24,9 +27,14 @@ export default function Skills({ skills }: SkillsProps) {
     setIsFormModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Delete triggered for skill ID:", id);
-    // Execute your Axios delete routine here...
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSkill(id);
+      await onRefresh();
+    } catch (error) {
+      console.error(error);
+      window.alert("Unable to delete the skill.");
+    }
   };
 
   return (
@@ -109,6 +117,8 @@ export default function Skills({ skills }: SkillsProps) {
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         initialData={selectedSkill}
+        profileId={profileId}
+        onSaved={onRefresh}
       />
 
     </div>

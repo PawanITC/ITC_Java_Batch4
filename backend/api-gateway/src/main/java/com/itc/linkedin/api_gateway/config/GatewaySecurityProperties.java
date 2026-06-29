@@ -13,7 +13,7 @@ import java.util.List;
 public class GatewaySecurityProperties {
 
     @NotEmpty
-    private List<String> allowedOrigins = List.of("http://localhost:3000");
+    private List<String> allowedOrigins = List.of("http://ade5840dc3ec0494cba966d84b187f2c-490133502.eu-west-2.elb.amazonaws.com:3000");
 
     @NotEmpty
     private List<String> allowedTokenClients = List.of("linkedin-frontend", "api-gateway");

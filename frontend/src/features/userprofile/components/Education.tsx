@@ -1,107 +1,113 @@
-import React, { useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import EducationFormModal from './EducationFormModal';
+import React, { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { deleteEducation } from "../api";
+import EducationFormModal from "./EducationFormModal";
 
 interface EducationProps {
   profile: any;
-  onRefresh?: () => void; // Optional callback to re-fetch profile data after a change
+  onRefresh?: () => Promise<void>;
 }
 
 export default function Education({ profile, onRefresh }: EducationProps) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedEducation, setSelectedEducation] = useState<any>(null);
-  
+
   const educationsList = profile?.educations || [];
 
   const handleAddClick = () => {
-    setSelectedEducation(null); // Fresh form
+    setSelectedEducation(null);
     setIsFormModalOpen(true);
   };
 
-  const handleEditClick = (edu: any) => {
-    setSelectedEducation(edu); // Load existing values
+  const handleEditClick = (education: any) => {
+    setSelectedEducation(education);
     setIsFormModalOpen(true);
   };
 
   const handleDeleteClick = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this education history?")) {
-      console.log("Submitting DELETE request for ID:", id);
-      // Example Axios call:
-      // axios.delete(`http://localhost:8083/api/education/${id}`).then(() => onRefresh?.());
+    if (!window.confirm("Are you sure you want to delete this education history?")) {
+      return;
     }
+
+    deleteEducation(id)
+      .then(() => onRefresh?.())
+      .catch((error) => {
+        console.error(error);
+        window.alert("Unable to delete the education entry.");
+      });
   };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Education</h2>
-        <button 
+        <button
           onClick={handleAddClick}
-          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
           title="Add education"
         >
-          <Plus className="w-6 h-6" />
+          <Plus className="h-6 w-6" />
         </button>
       </div>
 
-      {/* List items */}
       <div className="space-y-6">
         {educationsList.length === 0 ? (
-          <p className="text-gray-500 text-sm">No education history available.</p>
+          <p className="text-sm text-gray-500">No education history available.</p>
         ) : (
-          educationsList.map((edu: any, index: number) => (
-            <div key={edu.id || index} className="group/edu-item">
-              <div className="flex gap-4 justify-between items-start">
-                
+          educationsList.map((education: any, index: number) => (
+            <div key={education.id || index} className="group/edu-item">
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex gap-4">
-                  {/* Generates placeholder initials from the school name */}
-                  <div className="w-12 h-12 rounded-xl bg-blue-900 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold text-center p-1 break-words leading-tight">
-                    {edu.schoolName?.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "EDU"}
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-blue-900 p-1 text-center text-[10px] font-bold leading-tight text-white">
+                    {education.schoolName
+                      ?.split(" ")
+                      .slice(0, 2)
+                      .map((word: string) => word[0])
+                      .join("")
+                      .toUpperCase() || "EDU"}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{edu.schoolName}</h3>
-                    <p className="text-gray-700 text-sm">
-                      {edu.degree}, {edu.fieldOfStudy}
+                    <h3 className="font-semibold text-gray-900">{education.schoolName}</h3>
+                    <p className="text-sm text-gray-700">
+                      {education.degree}, {education.fieldOfStudy}
                     </p>
-                    <p className="text-gray-500 text-sm mb-2">
-                      {edu.startYear} – {edu.endYear || "Present"}
+                    <p className="mb-2 text-sm text-gray-500">
+                      {education.startYear} - {education.endYear || "Present"}
                     </p>
                   </div>
                 </div>
 
-                {/* Edit & Delete Action Buttons (visible on row hover) */}
-                <div className="flex items-center gap-1 opacity-0 group-hover/edu-item:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/edu-item:opacity-100">
                   <button
-                    onClick={() => handleEditClick(edu)}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    onClick={() => handleEditClick(education)}
+                    className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
                     title="Edit education"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(edu.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    onClick={() => handleDeleteClick(education.id)}
+                    className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
                     title="Delete education"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-
               </div>
-              {index < educationsList.length - 1 && (
-                <hr className="border-gray-100 mt-6" />
-              )}
+              {index < educationsList.length - 1 && <hr className="mt-6 border-gray-100" />}
             </div>
           ))
         )}
       </div>
 
-      {/* Form Validation Modal (Add / Edit) */}
       <EducationFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         initialData={selectedEducation}
+        profileId={profile?.id}
+        onSaved={async () => {
+          await onRefresh?.();
+        }}
       />
     </div>
   );

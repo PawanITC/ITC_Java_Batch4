@@ -57,6 +57,8 @@
       "protocol": "openid-connect",
       "redirectUris": [
         "http://localhost:3000/*",
+        "http://*.eu-west-2.elb.amazonaws.com/*",
+        "https://*.eu-west-2.elb.amazonaws.com/*",
         "http://localhost:8086/swagger-ui/oauth2-redirect.html",
         "http://localhost:8087/swagger-ui/oauth2-redirect.html",
         "http://localhost:8083/swagger-ui/oauth2-redirect.html",
@@ -64,6 +66,8 @@
       ],
       "webOrigins": [
         "http://localhost:3000",
+        "http://*.eu-west-2.elb.amazonaws.com",
+        "https://*.eu-west-2.elb.amazonaws.com",
         "http://localhost:8086",
         "http://localhost:8087",
         "http://localhost:8083",
@@ -75,7 +79,7 @@
       "serviceAccountsEnabled": false,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/*"
+        "post.logout.redirect.uris": "http://localhost:3000/* http://*.eu-west-2.elb.amazonaws.com/* https://*.eu-west-2.elb.amazonaws.com/*"
       },
       "defaultClientScopes": [
         "web-origins",
