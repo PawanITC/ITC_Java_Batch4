@@ -95,8 +95,8 @@ pipeline {
 
                 stage('Connection Service') {
                     steps {
-                        dir('backend/connection') {
-                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        dir('backend/connections') {
+                            sh 'mvn clean package -DskipTests ${MAVEN_CLI_OPTS}'
                         }
                     }
                 }
@@ -132,7 +132,7 @@ pipeline {
                 sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
                 sh 'docker build -t ${JOBPOSTING_SERVICE_IMAGE} backend/jobPosting'
                 sh 'docker build -t ${NOTIFICATION_SERVICE_IMAGE} backend/notification'
-                sh 'docker build -t ${CONNECTION_SERVICE_IMAGE} backend/connection'
+                sh 'docker build -t ${CONNECTION_SERVICE_IMAGE} backend/connections'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }
