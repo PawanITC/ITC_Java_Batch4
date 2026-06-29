@@ -93,13 +93,6 @@ pipeline {
                     }
                 }
 
-                stage('Connection Service') {
-                    steps {
-                        dir('backend/connections') {
-                            sh 'mvn clean package -DskipTests ${MAVEN_CLI_OPTS}'
-                        }
-                    }
-                }
 
                 stage('Notification Service') {
                     steps {
@@ -122,7 +115,6 @@ pipeline {
                     env.JOBPOSTING_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:${IMAGE_TAG}"
                     env.NOTIFICATION_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
-                    env.CONNECTION_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/connection-service:${IMAGE_TAG}"
                 }
 
                 sh 'docker build -t ${API_GATEWAY_IMAGE} backend/api-gateway'
@@ -132,7 +124,6 @@ pipeline {
                 sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
                 sh 'docker build -t ${JOBPOSTING_SERVICE_IMAGE} backend/jobPosting'
                 sh 'docker build -t ${NOTIFICATION_SERVICE_IMAGE} backend/notification'
-                sh 'docker build -t ${CONNECTION_SERVICE_IMAGE} backend/connections'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }
@@ -158,7 +149,6 @@ pipeline {
                     sh 'docker push ${USERPROFILE_SERVICE_IMAGE}'
                     sh 'docker push ${JOBPOSTING_SERVICE_IMAGE}'
                     sh 'docker push ${NOTIFICATION_SERVICE_IMAGE}'
-                    sh 'docker push ${CONNECTION_SERVICE_IMAGE}'
                     sh 'docker push ${FRONTEND_IMAGE}'
                 }
             }
@@ -190,7 +180,7 @@ pipeline {
                     sed -i "s|image: .*search-service:.*|image: docker.io/shubhratripathi16/search-service:${IMAGE_TAG}|g" environments/prod/search-service/deployment.yaml
 
                      sed -i "s|image: .*feed-service:.*|image: docker.io/shubhratripathi16/feed-service:${IMAGE_TAG}|g" environments/prod/feed-service/deployment.yaml
-                     sed -i "s|image: .*connection-service:.*|image: docker.io/shubhratripathi16/connection-service:${IMAGE_TAG}|g" environments/prod/connection-service/deployment.yaml
+
                      if grep -q "name: MSK_BOOTSTRAP_SERVERS" environments/prod/feed-service/deployment.yaml; then
                        sed -i "/name: MSK_BOOTSTRAP_SERVERS/{n;s|value:.*|value: ${MSK_BOOTSTRAP_SERVERS}|;}" environments/prod/feed-service/deployment.yaml
                      else
