@@ -30,7 +30,6 @@ public class ConnectionController {
    private final ConnectionService connectionService;
    @Autowired
    private final CurrentUserProvider currentUserProvider;
-    //   private final CurrentUserProvider currentUserProvider;
     @Operation(
             summary = "Send connection request",
             description = "Allows the authenticated user to send a connection request to another user."
