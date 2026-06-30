@@ -98,25 +98,29 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-redis-reactive-test</artifactId>
-			<scope>test</scope>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
+		<!-- Kafka auto-configuration for Spring Boot 4 -->
 		<dependency>
-			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka-streams</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-kafka</artifactId>
 		</dependency>
+
+		<!-- Spring Kafka core support -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+
+		<!-- Kafka test support -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-kafka-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
