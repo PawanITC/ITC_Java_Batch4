@@ -1,5 +1,8 @@
 package com.itc.linkedin.searchAndDiscover.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itc.linkedin.searchAndDiscover.client.OpenSearchHttpClient;
 import com.itc.linkedin.searchAndDiscover.document.CompanyDocument;
 import com.itc.linkedin.searchAndDiscover.document.JobDocument;
 import com.itc.linkedin.searchAndDiscover.document.PeopleDocument;
@@ -8,23 +11,12 @@ import com.itc.linkedin.searchAndDiscover.dto.CompanySearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.JobSearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.PeopleSearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.PostSearchResponse;
-import com.itc.linkedin.searchAndDiscover.repository.CompanySearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.JobSearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.PeopleSearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.PostSearchRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.SearchHitsImpl;
-import org.springframework.data.elasticsearch.core.TotalHitsRelation;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.query.Query;
 
-import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,22 +29,14 @@ import static org.mockito.Mockito.when;
 class SearchServiceTest {
 
     @Mock
-    private PeopleSearchRepository peopleRepository;
+    private OpenSearchHttpClient openSearchClient;
 
-    @Mock
-    private PostSearchRepository postRepository;
-
-    @Mock
-    private JobSearchRepository jobRepository;
-
-    @Mock
-    private CompanySearchRepository companyRepository;
-
-    @Mock
-    private ElasticsearchOperations elasticsearchOperations;
-
-    @InjectMocks
     private SearchService searchService;
+
+    @BeforeEach
+    void setUp() {
+        searchService = new SearchService(openSearchClient, new ObjectMapper());
+    }
 
     @Test
     void shouldRankPeopleByClosestMatch() {
@@ -72,8 +56,8 @@ class SearchServiceTest {
                 .skills("Java")
                 .build();
 
-        when(elasticsearchOperations.search(any(Query.class), eq(PeopleDocument.class)))
-                .thenReturn(searchHits(exactHeadline, weakerMatch));
+        when(openSearchClient.search(eq("people"), any(JsonNode.class), eq(PeopleDocument.class)))
+                .thenReturn(List.of(exactHeadline, weakerMatch));
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java full stack", "user-1");
 
@@ -83,16 +67,8 @@ class SearchServiceTest {
 
     @Test
     void shouldRequireCoverageAcrossQueryTokens() {
-        PeopleDocument partialMatch = PeopleDocument.builder()
-                .id("user-1")
-                .fullName("Shubhra Tripathi")
-                .headline("Java Developer")
-                .location("London")
-                .skills("Spring Boot")
-                .build();
-
-        when(elasticsearchOperations.search(any(Query.class), eq(PeopleDocument.class)))
-                .thenReturn(searchHits());
+        when(openSearchClient.search(eq("people"), any(JsonNode.class), eq(PeopleDocument.class)))
+                .thenReturn(List.of());
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java kubernetes", "user-1");
 
@@ -117,8 +93,8 @@ class SearchServiceTest {
                 .comments(0)
                 .build();
 
-        when(elasticsearchOperations.search(any(Query.class), eq(PostDocument.class)))
-                .thenReturn(searchHits(strongMatch, weakMatch));
+        when(openSearchClient.search(eq("posts"), any(JsonNode.class), eq(PostDocument.class)))
+                .thenReturn(List.of(strongMatch, weakMatch));
 
         List<PostSearchResponse> result = searchService.searchPosts("java search", "user-1");
 
@@ -135,8 +111,8 @@ class SearchServiceTest {
                 .workplaceType("Remote")
                 .build();
 
-        when(elasticsearchOperations.search(any(Query.class), eq(JobDocument.class)))
-                .thenReturn(searchHits(remoteJob));
+        when(openSearchClient.search(eq("jobs"), any(JsonNode.class), eq(JobDocument.class)))
+                .thenReturn(List.of(remoteJob));
 
         List<JobSearchResponse> result = searchService.searchJobs("java remote", "user-1");
 
@@ -162,43 +138,11 @@ class SearchServiceTest {
                 .followers(5000)
                 .build();
 
-        when(elasticsearchOperations.search(any(Query.class), eq(CompanyDocument.class)))
-                .thenReturn(searchHits(strongCompany, weakerCompany));
+        when(openSearchClient.search(eq("companies"), any(JsonNode.class), eq(CompanyDocument.class)))
+                .thenReturn(List.of(strongCompany, weakerCompany));
 
         List<CompanySearchResponse> result = searchService.searchCompanies("cloud", "user-1");
 
         assertEquals("company-1", result.get(0).id());
-    }
-
-    @SafeVarargs
-    private static <T> SearchHits<T> searchHits(T... documents) {
-        List<SearchHit<T>> hits = List.of(documents).stream()
-                .map(document -> new SearchHit<T>(
-                        null,
-                        null,
-                        null,
-                        1.0f,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        document
-                ))
-                .toList();
-
-        return new SearchHitsImpl<>(
-                hits.size(),
-                TotalHitsRelation.EQUAL_TO,
-                hits.isEmpty() ? 0.0f : 1.0f,
-                Duration.ZERO,
-                null,
-                null,
-                hits,
-                null,
-                null,
-                null
-        );
     }
 }

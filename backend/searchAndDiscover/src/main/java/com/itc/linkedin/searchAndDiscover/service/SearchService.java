@@ -1,37 +1,41 @@
 package com.itc.linkedin.searchAndDiscover.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.searchAndDiscover.document.*;
 import com.itc.linkedin.searchAndDiscover.dto.*;
-import com.itc.linkedin.searchAndDiscover.repository.*;
+import com.itc.linkedin.searchAndDiscover.client.OpenSearchHttpClient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.elasticsearch.client.elc.NativeQuery;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final PeopleSearchRepository peopleRepository;
-    private final PostSearchRepository postRepository;
-    private final JobSearchRepository jobRepository;
-    private final CompanySearchRepository companyRepository;
-    private final ElasticsearchOperations elasticsearchOperations;
+    private static final String PEOPLE_INDEX = "people";
+    private static final String POSTS_INDEX = "posts";
+    private static final String JOBS_INDEX = "jobs";
+    private static final String COMPANIES_INDEX = "companies";
+
+    private final OpenSearchHttpClient openSearchClient;
+    private final ObjectMapper objectMapper;
 
     public boolean hasSeedData() {
-        return peopleRepository.count() > 0
-                || postRepository.count() > 0
-                || jobRepository.count() > 0
-                || companyRepository.count() > 0;
+        return openSearchClient.hasDocuments(PEOPLE_INDEX)
+                || openSearchClient.hasDocuments(POSTS_INDEX)
+                || openSearchClient.hasDocuments(JOBS_INDEX)
+                || openSearchClient.hasDocuments(COMPANIES_INDEX);
     }
 
     public List<PeopleSearchResponse> searchPeople(String q, String userId) {
         return search(
                 q,
+                PEOPLE_INDEX,
                 PeopleDocument.class,
                 person -> new PeopleSearchResponse(
                         person.getId(),
@@ -51,6 +55,7 @@ public class SearchService {
     public List<PostSearchResponse> searchPosts(String q, String userId) {
         return search(
                 q,
+                POSTS_INDEX,
                 PostDocument.class,
                 post -> new PostSearchResponse(
                         post.getId(),
@@ -67,6 +72,7 @@ public class SearchService {
     public List<JobSearchResponse> searchJobs(String q, String userId) {
         return search(
                 q,
+                JOBS_INDEX,
                 JobDocument.class,
                 job -> new JobSearchResponse(
                         job.getId(),
@@ -85,6 +91,7 @@ public class SearchService {
     public List<CompanySearchResponse> searchCompanies(String q, String userId) {
         return search(
                 q,
+                COMPANIES_INDEX,
                 CompanyDocument.class,
                 company -> new CompanySearchResponse(
                         company.getId(),
@@ -100,7 +107,7 @@ public class SearchService {
     }
 
     public void seedAll() {
-        peopleRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(PEOPLE_INDEX, List.of(
                 PeopleDocument.builder()
                         .id("user-1")
                         .fullName("Shubhra Tripathi")
@@ -116,9 +123,9 @@ public class SearchService {
                         .location("London")
                         .skills("Java Spring Boot Microservices")
                         .build()
-        ));
+        ), PeopleDocument::getId);
 
-        postRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(POSTS_INDEX, List.of(
                 PostDocument.builder()
                         .id("post-1")
                         .authorName("Shubhra Tripathi")
@@ -134,9 +141,9 @@ public class SearchService {
                         .likes(88)
                         .comments(9)
                         .build()
-        ));
+        ), PostDocument::getId);
 
-        jobRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(JOBS_INDEX, List.of(
                 JobDocument.builder()
                         .id("job-1")
                         .title("Java Backend Developer")
@@ -152,9 +159,9 @@ public class SearchService {
                         .location("Remote")
                         .workplaceType("Remote")
                         .build()
-        ));
+        ), JobDocument::getId);
 
-        companyRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(COMPANIES_INDEX, List.of(
                 CompanyDocument.builder()
                         .id("company-1")
                         .name("LinkedIn Demo Ltd")
@@ -170,37 +177,50 @@ public class SearchService {
                         .location("Manchester")
                         .followers(12000)
                         .build()
-        ));
+        ), CompanyDocument::getId);
     }
 
-    private <T, R> List<R> search(String query, Class<T> documentClass, Function<T, R> mapper, String... fields) {
+    private <T, R> List<R> search(
+            String query,
+            String indexName,
+            Class<T> documentClass,
+            Function<T, R> mapper,
+            String... fields
+    ) {
         if (query == null || query.trim().isEmpty()) {
             return List.of();
         }
 
-        NativeQuery nativeQuery = NativeQuery.builder()
-                .withQuery(q -> q.bool(bool -> bool
-                        .should(s -> s.multiMatch(match -> match
-                                .query(query.trim())
-                                .fields(List.of(fields))
-                                .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
-                        ))
-                        .should(s -> s.multiMatch(match -> match
-                                .query(query.trim())
-                                .fields(List.of(fields))
-                                .type(co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType.PhrasePrefix)
-                                .boost(1.5f)
-                        ))
-                        .minimumShouldMatch("1")
-                ))
-                .withMaxResults(20)
-                .build();
-
-        return elasticsearchOperations.search(nativeQuery, documentClass)
-                .getSearchHits()
+        return openSearchClient.search(indexName, searchQuery(query.trim(), fields), documentClass)
                 .stream()
-                .map(SearchHit::getContent)
                 .map(mapper)
                 .toList();
+    }
+
+    private JsonNode searchQuery(String query, String... fields) {
+        Map<String, Object> exactMatch = Map.of(
+                "multi_match", Map.of(
+                        "query", query,
+                        "fields", List.of(fields),
+                        "operator", "and"
+                )
+        );
+        Map<String, Object> prefixMatch = Map.of(
+                "multi_match", Map.of(
+                        "query", query,
+                        "fields", List.of(fields),
+                        "type", "phrase_prefix",
+                        "boost", 1.5
+                )
+        );
+
+        Map<String, Object> bool = new LinkedHashMap<>();
+        bool.put("should", List.of(exactMatch, prefixMatch));
+        bool.put("minimum_should_match", 1);
+
+        return objectMapper.valueToTree(Map.of(
+                "size", 20,
+                "query", Map.of("bool", bool)
+        ));
     }
 }
