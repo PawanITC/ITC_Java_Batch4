@@ -15,14 +15,6 @@ async function authHeaders() {
     "Content-Type": "application/json",
   };
 }
-const headers = await authHeaders();
-console.log("Keycloak authenticated:", keycloak.authenticated);
-console.log("Token exists:", !!keycloak.token);
-console.log("Token first chars:", keycloak.token?.substring(0, 30));
-
-const res = await fetch(`${API_BASE}/api/timeline`, {
-  headers,
-});
 
 function toFeedPost(item: any): FeedPost {
   return {

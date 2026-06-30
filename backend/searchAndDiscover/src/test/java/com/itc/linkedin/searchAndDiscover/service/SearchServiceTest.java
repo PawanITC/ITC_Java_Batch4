@@ -17,11 +17,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.SearchHitsImpl;
+import org.springframework.data.elasticsearch.core.TotalHitsRelation;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.query.Query;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +47,9 @@ class SearchServiceTest {
 
     @Mock
     private CompanySearchRepository companyRepository;
+
+    @Mock
+    private ElasticsearchOperations elasticsearchOperations;
 
     @InjectMocks
     private SearchService searchService;
@@ -60,7 +72,8 @@ class SearchServiceTest {
                 .skills("Java")
                 .build();
 
-        when(peopleRepository.findAll()).thenReturn(List.of(weakerMatch, exactHeadline));
+        when(elasticsearchOperations.search(any(Query.class), eq(PeopleDocument.class)))
+                .thenReturn(searchHits(exactHeadline, weakerMatch));
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java full stack", "user-1");
 
@@ -78,7 +91,8 @@ class SearchServiceTest {
                 .skills("Spring Boot")
                 .build();
 
-        when(peopleRepository.findAll()).thenReturn(List.of(partialMatch));
+        when(elasticsearchOperations.search(any(Query.class), eq(PeopleDocument.class)))
+                .thenReturn(searchHits());
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java kubernetes", "user-1");
 
@@ -103,7 +117,8 @@ class SearchServiceTest {
                 .comments(0)
                 .build();
 
-        when(postRepository.findAll()).thenReturn(List.of(weakMatch, strongMatch));
+        when(elasticsearchOperations.search(any(Query.class), eq(PostDocument.class)))
+                .thenReturn(searchHits(strongMatch, weakMatch));
 
         List<PostSearchResponse> result = searchService.searchPosts("java search", "user-1");
 
@@ -120,7 +135,8 @@ class SearchServiceTest {
                 .workplaceType("Remote")
                 .build();
 
-        when(jobRepository.findAll()).thenReturn(List.of(remoteJob));
+        when(elasticsearchOperations.search(any(Query.class), eq(JobDocument.class)))
+                .thenReturn(searchHits(remoteJob));
 
         List<JobSearchResponse> result = searchService.searchJobs("java remote", "user-1");
 
@@ -146,10 +162,43 @@ class SearchServiceTest {
                 .followers(5000)
                 .build();
 
-        when(companyRepository.findAll()).thenReturn(List.of(weakerCompany, strongCompany));
+        when(elasticsearchOperations.search(any(Query.class), eq(CompanyDocument.class)))
+                .thenReturn(searchHits(strongCompany, weakerCompany));
 
         List<CompanySearchResponse> result = searchService.searchCompanies("cloud", "user-1");
 
         assertEquals("company-1", result.get(0).id());
+    }
+
+    @SafeVarargs
+    private static <T> SearchHits<T> searchHits(T... documents) {
+        List<SearchHit<T>> hits = List.of(documents).stream()
+                .map(document -> new SearchHit<T>(
+                        null,
+                        null,
+                        null,
+                        1.0f,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        document
+                ))
+                .toList();
+
+        return new SearchHitsImpl<>(
+                hits.size(),
+                TotalHitsRelation.EQUAL_TO,
+                hits.isEmpty() ? 0.0f : 1.0f,
+                Duration.ZERO,
+                null,
+                null,
+                hits,
+                null,
+                null,
+                null
+        );
     }
 }

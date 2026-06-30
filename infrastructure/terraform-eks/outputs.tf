@@ -25,3 +25,7 @@ output "msk_bootstrap_brokers" {
 output "opensearch_endpoint" {
   value = aws_opensearch_domain.linkedin_opensearch.endpoint
 }
+
+output "opensearch_url" {
+  value = "https://${aws_opensearch_domain.linkedin_opensearch.endpoint}"
+}

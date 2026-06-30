@@ -12,7 +12,9 @@ spring:
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   elasticsearch:
-    uris: ${OPENSEARCH_URL}
+    uris: ${OPENSEARCH_URL:${ELASTICSEARCH_URI:http://localhost:9200}}
+    username: ${OPENSEARCH_USERNAME:${ELASTICSEARCH_USERNAME:}}
+    password: ${OPENSEARCH_PASSWORD:${ELASTICSEARCH_PASSWORD:}}
 
   main:
     lazy-initialization: true

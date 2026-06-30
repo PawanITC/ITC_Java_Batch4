@@ -3,6 +3,8 @@ provider "aws" {
   profile = "linkedin-clone"
 }
 
+data "aws_caller_identity" "current" {}
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.21.0"

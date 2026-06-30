@@ -6,12 +6,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 import org.springframework.data.elasticsearch.support.HttpHeaders;
+import org.springframework.util.StringUtils;
 
 @Configuration
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
     @Value("${spring.elasticsearch.uris}")
     private String elasticsearchUri;
+
+    @Value("${spring.elasticsearch.username:}")
+    private String username;
+
+    @Value("${spring.elasticsearch.password:}")
+    private String password;
 
     @Override
     public ClientConfiguration clientConfiguration() {
@@ -28,6 +35,13 @@ public class ElasticsearchConfig extends ElasticsearchConfiguration {
                 ? builder.usingSsl()
                 : builder;
 
-        return terminalBuilder.withDefaultHeaders(headers).build();
+        ClientConfiguration.TerminalClientConfigurationBuilder configuredBuilder =
+                terminalBuilder.withDefaultHeaders(headers);
+
+        if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+            configuredBuilder = configuredBuilder.withBasicAuth(username, password);
+        }
+
+        return configuredBuilder.build();
     }
 }

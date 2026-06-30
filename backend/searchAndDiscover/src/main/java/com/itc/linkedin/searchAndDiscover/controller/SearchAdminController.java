@@ -17,15 +17,15 @@ public class SearchAdminController {
     @PostMapping("/seed")
     public ApiResponse<String> seedSearchData() {
         searchService.seedAll();
-        return ApiResponse.success("Elasticsearch seed data inserted successfully");
+        return ApiResponse.success("OpenSearch seed data inserted successfully");
     }
 
     @GetMapping("/health")
-    public ApiResponse<Map<String, String>> elasticsearchHealth() {
+    public ApiResponse<Map<String, String>> openSearchHealth() {
         return ApiResponse.success(
                 Map.of(
-                        "elasticsearch", "UP",
-                        "message", "Search repositories are available"
+                        "opensearch", "UP",
+                        "message", "Search indexes are available"
                 )
         );
     }

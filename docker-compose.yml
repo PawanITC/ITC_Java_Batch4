@@ -31,15 +31,15 @@ services:
     volumes:
       - search_postgres_data:/var/lib/postgresql/data
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.8
-    container_name: linkedin-elasticsearch
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    container_name: linkedin-opensearch
     ports:
       - "9200:9200"
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
   kafka:
     image: apache/kafka:3.9.0
     container_name: linkedin-kafka
@@ -113,7 +113,7 @@ services:
       - "8086:8086"
     depends_on:
       - postgres-search
-      - elasticsearch
+      - opensearch
       - keycloak
       - redis
       - otel-collector
@@ -124,7 +124,8 @@ services:
       POSTGRES_URL: ${POSTGRES_URL}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      ELASTICSEARCH_URI: ${ELASTICSEARCH_URI}
+      OPENSEARCH_URL: ${OPENSEARCH_URL:-http://opensearch:9200}
+      ELASTICSEARCH_URI: ${ELASTICSEARCH_URI:-http://opensearch:9200}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
