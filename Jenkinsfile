@@ -205,7 +205,7 @@ pipeline {
 
                     sed -i "s|image: .*userprofile-service:.*|image: docker.io/shubhratripathi16/userprofile-service:${IMAGE_TAG}|g" environments/prod/userprofile-service/deployment.yaml
 
-                    sed -i "s|image: .*connections-service:.*|image: docker.io/shubhratripathi16/connection-service:${IMAGE_TAG}|g" environments/prod/connections-service/deployment.yaml
+                    sed -i "s|image: .*connections-service:.*|image: docker.io/shubhratripathi16/connections-service:${IMAGE_TAG}|g" environments/prod/connections-service/deployment.yaml
 
                     sed -i "s|image: .*jobposting-service:.*|image: docker.io/shubhratripathi16/jobposting-service:${IMAGE_TAG}|g" environments/prod/jobposting-service/deployment.yaml
 

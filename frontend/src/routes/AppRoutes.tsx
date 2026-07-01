@@ -1,6 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
-import Profile from "../pages/Profile";
 import UserProfile from "../pages/UserProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
@@ -23,7 +22,7 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<FeedTimelinePage />} />
           <Route path="/search" element={<SearchDiscoveryPage />} />
-          <Route path="/profile" element={<Profile />} />
+        
           <Route path="/user-profile" element={<UserProfile />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
