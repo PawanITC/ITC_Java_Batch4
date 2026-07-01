@@ -34,17 +34,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ConnectionServiceImpl implements ConnectionService {
 
-    private ConnectionRepository connectionRepository;
+    private final ConnectionRepository connectionRepository;
 
-    private BlockedUserRepository blockedUserRepository;
+    private final BlockedUserRepository blockedUserRepository;
 
-    private OutboxEventRepository outboxEventRepository;
+    private final OutboxEventRepository outboxEventRepository;
 
-    private ConnectionMapper connectionMapper;
+    private final ConnectionMapper connectionMapper;
 
-    private OutboxEventService outboxEventService;
+    private final OutboxEventService outboxEventService;
 
-    private ConnectionCacheService connectionCacheService;
+    private final ConnectionCacheService connectionCacheService;
 
 
     @Override
@@ -241,6 +241,7 @@ public class ConnectionServiceImpl implements ConnectionService {
                 currentUserId,
                 receiverId
         );
+
 
         if (blocked) {
             throw new BadRequestException("Connection request is not allowed between these users");

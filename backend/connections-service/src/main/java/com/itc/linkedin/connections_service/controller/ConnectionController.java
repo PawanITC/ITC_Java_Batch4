@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/connections")
 @RequiredArgsConstructor
@@ -38,7 +38,9 @@ public class ConnectionController {
     public ApiResponse<ConnectionResponse> sendConnectionRequest(
             @Valid @RequestBody SendConnectionRequest request
     ) throws BadRequestException {
+        System.out.println("Receiver "+ request.receiverId().toString());
         UUID currentUserId = currentUserProvider.getCurrentUserId();
+        System.out.println("Current"+currentUserId.toString());
         ConnectionResponse response = connectionService.sendConnectionRequest(
                 currentUserId,
                 request.receiverId()
@@ -55,6 +57,7 @@ public class ConnectionController {
             @PathVariable UUID requestId
     ) throws BadRequestException {
         UUID currentUserId = currentUserProvider.getCurrentUserId();
+        System.out.println(currentUserId.toString());
 
         ConnectionResponse response = connectionService.acceptConnectionRequest(
                 currentUserId,
