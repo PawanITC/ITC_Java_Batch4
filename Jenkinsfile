@@ -85,6 +85,14 @@ pipeline {
                     }
                 }
 
+                stage('Connections Service') {
+                    steps {
+                        dir('backend/connections-service') {
+                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                }
+
                 stage('JobPosting Service') {
                     steps {
                         dir('backend/jobPosting') {
@@ -112,6 +120,7 @@ pipeline {
                     env.FEED_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/feed-service:${IMAGE_TAG}"
                     env.POST_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/post-service:${IMAGE_TAG}"
                     env.USERPROFILE_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/userprofile-service:${IMAGE_TAG}"
+                    env.CONNECTIONS_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/connections-service:${IMAGE_TAG}"
                     env.JOBPOSTING_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:${IMAGE_TAG}"
                     env.NOTIFICATION_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
@@ -122,6 +131,7 @@ pipeline {
                 sh 'docker build -t ${FEED_SERVICE_IMAGE} backend/feedAndTimeline'
                 sh 'docker build -t ${POST_SERVICE_IMAGE} backend/postAndTimeline'
                 sh 'docker build -t ${USERPROFILE_SERVICE_IMAGE} backend/userprofile'
+                sh 'docker build -t ${CONNECTIONS_SERVICE_IMAGE} backend/connections-service'
                 sh 'docker build -t ${JOBPOSTING_SERVICE_IMAGE} backend/jobPosting'
                 sh 'docker build -t ${NOTIFICATION_SERVICE_IMAGE} backend/notification'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
@@ -147,6 +157,7 @@ pipeline {
                     sh 'docker push ${FEED_SERVICE_IMAGE}'
                     sh 'docker push ${POST_SERVICE_IMAGE}'
                     sh 'docker push ${USERPROFILE_SERVICE_IMAGE}'
+                    sh 'docker push ${CONNECTIONS_SERVICE_IMAGE}'
                     sh 'docker push ${JOBPOSTING_SERVICE_IMAGE}'
                     sh 'docker push ${NOTIFICATION_SERVICE_IMAGE}'
                     sh 'docker push ${FRONTEND_IMAGE}'
@@ -193,6 +204,8 @@ pipeline {
                     sed -i "s|image: .*post-service:.*|image: docker.io/shubhratripathi16/post-service:${IMAGE_TAG}|g" environments/prod/post-service/deployment.yaml
 
                     sed -i "s|image: .*userprofile-service:.*|image: docker.io/shubhratripathi16/userprofile-service:${IMAGE_TAG}|g" environments/prod/userprofile-service/deployment.yaml
+
+                    sed -i "s|image: .*connections-service:.*|image: docker.io/shubhratripathi16/connections-service:${IMAGE_TAG}|g" environments/prod/connections-service/deployment.yaml
 
                     sed -i "s|image: .*jobposting-service:.*|image: docker.io/shubhratripathi16/jobposting-service:${IMAGE_TAG}|g" environments/prod/jobposting-service/deployment.yaml
 
