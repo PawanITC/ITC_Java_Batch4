@@ -1,9 +1,9 @@
 import axios from "axios";
 import keycloak from "../../features/auth/keycloak";
+import { apiBaseUrl } from "../../config/runtimeConfig";
 
 const userProfileApi = axios.create({
-  baseURL:
-    process.env.REACT_APP_USERPROFILE_API_BASE_URL ?? "http://localhost:8083",
+  baseURL: process.env.REACT_APP_USERPROFILE_API_BASE_URL ?? apiBaseUrl,
 });
 
 userProfileApi.interceptors.request.use(async (config) => {
@@ -25,6 +25,7 @@ userProfileApi.interceptors.request.use(async (config) => {
 
 export type Profile = {
   id: string;
+  keycloakUserId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -81,6 +82,7 @@ export type Language = {
 };
 
 export type CreateProfilePayload = {
+  keycloakUserId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -91,6 +93,17 @@ export type CreateProfilePayload = {
   country?: string;
   openToWork?: boolean;
   profilePublic?: boolean;
+};
+
+export type UpdateProfilePayload = Partial<Omit<CreateProfilePayload, "keycloakUserId">> & {
+  profilePictureUrl?: string;
+  coverPhotoUrl?: string;
+  industry?: string;
+  currentCompany?: string;
+  currentPosition?: string;
+  website?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
 };
 
 export type SkillPayload = {
@@ -130,6 +143,11 @@ export async function getProfile(profileId: string) {
 
 export async function createProfile(payload: CreateProfilePayload) {
   const response = await userProfileApi.post<Profile>("/api/profiles", payload);
+  return response.data;
+}
+
+export async function updateProfile(profileId: string, payload: UpdateProfilePayload) {
+  const response = await userProfileApi.put<Profile>(`/api/profiles/${profileId}`, payload);
   return response.data;
 }
 

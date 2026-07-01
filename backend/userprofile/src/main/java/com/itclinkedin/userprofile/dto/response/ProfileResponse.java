@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProfileResponse {
     private UUID id;
+    private String keycloakUserId;
     private String firstName;
     private String lastName;
     private String email;

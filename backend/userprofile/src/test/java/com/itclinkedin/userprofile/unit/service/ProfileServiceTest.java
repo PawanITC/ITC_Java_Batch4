@@ -1,5 +1,6 @@
 package com.itclinkedin.userprofile.unit.service;
 import com.itclinkedin.userprofile.dto.request.CreateProfileRequest;
+import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.entity.UserProfile;
 import com.itclinkedin.userprofile.exception.ResourceNotFoundException;
@@ -87,6 +88,39 @@ class ProfileServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> service.getById(id));
+    }
+
+    @Test
+    void givenValidRequest_whenUpdateProfile_thenSaveUpdatedProfile() {
+
+        UUID id = UUID.randomUUID();
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        request.setFirstName("Shubhra");
+        request.setLastName("Tripathi");
+        request.setHeadline("Java Full Stack Developer");
+
+        UserProfile entity = new UserProfile();
+        entity.setId(id);
+        entity.setFirstName("Old");
+        entity.setLastName("Name");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .id(id)
+                .firstName("Shubhra")
+                .lastName("Tripathi")
+                .headline("Java Full Stack Developer")
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(entity));
+        when(repository.save(entity)).thenReturn(entity);
+        when(mapper.toResponse(entity)).thenReturn(response);
+
+        ProfileResponse result = service.update(id, request);
+
+        assertEquals("Shubhra", result.getFirstName());
+        assertEquals("Tripathi", result.getLastName());
+        assertEquals("Java Full Stack Developer", result.getHeadline());
+        verify(repository).save(entity);
     }
 
     @Test
