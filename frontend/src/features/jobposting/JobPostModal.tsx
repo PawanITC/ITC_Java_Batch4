@@ -2,6 +2,7 @@ import React from 'react';
 import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { postNewJob } from './jobPostingApi';
 
 // --- Validation Schema using Yup ---
 const JobPostSchema = Yup.object().shape({
@@ -21,7 +22,13 @@ const JobPostSchema = Yup.object().shape({
   benefits: Yup.array().of(Yup.string().required('Benefit text cannot be empty')).min(1, 'At least one benefit is required')
 });
 
-export default function JobPostModal({ isOpen, onClose, onSubmitSuccess }:any) {
+interface JobPostModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmitSuccess: () => void;
+}
+
+export default function JobPostModal({ isOpen, onClose, onSubmitSuccess }: JobPostModalProps) {
   if (!isOpen) return null;
 
   const initialValues = {
@@ -36,24 +43,23 @@ export default function JobPostModal({ isOpen, onClose, onSubmitSuccess }:any) {
     benefits: ['']
   };
 
-  const handleSubmit = async (values:any, { setSubmitting, resetForm } :any) => {
-    try {
-      // Mock API Post Request
-      console.log('Payload sending to backend:', JSON.stringify(values, null, 2));
-      
-      // Example call:
-      // await axios.post('/api/v1/jobs', values);
-      
-      alert('Job posted successfully!');
-      resetForm();
-      onSubmitSuccess();
-      onClose();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
+  try {
+    // Run clean client interface request handling
+    const result = await postNewJob(values);
+    console.log('Job saved:', result);
+    
+    alert('Job posted successfully!');
+    resetForm();
+    if (onSubmitSuccess) onSubmitSuccess();
+    onClose();
+  } catch (error) {
+    console.error('API Post Request Failed:', error);
+    alert('Failed to save your job posting.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto p-4">
