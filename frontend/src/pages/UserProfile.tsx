@@ -6,6 +6,7 @@ import Education from "../features/userprofile/components/Education";
 import Experience from "../features/userprofile/components/Experience";
 import HeroSection from "../features/userprofile/components/HeroSection";
 import ProfileInfo from "../features/userprofile/components/ProfileInfo";
+import ProfileEditModal from "../features/userprofile/components/ProfileEditModal";
 import Services from "../features/userprofile/components/Services";
 import Skills from "../features/userprofile/components/Skills";
 import {
@@ -20,6 +21,7 @@ function UserProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { isLoggedIn, loading: authLoading, user: authUser } = useAppSelector(
     (state) => state.auth
   );
@@ -33,6 +35,7 @@ function UserProfile() {
     }
 
     return {
+      keycloakUserId: keycloakUser?.id,
       firstName: keycloakUser?.firstName || authUser?.name || "LinkedIn",
       lastName: keycloakUser?.lastName || "Member",
       email,
@@ -119,8 +122,8 @@ function UserProfile() {
     <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
       <div className="w-[65%] mx-auto flex flex-col gap-6">
         <HeroSection profile={profile} />
-        <ProfileInfo profile={profile} />
-        <About />
+        <ProfileInfo profile={profile} onEdit={() => setIsEditModalOpen(true)} />
+        <About profile={profile} onEdit={() => setIsEditModalOpen(true)} />
         <Services />
         <Experience
           experiences={profile.experiences || []}
@@ -132,6 +135,12 @@ function UserProfile() {
           skills={profile.skills || []}
           profileId={profile.id}
           onRefresh={loadProfile}
+        />
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          profile={profile}
+          onSaved={loadProfile}
         />
       </div>
     </div>

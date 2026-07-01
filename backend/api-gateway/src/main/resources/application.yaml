@@ -40,7 +40,7 @@ spring:
             - id: userprofile-service
               uri: ${USERPROFILE_SERVICE_URI:http://localhost:8083}
               predicates:
-                - Path=/api/profiles/**
+                - Path=/api/profiles,/api/profiles/**,/api/skills,/api/skills/**,/api/educations,/api/educations/**,/api/experiences,/api/experiences/**,/api/languages,/api/languages/**,/api/follows,/api/follows/**
 
             - id: search-discovery-service
               uri: ${SEARCH_SERVICE_URI:http://localhost:8086}

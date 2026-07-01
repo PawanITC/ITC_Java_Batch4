@@ -25,6 +25,8 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class OpenSearchHttpClient {
 
+    private static final String APPLICATION_NDJSON = "application/x-ndjson";
+
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
@@ -63,6 +65,7 @@ public class OpenSearchHttpClient {
     public <T> List<T> search(String indexName, JsonNode query, Class<T> resultType) {
         try {
             HttpRequest request = requestBuilder(indexName + "/_search")
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(query)))
                     .build();
             HttpResponse<String> response = send(request);
@@ -114,7 +117,7 @@ public class OpenSearchHttpClient {
             }
 
             HttpRequest request = requestBuilder("_bulk")
-                    .header(HttpHeaders.CONTENT_TYPE, "application/x-ndjson")
+                    .header(HttpHeaders.CONTENT_TYPE, APPLICATION_NDJSON)
                     .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                     .build();
             HttpResponse<String> response = send(request);
@@ -135,8 +138,7 @@ public class OpenSearchHttpClient {
     private HttpRequest.Builder requestBuilder(String path) {
         HttpRequest.Builder builder = HttpRequest.newBuilder(uri(path))
                 .timeout(Duration.ofSeconds(15))
-                .header(HttpHeaders.ACCEPT, "application/json")
-                .header(HttpHeaders.CONTENT_TYPE, "application/json");
+                .header(HttpHeaders.ACCEPT, "application/json");
 
         if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
             String credentials = username + ":" + password;

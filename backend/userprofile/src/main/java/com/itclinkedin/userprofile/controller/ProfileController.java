@@ -1,6 +1,7 @@
 package com.itclinkedin.userprofile.controller;
 
 import com.itclinkedin.userprofile.dto.request.CreateProfileRequest;
+import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.service.ProfileService;
 import jakarta.validation.Valid;
@@ -30,6 +31,11 @@ public class ProfileController {
     @GetMapping("/{id}")
     public ProfileResponse getById(@PathVariable UUID id) {
         return service.getById(id);
+    }
+
+    @PutMapping("/{id}")
+    public ProfileResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateProfileRequest request) {
+        return service.update(id, request);
     }
 
     @GetMapping

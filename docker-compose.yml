@@ -143,6 +143,7 @@ services:
       - userprofile-service
       - feed-and-timeline-service
       - post-service
+      - connections-service
       - otel-collector
       - jobposting-service
     volumes:
@@ -155,6 +156,7 @@ services:
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
       FEED_SERVICE_URI: http://feed-and-timeline-service:8087
       POST_SERVICE_URI: http://post-service:8088
+      CONNECTIONS_SERVICE_URI: http://connections-service:8082
 
   userprofile-postgres:
     image: postgres:16
@@ -210,6 +212,48 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: hasnain4890
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  connections-postgres:
+    image: postgres:16
+    container_name: linkedin-connections-postgres
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_DB: connection_db
+      POSTGRES_USER: connection_user
+      POSTGRES_PASSWORD: connection_pass
+    volumes:
+      - connections_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U connection_user -d connection_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  connections-service:
+    build: ./backend/connections-service
+    container_name: linkedin-connections-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      connections-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://connections-postgres:5432/connection_db
+      SPRING_DATASOURCE_USERNAME: connection_user
+      SPRING_DATASOURCE_PASSWORD: connection_pass
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
   postgres-feed:
     image: postgres:16
@@ -322,6 +366,7 @@ volumes:
   userprofile_postgres_data:
   post_postgres_data:
   jobposting_postgres_data:
+  connections_postgres_data:
 
 
 

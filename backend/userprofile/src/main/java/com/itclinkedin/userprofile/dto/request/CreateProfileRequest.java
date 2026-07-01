@@ -11,6 +11,8 @@ import org.hibernate.validator.constraints.URL;
 @Data
 public class CreateProfileRequest {
 
+    private String keycloakUserId;
+
     @NotBlank(message = "First name is required")
     @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
