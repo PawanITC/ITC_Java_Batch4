@@ -24,7 +24,7 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(gatewaySecurityProperties.getAllowedOrigins());
+        config.setAllowedOriginPatterns(gatewaySecurityProperties.getAllowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-User-Id", "X-Username", "X-Email"));

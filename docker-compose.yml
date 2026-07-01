@@ -121,15 +121,17 @@ services:
       - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
       JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=search-discovery-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
-      POSTGRES_URL: ${POSTGRES_URL}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_URL: ${POSTGRES_URL:-jdbc:postgresql://postgres-search:5432/searchdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       OPENSEARCH_URL: ${OPENSEARCH_URL:-http://opensearch:9200}
       ELASTICSEARCH_URI: ${ELASTICSEARCH_URI:-http://opensearch:9200}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
-      SWAGGER_OAUTH_REDIRECT_URL: ${SEARCH_SWAGGER_OAUTH_REDIRECT_URL}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
+      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID:-linkedin-frontend}
+      SWAGGER_OAUTH_REDIRECT_URL: ${SEARCH_SWAGGER_OAUTH_REDIRECT_URL:-http://localhost:8086/swagger-ui/oauth2-redirect.html}
 
   api-gateway:
     build: ./backend/api-gateway
@@ -144,19 +146,23 @@ services:
       - feed-and-timeline-service
       - post-service
       - connections-service
+      - notification-service
       - otel-collector
       - jobposting-service
     volumes:
       - ./observability/opentelemetry/opentelemetry-javaagent.jar:/opentelemetry/opentelemetry-javaagent.jar
     environment:
-      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=search-discovery-service -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      JAVA_TOOL_OPTIONS: "-javaagent:/opentelemetry/opentelemetry-javaagent.jar -Dotel.service.name=api-gateway -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 -Dotel.metrics.exporter=none"
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
-      REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       USERPROFILE_SERVICE_URI: http://userprofile-service:8083
       SEARCH_SERVICE_URI: http://search-discovery-service:8086
       FEED_SERVICE_URI: http://feed-and-timeline-service:8087
       POST_SERVICE_URI: http://post-service:8088
       CONNECTIONS_SERVICE_URI: http://connections-service:8082
+      NOTIFICATION_SERVICE_URI: http://notification-service:8091
 
   userprofile-postgres:
     image: postgres:16
@@ -184,6 +190,8 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: hasnain4890
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
 
   jobposting-postgres:
@@ -212,6 +220,8 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: hasnain4890
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
   connections-postgres:
     image: postgres:16
@@ -252,7 +262,7 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/linkedin-app
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
   postgres-feed:
@@ -279,6 +289,18 @@ services:
     volumes:
       - post_postgres_data:/var/lib/postgresql/data
 
+  notification-postgres:
+    image: postgres:16
+    container_name: linkedin-notification-postgres
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - notification_postgres_data:/var/lib/postgresql/data
+
   feed-and-timeline-service:
     build: ./backend/feedAndTimeline
     container_name: linkedin-feed-and-timeline-service
@@ -303,6 +325,8 @@ services:
       SPRING_KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
 
   post-service:
     build: ./backend/postAndTimeline
@@ -324,6 +348,23 @@ services:
       POSTGRES_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_KAFKA_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs
+
+  notification-service:
+    build: ./backend/notification
+    container_name: linkedin-notification-service
+    ports:
+      - "8091:8091"
+    depends_on:
+      - notification-postgres
+      - kafka
+    environment:
+      SERVER_PORT: 8091
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-postgres:5432/notificationdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -349,7 +390,14 @@ services:
 
 
   client:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8085
+        REACT_APP_KEYCLOAK_URL: http://localhost:8080
+        REACT_APP_KEYCLOAK_REALM: linkedin-app
+        REACT_APP_KEYCLOAK_CLIENT_ID: linkedin-frontend
+        REACT_APP_LOGOUT_REDIRECT_URI: http://localhost:3000/login
     container_name: linkedin-frontend
     ports:
       - "3000:3000"
@@ -358,6 +406,7 @@ services:
       - keycloak
       - api-gateway
     environment:
+      - PORT=3000
       - CHOKIDAR_USEPOLLING=true
 
 volumes:
@@ -367,6 +416,7 @@ volumes:
   post_postgres_data:
   jobposting_postgres_data:
   connections_postgres_data:
+  notification_postgres_data:
 
 
 
