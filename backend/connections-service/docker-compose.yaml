@@ -48,6 +48,13 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   connections-service:
     build:
@@ -58,13 +65,22 @@ services:
       - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+
+      # Important: inside Docker, Spring Boot must use Kafka internal listener
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+      # Optional but recommended if app runs inside Docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/connection_db
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   connection_postgres_data:

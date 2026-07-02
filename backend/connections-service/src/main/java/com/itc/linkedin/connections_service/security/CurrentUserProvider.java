@@ -13,14 +13,15 @@ import java.util.UUID;
 public class CurrentUserProvider {
 
     public UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-
-        String userId = jwt.getSubject();
-
-        return UUID.fromString(userId);
-       // for testing only need to remove in prod return getRandomLoggedInUserId();
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//
+//        Jwt jwt = (Jwt) authentication.getPrincipal();
+//
+//        String userId = jwt.getSubject();
+//
+//        return UUID.fromString(userId);
+       // for testing only need to remove in prod
+        return getRandomLoggedInUserId();
     }
     private static final List<UUID> TEST_USER_IDS = List.of(
             UUID.fromString("11111111-1111-1111-1111-111111111111"),
