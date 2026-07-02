@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { Profile, UpdateProfilePayload } from "../api";
-import { updateProfile } from "../api";
+import { updateCurrentProfile } from "../api";
 
 type ProfileEditModalProps = {
   isOpen: boolean;
@@ -102,7 +102,7 @@ export default function ProfileEditModal({
 
     try {
       setSaving(true);
-      await updateProfile(profile.id, payload);
+      await updateCurrentProfile(payload);
       await onSaved();
       onClose();
     } catch (error) {

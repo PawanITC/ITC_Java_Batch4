@@ -11,8 +11,8 @@ import Services from "../features/userprofile/components/Services";
 import Skills from "../features/userprofile/components/Skills";
 import {
   createProfile,
+  getCurrentProfile,
   getProfile,
-  listProfiles,
   type CreateProfilePayload,
   type Profile,
 } from "../features/userprofile/api";
@@ -71,12 +71,15 @@ function UserProfile() {
     }
 
     try {
-      const profiles = await listProfiles();
+      let selectedProfile: Profile | null = null;
 
-      let selectedProfile =
-        profiles.find((item) => item.email?.toLowerCase() === email) || null;
+      try {
+        selectedProfile = await getCurrentProfile();
+      } catch (profileError: any) {
+        if (profileError?.response?.status !== 404) {
+          throw profileError;
+        }
 
-      if (!selectedProfile) {
         const payload = buildProfilePayload();
         if (payload) {
           selectedProfile = await createProfile(payload);

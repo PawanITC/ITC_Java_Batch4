@@ -11,9 +11,13 @@ public interface ProfileService {
 
     ProfileResponse create(CreateProfileRequest request);
 
+    ProfileResponse getByKeycloakUserId(String keycloakUserId);
+
     ProfileResponse getById(UUID id);
 
     ProfileResponse update(UUID id, UpdateProfileRequest request);
+
+    ProfileResponse updateByKeycloakUserId(String keycloakUserId, UpdateProfileRequest request);
 
     List<ProfileResponse> getAll();
 

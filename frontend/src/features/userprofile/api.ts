@@ -3,7 +3,7 @@ import keycloak from "../../features/auth/keycloak";
 import { apiBaseUrl } from "../../config/runtimeConfig";
 
 const userProfileApi = axios.create({
-  baseURL: process.env.REACT_APP_USERPROFILE_API_BASE_URL ?? apiBaseUrl,
+  baseURL: apiBaseUrl,
 });
 
 userProfileApi.interceptors.request.use(async (config) => {
@@ -141,6 +141,11 @@ export async function getProfile(profileId: string) {
   return response.data;
 }
 
+export async function getCurrentProfile() {
+  const response = await userProfileApi.get<Profile>("/api/profiles/me");
+  return response.data;
+}
+
 export async function createProfile(payload: CreateProfilePayload) {
   const response = await userProfileApi.post<Profile>("/api/profiles", payload);
   return response.data;
@@ -148,6 +153,11 @@ export async function createProfile(payload: CreateProfilePayload) {
 
 export async function updateProfile(profileId: string, payload: UpdateProfilePayload) {
   const response = await userProfileApi.put<Profile>(`/api/profiles/${profileId}`, payload);
+  return response.data;
+}
+
+export async function updateCurrentProfile(payload: UpdateProfilePayload) {
+  const response = await userProfileApi.put<Profile>("/api/profiles/me", payload);
   return response.data;
 }
 

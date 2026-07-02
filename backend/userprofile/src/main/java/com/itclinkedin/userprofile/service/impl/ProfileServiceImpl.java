@@ -25,13 +25,28 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public ProfileResponse create(CreateProfileRequest request) {
 
-        if (repository.existsByEmail(request.getEmail())) {
+        if (request.getKeycloakUserId() != null) {
+            repository.findByKeycloakUserId(request.getKeycloakUserId())
+                    .ifPresent(existing -> {
+                        throw new RuntimeException("A profile with this Keycloak user already exists.");
+                    });
+        }
+
+        if (repository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             throw new RuntimeException("A profile with this email already exists.");
         }
 
         UserProfile profile = mapper.toEntity(request);
 
         return mapper.toResponse(repository.save(profile));
+    }
+
+    @Override
+    public ProfileResponse getByKeycloakUserId(String keycloakUserId) {
+        UserProfile profile = repository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        return mapper.toResponse(profile);
     }
 
     @Override
@@ -49,6 +64,18 @@ public class ProfileServiceImpl implements ProfileService {
         UserProfile profile = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
 
+        return updateProfile(profile, request);
+    }
+
+    @Override
+    public ProfileResponse updateByKeycloakUserId(String keycloakUserId, UpdateProfileRequest request) {
+        UserProfile profile = repository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        return updateProfile(profile, request);
+    }
+
+    private ProfileResponse updateProfile(UserProfile profile, UpdateProfileRequest request) {
         if (request.getFirstName() != null) {
             profile.setFirstName(request.getFirstName());
         }
