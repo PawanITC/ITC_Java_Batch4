@@ -5,6 +5,7 @@ import UserProfile from "../pages/UserProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
+import NotificationsPage from "../pages/NotificationsPage";
 
 export default function AppRoutes() {
 
@@ -21,6 +22,7 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<FeedTimelinePage />} />
           <Route path="/search" element={<SearchDiscoveryPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user-profile" element={<UserProfile />} />
         </Route>

@@ -10,16 +10,37 @@ import {
   Users,
 } from "lucide-react";
 import keycloak from "../../features/auth/keycloak";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
+import { loadNotifications } from "../../store/notificationSlice";
+import { getUsername } from "../../utils/authUtils";
 
 export default function FeedNavbar() {
   const navigate = useNavigate();
+
+  const dispatch = useAppDispatch();
+  const unreadCount = useAppSelector(
+    (state) => state.notifications.items.filter((n) => !n.read).length
+  );
+
+  useEffect(() => {
+    const userId = getUsername();
+    if (!userId) return;
+
+    dispatch(loadNotifications(userId));
+    const timer = setInterval(() => {
+      dispatch(loadNotifications(userId));
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, [dispatch]);
 
   const navItems = [
     { label: "Home", to: "/", icon: Home },
     { label: "My Network", to: "/search", icon: Users },
     { label: "Jobs", to: "/search?type=jobs", icon: BriefcaseBusiness },
     { label: "Messaging", to: "/", icon: MessageSquare },
-    { label: "Notifications", to: "/", icon: Bell },
+    { label: "Notifications", to: "/notifications", icon: Bell },
   ];
 
   return (
@@ -58,7 +79,14 @@ export default function FeedNavbar() {
                   }`
                 }
               >
-                <Icon size={20} strokeWidth={1.8} />
+                <span className="relative">
+                  <Icon size={20} strokeWidth={1.8} />
+                  {label === "Notifications" && unreadCount > 0 && (
+                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#cb112d] px-1 text-[10px] font-semibold leading-none text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </span>
                 <span className="leading-none">{label}</span>
               </NavLink>
             ))}
