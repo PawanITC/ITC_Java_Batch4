@@ -1,22 +1,32 @@
 import { X } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { createExperience, updateExperience } from "../api";
 
-export default function AddandEditExperienceModal({ isOpen, onClose, initialData }: any) {
-  
-  // Helper to safely pull Year (YYYY) and Month (MM) parts out of database raw string strings ("YYYY-MM-DD")
+interface ExperienceModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: any;
+  profileId: string;
+  onSaved: () => Promise<void>;
+}
+
+export default function AddandEditExperienceModal({
+  isOpen,
+  onClose,
+  initialData,
+  profileId,
+  onSaved,
+}: ExperienceModalProps) {
   const parseDatePart = (dateStr: string, part: "month" | "year") => {
     if (!dateStr) return part === "month" ? "06" : "2026";
-    const segments = dateStr.split("-"); // ["2024", "01", "01"]
+    const segments = dateStr.split("-");
     return part === "year" ? segments[0] : segments[1];
   };
 
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Job title is required"),
     companyName: Yup.string().required("Organization name is required"),
-    location: Yup.string().required("Location is required"),
-    locationType: Yup.string().required("Please select a location type"),
-    employmentType: Yup.string().required("Please select an employment type"),
     current: Yup.boolean(),
     startMonth: Yup.string().required("Start month is required"),
     startYear: Yup.string().required("Start year is required"),
@@ -34,14 +44,10 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
   });
 
   const formik = useFormik({
-    // Enable Formik to dynamically re-populate fields whenever initialData changes status
-    enableReinitialize: true, 
+    enableReinitialize: true,
     initialValues: {
       title: initialData?.title || "",
       companyName: initialData?.companyName || "",
-      location: initialData?.location || "Crawley", // Fallback matching screenshot structure context layout placeholders
-      locationType: initialData?.locationType || "On-site",
-      employmentType: initialData?.employmentType || "Full-time",
       current: initialData?.current || false,
       startMonth: parseDatePart(initialData?.startDate, "month"),
       startYear: parseDatePart(initialData?.startDate, "year"),
@@ -49,75 +55,83 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
       endYear: parseDatePart(initialData?.endDate, "year"),
       description: initialData?.description || "",
     },
-    validationSchema: validationSchema,
-    onSubmit: (values, { resetForm }) => {
+    validationSchema,
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
       const formattedStartDate = `${values.startYear}-${values.startMonth}-01`;
       const formattedEndDate = values.current ? null : `${values.endYear}-${values.endMonth}-01`;
 
       const payload = {
-        ...(initialData?.id && { id: initialData.id }), // Include matching existing ID if editing
+        profileId,
         title: values.title,
         companyName: values.companyName,
-        location: values.location,
-        locationType: values.locationType,
-        employmentType: values.employmentType,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
         current: values.current,
         description: values.description,
       };
 
-      if (initialData?.id) {
-        console.log("Sending PUT request to update existing entry payload:", payload);
-        // Your fetch PUT api call route goes here...
-      } else {
-        console.log("Sending POST request to append fresh role payload:", payload);
-        // Your fetch POST api call route goes here...
-      }
+      try {
+        if (initialData?.id) {
+          await updateExperience(initialData.id, payload);
+        } else {
+          await createExperience(payload);
+        }
 
-      resetForm();
-      onClose();
+        await onSaved();
+        resetForm();
+        onClose();
+      } catch (error) {
+        console.error(error);
+        window.alert("Unable to save the experience entry.");
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
   if (!isOpen) return null;
 
   const months = [
-    { value: "01", name: "January" }, { value: "02", name: "February" },
-    { value: "03", name: "March" }, { value: "04", name: "April" },
-    { value: "05", name: "May" }, { value: "06", name: "June" },
-    { value: "07", name: "July" }, { value: "08", name: "August" },
-    { value: "09", name: "September" }, { value: "10", name: "October" },
-    { value: "11", name: "November" }, { value: "12", name: "December" },
+    { value: "01", name: "January" },
+    { value: "02", name: "February" },
+    { value: "03", name: "March" },
+    { value: "04", name: "April" },
+    { value: "05", name: "May" },
+    { value: "06", name: "June" },
+    { value: "07", name: "July" },
+    { value: "08", name: "August" },
+    { value: "09", name: "September" },
+    { value: "10", name: "October" },
+    { value: "11", name: "November" },
+    { value: "12", name: "December" },
   ];
-  const years = Array.from({ length: 30 }, (_, i) => String(2026 - i));
+  const years = Array.from({ length: 30 }, (_, index) => String(2026 - index));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl flex flex-col overflow-hidden max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 className="text-xl font-bold text-gray-900">
             {initialData ? "Edit role details" : "Add a role to your profile"}
           </h2>
-          <button 
-            type="button" 
-            onClick={() => { formik.resetForm(); onClose(); }} 
-            className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition"
+          <button
+            type="button"
+            onClick={() => {
+              formik.resetForm();
+              onClose();
+            }}
+            className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <form onSubmit={formik.handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1">
+        <form onSubmit={formik.handleSubmit} className="flex-1 space-y-5 overflow-y-auto p-6">
           <h3 className="text-lg font-semibold text-gray-900">Let's start with the basics</h3>
 
-          {/* Job Title & Organization */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Job title*</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Job title*</label>
               <input
                 type="text"
                 name="title"
@@ -125,15 +139,19 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
                 value={formik.values.title}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  formik.touched.title && formik.errors.title ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  formik.touched.title && formik.errors.title
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
-              {formik.touched.title && formik.errors.title && <p className="text-red-500 text-xs mt-1">{formik.errors.title as any}</p>}
+              {formik.touched.title && formik.errors.title && (
+                <p className="mt-1 text-xs text-red-500">{formik.errors.title as any}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Organization*</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Organization*</label>
               <input
                 type="text"
                 name="companyName"
@@ -141,19 +159,18 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
                 value={formik.values.companyName}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  formik.touched.companyName && formik.errors.companyName ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  formik.touched.companyName && formik.errors.companyName
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
-              {formik.touched.companyName && formik.errors.companyName && <p className="text-red-500 text-xs mt-1">{formik.errors.companyName as any}</p>}
+              {formik.touched.companyName && formik.errors.companyName && (
+                <p className="mt-1 text-xs text-red-500">{formik.errors.companyName as any}</p>
+              )}
             </div>
           </div>
 
-        
-
-          
-
-          {/* Current Working Checkbox */}
           <div className="flex items-center gap-2 py-1">
             <input
               type="checkbox"
@@ -161,36 +178,43 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
               name="current"
               checked={formik.values.current}
               onChange={formik.handleChange}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="current" className="text-sm text-gray-700 select-none">
+            <label htmlFor="current" className="select-none text-sm text-gray-700">
               I currently work here
             </label>
           </div>
 
-          {/* Date Picker Blocks */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 gap-4 pt-1 md:grid-cols-2">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Start month</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Start month</label>
                 <select
                   name="startMonth"
                   value={formik.values.startMonth}
                   onChange={formik.handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none"
                 >
-                  {months.map((m) => <option key={m.value} value={m.value}>{m.name}</option>)}
+                  {months.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Start year*</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Start year*</label>
                 <select
                   name="startYear"
                   value={formik.values.startYear}
                   onChange={formik.handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none"
                 >
-                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -198,44 +222,55 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
             {!formik.values.current ? (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">End month</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">End month</label>
                   <select
                     name="endMonth"
                     value={formik.values.endMonth}
                     onChange={formik.handleChange}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none ${
-                      formik.touched.endMonth && formik.errors.endMonth ? "border-red-500" : "border-gray-300"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
+                      formik.touched.endMonth && formik.errors.endMonth
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                   >
-                    {months.map((m) => <option key={m.value} value={m.value}>{m.name}</option>)}
+                    {months.map((month) => (
+                      <option key={month.value} value={month.value}>
+                        {month.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">End year*</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">End year*</label>
                   <select
                     name="endYear"
                     value={formik.values.endYear}
                     onChange={formik.handleChange}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none ${
-                      formik.touched.endYear && formik.errors.endYear ? "border-red-500" : "border-gray-300"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
+                      formik.touched.endYear && formik.errors.endYear
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                   >
-                    {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             ) : (
               <div className="flex items-end pb-1.5">
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200">
-                  Present Active Role
+                <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                  Present active role
                 </span>
               </div>
             )}
           </div>
 
-          {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Description*</label>
             <textarea
               rows={4}
               name="description"
@@ -243,25 +278,28 @@ export default function AddandEditExperienceModal({ isOpen, onClose, initialData
               value={formik.values.description}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                formik.touched.description && formik.errors.description ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                formik.touched.description && formik.errors.description
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-blue-500"
               }`}
             />
-            {formik.touched.description && formik.errors.description && <p className="text-red-500 text-xs mt-1">{formik.errors.description as any}</p>}
+            {formik.touched.description && formik.errors.description && (
+              <p className="mt-1 text-xs text-red-500">{formik.errors.description as any}</p>
+            )}
           </div>
         </form>
 
-        {/* Footer Action Buttons */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+        <div className="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
           <button
             type="button"
             onClick={() => formik.handleSubmit()}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-full shadow transition-colors"
+            disabled={formik.isSubmitting}
+            className="rounded-full bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
           >
-            Save
+            {formik.isSubmitting ? "Saving..." : "Save"}
           </button>
         </div>
-
       </div>
     </div>
   );

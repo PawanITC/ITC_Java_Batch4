@@ -5,10 +5,20 @@ import {
   ArrowRight,
 } from "lucide-react";
 import SkillsModal from "./SkillsModal";
+import type { Profile } from "../api";
 
-function About() {
+type AboutProps = {
+  profile?: Profile | null;
+  onEdit?: () => void;
+};
+
+function About({ profile, onEdit }: AboutProps) {
   const [showMore, setShowMore] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const hasProfileAbout = Boolean(profile?.about?.trim());
+  const aboutText =
+    profile?.about ||
+    "👋 I'm a passionate MERN stack developer with 3 years of hands-on experience building responsive, scalable web applications. I specialize in developing full-stack solutions using MongoDB, Express.js, React, and Node.js, with a focus on performance, clean code, and user experience.";
 
   return (
     <>
@@ -21,22 +31,14 @@ function About() {
           <Pencil
             size={22}
             className="cursor-pointer"
+            onClick={onEdit}
           />
         </div>
 
         <div className="mt-8 text-md leading-relaxed">
-          <p>
-            👋 I'm a passionate MERN stack developer
-            with 3 years of hands-on experience
-            building responsive, scalable web
-            applications. I specialize in developing
-            full-stack solutions using MongoDB,
-            Express.js, React, and Node.js, with a
-            focus on performance, clean code, and
-            user experience.
-          </p>
+          <p>{aboutText}</p>
 
-          {showMore && (
+          {!hasProfileAbout && showMore && (
             <div className="mt-4 space-y-4">
               <p>
                 I enjoy solving real-world problems
@@ -60,12 +62,14 @@ function About() {
             </div>
           )}
 
-          <button
-            className="text-gray-500 mt-3 text-xl"
-            onClick={() => setShowMore(!showMore)}
-          >
-            {showMore ? "Show less" : "... more"}
-          </button>
+          {!hasProfileAbout && (
+            <button
+              className="text-gray-500 mt-3 text-xl"
+              onClick={() => setShowMore(!showMore)}
+            >
+              {showMore ? "Show less" : "... more"}
+            </button>
+          )}
         </div>
 
         {/* Skills Card */}

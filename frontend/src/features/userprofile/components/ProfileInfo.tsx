@@ -1,7 +1,13 @@
-import { ShieldCheck, MapPin } from "lucide-react";
+import { ShieldCheck, MapPin, Pencil } from "lucide-react";
 import companyphoto from "../../../assets/profile.jpeg";
+import type { Profile } from "../api";
 
-function ProfileInfo({ profile }: any) {
+type ProfileInfoProps = {
+  profile: Profile | null;
+  onEdit: () => void;
+};
+
+function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
   if (!profile) return null;
 
   return (
@@ -51,16 +57,25 @@ function ProfileInfo({ profile }: any) {
 
       {/* RIGHT */}
       <div className="w-80 ml-10 space-y-8">
+        <div className="flex justify-end">
+          <button
+            onClick={onEdit}
+            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+            title="Edit profile"
+          >
+            <Pencil size={20} />
+          </button>
+        </div>
         
         <div className="flex items-center gap-4">
           <img src={companyphoto} alt="Company" className="w-16 h-16 rounded-full" />
-          <h3 className="text-xl font-semibold">Fiverr</h3>
+          <h3 className="text-xl font-semibold">{profile.currentCompany || "Fiverr"}</h3>
         </div>
 
         <div className="flex items-center gap-4">
           <img src={companyphoto} alt="company" className="w-16 h-16 rounded-full" />
           <h3 className="text-xl font-semibold">
-            COMSATS University Islamabad
+            {profile.currentPosition || "COMSATS University Islamabad"}
           </h3>
         </div>
 

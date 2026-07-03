@@ -3,6 +3,8 @@ provider "aws" {
   profile = "linkedin-clone"
 }
 
+data "aws_caller_identity" "current" {}
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.21.0"
@@ -39,9 +41,9 @@ module "eks" {
 
   eks_managed_node_groups = {
     default = {
-      min_size       = 1
-      max_size       = 2
-      desired_size   = 2
+      min_size       = 2
+      max_size       = 4
+      desired_size   = 3
       instance_types = [var.node_instance_type]
     }
   }

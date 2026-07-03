@@ -1,5 +1,8 @@
 package com.itc.linkedin.searchAndDiscover.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itc.linkedin.searchAndDiscover.client.OpenSearchHttpClient;
 import com.itc.linkedin.searchAndDiscover.document.CompanyDocument;
 import com.itc.linkedin.searchAndDiscover.document.JobDocument;
 import com.itc.linkedin.searchAndDiscover.document.PeopleDocument;
@@ -8,13 +11,9 @@ import com.itc.linkedin.searchAndDiscover.dto.CompanySearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.JobSearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.PeopleSearchResponse;
 import com.itc.linkedin.searchAndDiscover.dto.PostSearchResponse;
-import com.itc.linkedin.searchAndDiscover.repository.CompanySearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.JobSearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.PeopleSearchRepository;
-import com.itc.linkedin.searchAndDiscover.repository.PostSearchRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,25 +21,22 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SearchServiceTest {
 
     @Mock
-    private PeopleSearchRepository peopleRepository;
+    private OpenSearchHttpClient openSearchClient;
 
-    @Mock
-    private PostSearchRepository postRepository;
-
-    @Mock
-    private JobSearchRepository jobRepository;
-
-    @Mock
-    private CompanySearchRepository companyRepository;
-
-    @InjectMocks
     private SearchService searchService;
+
+    @BeforeEach
+    void setUp() {
+        searchService = new SearchService(openSearchClient, new ObjectMapper());
+    }
 
     @Test
     void shouldRankPeopleByClosestMatch() {
@@ -60,7 +56,8 @@ class SearchServiceTest {
                 .skills("Java")
                 .build();
 
-        when(peopleRepository.findAll()).thenReturn(List.of(weakerMatch, exactHeadline));
+        when(openSearchClient.search(eq("people"), any(JsonNode.class), eq(PeopleDocument.class)))
+                .thenReturn(List.of(exactHeadline, weakerMatch));
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java full stack", "user-1");
 
@@ -70,15 +67,8 @@ class SearchServiceTest {
 
     @Test
     void shouldRequireCoverageAcrossQueryTokens() {
-        PeopleDocument partialMatch = PeopleDocument.builder()
-                .id("user-1")
-                .fullName("Shubhra Tripathi")
-                .headline("Java Developer")
-                .location("London")
-                .skills("Spring Boot")
-                .build();
-
-        when(peopleRepository.findAll()).thenReturn(List.of(partialMatch));
+        when(openSearchClient.search(eq("people"), any(JsonNode.class), eq(PeopleDocument.class)))
+                .thenReturn(List.of());
 
         List<PeopleSearchResponse> result = searchService.searchPeople("java kubernetes", "user-1");
 
@@ -103,7 +93,8 @@ class SearchServiceTest {
                 .comments(0)
                 .build();
 
-        when(postRepository.findAll()).thenReturn(List.of(weakMatch, strongMatch));
+        when(openSearchClient.search(eq("posts"), any(JsonNode.class), eq(PostDocument.class)))
+                .thenReturn(List.of(strongMatch, weakMatch));
 
         List<PostSearchResponse> result = searchService.searchPosts("java search", "user-1");
 
@@ -120,7 +111,8 @@ class SearchServiceTest {
                 .workplaceType("Remote")
                 .build();
 
-        when(jobRepository.findAll()).thenReturn(List.of(remoteJob));
+        when(openSearchClient.search(eq("jobs"), any(JsonNode.class), eq(JobDocument.class)))
+                .thenReturn(List.of(remoteJob));
 
         List<JobSearchResponse> result = searchService.searchJobs("java remote", "user-1");
 
@@ -146,7 +138,8 @@ class SearchServiceTest {
                 .followers(5000)
                 .build();
 
-        when(companyRepository.findAll()).thenReturn(List.of(weakerCompany, strongCompany));
+        when(openSearchClient.search(eq("companies"), any(JsonNode.class), eq(CompanyDocument.class)))
+                .thenReturn(List.of(strongCompany, weakerCompany));
 
         List<CompanySearchResponse> result = searchService.searchCompanies("cloud", "user-1");
 

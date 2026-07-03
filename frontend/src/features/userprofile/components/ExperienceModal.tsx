@@ -5,20 +5,18 @@ interface ExperienceModalProps {
   onClose: () => void;
   experiences: any[];
   onEditClick: (exp: any) => void;
-  onDeleteClick?: (id: string) => void;
+  onDeleteClick?: (id: string) => void | Promise<void>;
 }
 
-export default function ExperienceModal({ 
-  isOpen, 
-  onClose, 
-  experiences, 
+export default function ExperienceModal({
+  isOpen,
+  onClose,
+  experiences,
   onEditClick,
-  onDeleteClick 
+  onDeleteClick,
 }: ExperienceModalProps) {
-  
   if (!isOpen) return null;
 
-  // Helper function to calculate human-readable duration
   const calculateDuration = (startDateStr: string, endDateStr: string, isCurrent: boolean) => {
     if (!startDateStr) return "";
 
@@ -47,7 +45,6 @@ export default function ExperienceModal({
     return [yearPart, monthPart].filter(Boolean).join(" ");
   };
 
-  // Helper to format string dates to human readable string (e.g., "Jan 2024")
   const formatDisplayDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -56,81 +53,79 @@ export default function ExperienceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl flex flex-col overflow-hidden max-h-[90vh]">
-        
-   
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 className="text-xl font-bold text-gray-900">All Experience</h2>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition"
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-
-        <div className="p-6 overflow-y-auto divide-y divide-gray-200 flex-1 space-y-0">
+        <div className="flex-1 space-y-0 divide-y divide-gray-200 overflow-y-auto p-6">
           {experiences && experiences.length > 0 ? (
-            experiences.map((exp: any) => {
-              const durationText = calculateDuration(exp.startDate, exp.endDate, exp.current);
+            experiences.map((experience: any) => {
+              const durationText = calculateDuration(
+                experience.startDate,
+                experience.endDate,
+                experience.current
+              );
 
               return (
-                <div key={exp.id} className="py-5 flex gap-4 group/modal-item first:pt-0 last:pb-0">
-                  
-                  <div className="w-12 h-12 bg-gray-100 flex items-center justify-center rounded-md border border-gray-200 flex-shrink-0">
+                <div key={experience.id} className="group/modal-item flex gap-4 py-5 first:pt-0 last:pb-0">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
                     <span className="font-bold text-gray-700">
-                      {exp.companyName?.[0] || "?"}
+                      {experience.companyName?.[0] || "?"}
                     </span>
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{exp.title}</h3>
-                    <p className="text-sm text-gray-700">{exp.companyName}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {formatDisplayDate(exp.startDate)} – {exp.current ? "Present" : formatDisplayDate(exp.endDate)}
-                      {durationText && ` · ${durationText}`}
+                    <h3 className="font-semibold text-gray-900">{experience.title}</h3>
+                    <p className="text-sm text-gray-700">{experience.companyName}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      {formatDisplayDate(experience.startDate)} -{" "}
+                      {experience.current ? "Present" : formatDisplayDate(experience.endDate)}
+                      {durationText && ` | ${durationText}`}
                     </p>
 
-                    {exp.description && (
-                      <p className="text-sm mt-2 text-gray-600 leading-relaxed whitespace-pre-line">
-                        {exp.description}
+                    {experience.description && (
+                      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600">
+                        {experience.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex items-start gap-1 opacity-0 group-hover/modal-item:opacity-100 transition-opacity">
+                  <div className="flex items-start gap-1 opacity-0 transition-opacity group-hover/modal-item:opacity-100">
                     <button
                       onClick={() => {
-                        onClose(); 
-                        onEditClick(exp); 
+                        onClose();
+                        onEditClick(experience);
                       }}
-                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
                       title="Edit entry"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => {
-                        if (onDeleteClick) onDeleteClick(exp.id);
-                        console.log("Delete clicked inside full modal view targeting ID:", exp.id);
+                        if (onDeleteClick) onDeleteClick(experience.id);
                       }}
-                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
                       title="Delete entry"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-
                 </div>
               );
             })
           ) : (
-            <p className="text-center py-8 text-sm text-gray-500">No experiences listed yet.</p>
+            <p className="py-8 text-center text-sm text-gray-500">No experiences listed yet.</p>
           )}
         </div>
-
       </div>
     </div>
   );

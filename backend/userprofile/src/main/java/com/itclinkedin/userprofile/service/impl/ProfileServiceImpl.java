@@ -1,6 +1,7 @@
 package com.itclinkedin.userprofile.service.impl;
 
 import com.itclinkedin.userprofile.dto.request.CreateProfileRequest;
+import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.entity.UserProfile;
 import com.itclinkedin.userprofile.exception.ResourceNotFoundException;
@@ -24,7 +25,14 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public ProfileResponse create(CreateProfileRequest request) {
 
-        if (repository.existsByEmail(request.getEmail())) {
+        if (request.getKeycloakUserId() != null) {
+            repository.findByKeycloakUserId(request.getKeycloakUserId())
+                    .ifPresent(existing -> {
+                        throw new RuntimeException("A profile with this Keycloak user already exists.");
+                    });
+        }
+
+        if (repository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             throw new RuntimeException("A profile with this email already exists.");
         }
 
@@ -34,12 +42,96 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    public ProfileResponse getByKeycloakUserId(String keycloakUserId) {
+        UserProfile profile = repository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        return mapper.toResponse(profile);
+    }
+
+    @Override
     public ProfileResponse getById(UUID id) {
 
         UserProfile profile = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
 
         return mapper.toResponse(profile);
+    }
+
+    @Override
+    public ProfileResponse update(UUID id, UpdateProfileRequest request) {
+
+        UserProfile profile = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        return updateProfile(profile, request);
+    }
+
+    @Override
+    public ProfileResponse updateByKeycloakUserId(String keycloakUserId, UpdateProfileRequest request) {
+        UserProfile profile = repository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        return updateProfile(profile, request);
+    }
+
+    private ProfileResponse updateProfile(UserProfile profile, UpdateProfileRequest request) {
+        if (request.getFirstName() != null) {
+            profile.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            profile.setLastName(request.getLastName());
+        }
+        if (request.getEmail() != null) {
+            profile.setEmail(request.getEmail());
+        }
+        if (request.getHeadline() != null) {
+            profile.setHeadline(request.getHeadline());
+        }
+        if (request.getAbout() != null) {
+            profile.setAbout(request.getAbout());
+        }
+        if (request.getGender() != null) {
+            profile.setGender(request.getGender());
+        }
+        if (request.getCity() != null) {
+            profile.setCity(request.getCity());
+        }
+        if (request.getCountry() != null) {
+            profile.setCountry(request.getCountry());
+        }
+        if (request.getProfilePictureUrl() != null) {
+            profile.setProfilePictureUrl(request.getProfilePictureUrl());
+        }
+        if (request.getCoverPhotoUrl() != null) {
+            profile.setCoverPhotoUrl(request.getCoverPhotoUrl());
+        }
+        if (request.getIndustry() != null) {
+            profile.setIndustry(request.getIndustry());
+        }
+        if (request.getCurrentCompany() != null) {
+            profile.setCurrentCompany(request.getCurrentCompany());
+        }
+        if (request.getCurrentPosition() != null) {
+            profile.setCurrentPosition(request.getCurrentPosition());
+        }
+        if (request.getWebsite() != null) {
+            profile.setWebsite(request.getWebsite());
+        }
+        if (request.getGithubUrl() != null) {
+            profile.setGithubUrl(request.getGithubUrl());
+        }
+        if (request.getLinkedinUrl() != null) {
+            profile.setLinkedinUrl(request.getLinkedinUrl());
+        }
+        if (request.getOpenToWork() != null) {
+            profile.setOpenToWork(request.getOpenToWork());
+        }
+        if (request.getProfilePublic() != null) {
+            profile.setProfilePublic(request.getProfilePublic());
+        }
+
+        return mapper.toResponse(repository.save(profile));
     }
 
     @Override

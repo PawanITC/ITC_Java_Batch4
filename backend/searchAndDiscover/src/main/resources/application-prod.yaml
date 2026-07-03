@@ -1,12 +1,39 @@
+
+
 spring:
+  application:
+    name: search-discovery-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs}
+
   elasticsearch:
-    uris: ${ELASTICSEARCH_URI}
-    username: ${ELASTICSEARCH_USERNAME:}
-    password: ${ELASTICSEARCH_PASSWORD:}
+    uris: ${OPENSEARCH_URL:${ELASTICSEARCH_URI:http://localhost:9200}}
+    username: ${OPENSEARCH_USERNAME:${ELASTICSEARCH_USERNAME:}}
+    password: ${OPENSEARCH_PASSWORD:${ELASTICSEARCH_PASSWORD:}}
+
+  main:
+    lazy-initialization: true
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:linkedin-frontend}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:http://localhost:8086/swagger-ui/oauth2-redirect.html}
 
 management:
   endpoints:
     web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
       exposure:
         include: health,info,prometheus
 

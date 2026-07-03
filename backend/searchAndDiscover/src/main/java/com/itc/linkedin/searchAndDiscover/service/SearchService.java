@@ -1,47 +1,42 @@
 package com.itc.linkedin.searchAndDiscover.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.searchAndDiscover.document.*;
 import com.itc.linkedin.searchAndDiscover.dto.*;
-import com.itc.linkedin.searchAndDiscover.repository.*;
+import com.itc.linkedin.searchAndDiscover.client.OpenSearchHttpClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final PeopleSearchRepository peopleRepository;
-    private final PostSearchRepository postRepository;
-    private final JobSearchRepository jobRepository;
-    private final CompanySearchRepository companyRepository;
+    private static final String PEOPLE_INDEX = "people";
+    private static final String POSTS_INDEX = "posts";
+    private static final String JOBS_INDEX = "jobs";
+    private static final String COMPANIES_INDEX = "companies";
+
+    private final OpenSearchHttpClient openSearchClient;
+    private final ObjectMapper objectMapper;
 
     public boolean hasSeedData() {
-        return peopleRepository.count() > 0
-                || postRepository.count() > 0
-                || jobRepository.count() > 0
-                || companyRepository.count() > 0;
+        return openSearchClient.hasDocuments(PEOPLE_INDEX)
+                || openSearchClient.hasDocuments(POSTS_INDEX)
+                || openSearchClient.hasDocuments(JOBS_INDEX)
+                || openSearchClient.hasDocuments(COMPANIES_INDEX);
     }
 
     public List<PeopleSearchResponse> searchPeople(String q, String userId) {
         return search(
                 q,
-                peopleRepository.findAll(),
-                person -> scoreFields(
-                        q,
-                        weightedField(person.getFullName(), 14),
-                        weightedField(person.getHeadline(), 10),
-                        weightedField(person.getSkills(), 8),
-                        weightedField(person.getLocation(), 4)
-                ),
+                PEOPLE_INDEX,
+                PeopleDocument.class,
                 person -> new PeopleSearchResponse(
                         person.getId(),
                         person.getFullName(),
@@ -49,76 +44,70 @@ public class SearchService {
                         person.getLocation(),
                         null,
                         "2nd"
-                )
+                ),
+                "fullName^6",
+                "headline^4",
+                "skills^3",
+                "location"
         );
     }
 
     public List<PostSearchResponse> searchPosts(String q, String userId) {
         return search(
                 q,
-                postRepository.findAll(),
-                post -> scoreFields(
-                                q,
-                                weightedField(post.getAuthorName(), 10),
-                                weightedField(post.getContent(), 12)
-                        )
-                        + Math.min(post.getLikes() / 20, 5)
-                        + Math.min(post.getComments() / 10, 4),
+                POSTS_INDEX,
+                PostDocument.class,
                 post -> new PostSearchResponse(
                         post.getId(),
                         post.getAuthorName(),
                         post.getContent(),
                         post.getLikes(),
                         post.getComments()
-                )
+                ),
+                "content^5",
+                "authorName^3"
         );
     }
 
     public List<JobSearchResponse> searchJobs(String q, String userId) {
         return search(
                 q,
-                jobRepository.findAll(),
-                job -> scoreFields(
-                                q,
-                                weightedField(job.getTitle(), 14),
-                                weightedField(job.getCompanyName(), 8),
-                                weightedField(job.getLocation(), 6),
-                                weightedField(job.getWorkplaceType(), 5)
-                        )
-                        + boostIfPhraseMatch(job.getWorkplaceType(), q, 2),
+                JOBS_INDEX,
+                JobDocument.class,
                 job -> new JobSearchResponse(
                         job.getId(),
                         job.getTitle(),
                         job.getCompanyName(),
                         job.getLocation(),
                         job.getWorkplaceType()
-                )
+                ),
+                "title^6",
+                "companyName^3",
+                "workplaceType^2",
+                "location"
         );
     }
 
     public List<CompanySearchResponse> searchCompanies(String q, String userId) {
         return search(
                 q,
-                companyRepository.findAll(),
-                company -> scoreFields(
-                                q,
-                                weightedField(company.getName(), 14),
-                                weightedField(company.getIndustry(), 10),
-                                weightedField(company.getLocation(), 6)
-                        )
-                        + Math.min(company.getFollowers() / 5000, 6),
+                COMPANIES_INDEX,
+                CompanyDocument.class,
                 company -> new CompanySearchResponse(
                         company.getId(),
                         company.getName(),
                         company.getIndustry(),
                         company.getLocation(),
                         company.getFollowers()
-                )
+                ),
+                "name^6",
+                "industry^4",
+                "location"
         );
     }
 
     public void seedAll() {
-        peopleRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(PEOPLE_INDEX, List.of(
                 PeopleDocument.builder()
                         .id("user-1")
                         .fullName("Shubhra Tripathi")
@@ -134,9 +123,9 @@ public class SearchService {
                         .location("London")
                         .skills("Java Spring Boot Microservices")
                         .build()
-        ));
+        ), PeopleDocument::getId);
 
-        postRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(POSTS_INDEX, List.of(
                 PostDocument.builder()
                         .id("post-1")
                         .authorName("Shubhra Tripathi")
@@ -152,9 +141,9 @@ public class SearchService {
                         .likes(88)
                         .comments(9)
                         .build()
-        ));
+        ), PostDocument::getId);
 
-        jobRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(JOBS_INDEX, List.of(
                 JobDocument.builder()
                         .id("job-1")
                         .title("Java Backend Developer")
@@ -170,9 +159,9 @@ public class SearchService {
                         .location("Remote")
                         .workplaceType("Remote")
                         .build()
-        ));
+        ), JobDocument::getId);
 
-        companyRepository.saveAll(List.of(
+        openSearchClient.bulkIndex(COMPANIES_INDEX, List.of(
                 CompanyDocument.builder()
                         .id("company-1")
                         .name("LinkedIn Demo Ltd")
@@ -188,133 +177,50 @@ public class SearchService {
                         .location("Manchester")
                         .followers(12000)
                         .build()
-        ));
+        ), CompanyDocument::getId);
     }
 
     private <T, R> List<R> search(
             String query,
-            Iterable<T> source,
-            ToIntFunction<T> scorer,
-            Function<T, R> mapper
+            String indexName,
+            Class<T> documentClass,
+            Function<T, R> mapper,
+            String... fields
     ) {
         if (query == null || query.trim().isEmpty()) {
             return List.of();
         }
 
-        return StreamSupport.stream(source.spliterator(), false)
-                .map(item -> new ScoredResult<>(item, scorer.applyAsInt(item)))
-                .filter(result -> result.score() > 0)
-                .sorted(Comparator.comparingInt(ScoredResult<T>::score).reversed())
-                .map(result -> mapper.apply(result.item()))
+        return openSearchClient.search(indexName, searchQuery(query.trim(), fields), documentClass)
+                .stream()
+                .map(mapper)
                 .toList();
     }
 
-    @SafeVarargs
-    private static int scoreFields(String query, WeightedField... fields) {
-        String normalizedQuery = normalize(query);
-        List<String> queryTokens = tokenize(normalizedQuery);
+    private JsonNode searchQuery(String query, String... fields) {
+        Map<String, Object> exactMatch = Map.of(
+                "multi_match", Map.of(
+                        "query", query,
+                        "fields", List.of(fields),
+                        "operator", "and"
+                )
+        );
+        Map<String, Object> prefixMatch = Map.of(
+                "multi_match", Map.of(
+                        "query", query,
+                        "fields", List.of(fields),
+                        "type", "phrase_prefix",
+                        "boost", 1.5
+                )
+        );
 
-        int combinedCoverage = fieldsMatchCoverage(queryTokens, fields);
-        if (combinedCoverage == 0) {
-            return 0;
-        }
+        Map<String, Object> bool = new LinkedHashMap<>();
+        bool.put("should", List.of(exactMatch, prefixMatch));
+        bool.put("minimum_should_match", 1);
 
-        int score = combinedCoverage * 6;
-        for (WeightedField field : fields) {
-            score += scoreField(normalizedQuery, queryTokens, field);
-        }
-        return score;
-    }
-
-    private static int fieldsMatchCoverage(List<String> queryTokens, WeightedField[] fields) {
-        if (queryTokens.isEmpty()) {
-            return 0;
-        }
-
-        int matches = 0;
-        for (String token : queryTokens) {
-            boolean matched = Arrays.stream(fields)
-                    .map(WeightedField::value)
-                    .anyMatch(value -> containsWordPrefix(value, token) || value.contains(token));
-            if (!matched) {
-                return 0;
-            }
-            matches++;
-        }
-        return matches;
-    }
-
-    private static int scoreField(String normalizedQuery, List<String> queryTokens, WeightedField field) {
-        String value = field.value();
-        if (value.isEmpty()) {
-            return 0;
-        }
-
-        int score = 0;
-        if (value.equals(normalizedQuery)) {
-            score += field.weight() * 12;
-        }
-        if (value.startsWith(normalizedQuery)) {
-            score += field.weight() * 8;
-        }
-        if (containsWordPrefix(value, normalizedQuery)) {
-            score += field.weight() * 6;
-        }
-        if (value.contains(normalizedQuery)) {
-            score += field.weight() * 4;
-        }
-
-        for (String token : queryTokens) {
-            if (containsWordPrefix(value, token)) {
-                score += field.weight() * 3;
-            } else if (value.contains(token)) {
-                score += field.weight() * 2;
-            }
-        }
-
-        return score;
-    }
-
-    private static int boostIfPhraseMatch(String value, String query, int boost) {
-        return normalize(value).contains(normalize(query)) ? boost : 0;
-    }
-
-    private static WeightedField weightedField(String value, int weight) {
-        return new WeightedField(normalize(value), weight);
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-
-        return Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9\\s]", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
-
-    private static List<String> tokenize(String value) {
-        if (value.isBlank()) {
-            return List.of();
-        }
-        return List.of(value.split(" "));
-    }
-
-    private static boolean containsWordPrefix(String value, String token) {
-        if (value.isEmpty() || token.isEmpty()) {
-            return false;
-        }
-
-        return Arrays.stream(value.split(" "))
-                .anyMatch(word -> word.startsWith(token));
-    }
-
-    private record WeightedField(String value, int weight) {
-    }
-
-    private record ScoredResult<T>(T item, int score) {
+        return objectMapper.valueToTree(Map.of(
+                "size", 20,
+                "query", Map.of("bool", bool)
+        ));
     }
 }

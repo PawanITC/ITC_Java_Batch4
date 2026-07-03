@@ -3,6 +3,7 @@ package com.itclinkedin.userprofile.unit.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itclinkedin.userprofile.controller.ProfileController;
 import com.itclinkedin.userprofile.dto.request.CreateProfileRequest;
+import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.service.ProfileService;
 
@@ -79,6 +80,35 @@ class ProfileControllerTest {
                 .andExpect(jsonPath("$.email").value("test@test.com"));
 
         verify(service).getById(id);
+    }
+
+    @Test
+    void givenValidRequest_whenUpdateProfile_thenReturnUpdatedProfile() throws Exception {
+
+        UUID id = UUID.randomUUID();
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        request.setFirstName("Shubhra");
+        request.setLastName("Tripathi");
+        request.setHeadline("Java Full Stack Developer");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .id(id)
+                .firstName("Shubhra")
+                .lastName("Tripathi")
+                .headline("Java Full Stack Developer")
+                .email("shubhra@test.com")
+                .build();
+
+        when(service.update(eq(id), any(UpdateProfileRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/profiles/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Shubhra"))
+                .andExpect(jsonPath("$.headline").value("Java Full Stack Developer"));
+
+        verify(service).update(eq(id), any(UpdateProfileRequest.class));
     }
 
     @Test

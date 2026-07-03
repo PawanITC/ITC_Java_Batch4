@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import keycloak from "./keycloak";
+import { getKeycloakUser } from "./keycloakUser";
 import {
   loginSuccess,
   authLoaded,
@@ -23,27 +24,40 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   })
   .then((authenticated: boolean) => {
     if (authenticated) {
+      const keycloakUser = getKeycloakUser();
+
       dispatch(
         loginSuccess({
           token: keycloak.token || "",
-          username: keycloak.tokenParsed?.preferred_username || "",
-          roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
+          username: keycloakUser?.username || "",
+          email: keycloakUser?.email,
+          name: keycloakUser?.displayName,
+          roles: keycloakUser?.roles || [],
         })
       );
     } else {
       dispatch(authLoaded());
     }
+  })
+  .catch((error: unknown) => {
+    console.error("Keycloak initialization failed", error);
+    dispatch(logoutSuccess());
+    dispatch(authLoaded());
   });
 
     keycloak.onTokenExpired = () => {
       keycloak
         .updateToken(30)
         .then(() => {
+          const keycloakUser = getKeycloakUser();
+
           dispatch(
             loginSuccess({
               token: keycloak.token || "",
-              username: keycloak.tokenParsed?.preferred_username || "",
-              roles: (keycloak.tokenParsed?.realm_access as any)?.roles || [],
+              username: keycloakUser?.username || "",
+              email: keycloakUser?.email,
+              name: keycloakUser?.displayName,
+              roles: keycloakUser?.roles || [],
             })
           );
         })

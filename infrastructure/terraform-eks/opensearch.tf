@@ -27,7 +27,7 @@ resource "aws_security_group" "opensearch_sg" {
 }
 
 resource "aws_opensearch_domain" "linkedin_opensearch" {
-  depends_on = [aws_iam_service_linked_role.opensearch]
+  depends_on     = [aws_iam_service_linked_role.opensearch]
   domain_name    = "linkedin-search"
   engine_version = "OpenSearch_2.17"
 
@@ -62,4 +62,18 @@ resource "aws_opensearch_domain" "linkedin_opensearch" {
   tags = {
     Project = "linkedin-clone"
   }
+
+  access_policies = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"
+        }
+        Action   = "es:ESHttp*"
+        Resource = "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/linkedin-search/*"
+      }
+    ]
+  })
 }
