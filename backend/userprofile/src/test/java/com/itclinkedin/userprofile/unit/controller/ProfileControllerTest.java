@@ -13,10 +13,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,7 +39,49 @@ class ProfileControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void givenValidRequest_whenCreateProfile_thenReturn200() throws Exception {
+    void whenCreateCurrentUserProfile_thenUseJwtSubjectAsOwner() {
+        ProfileController controller = new ProfileController(service);
+        CreateProfileRequest request = new CreateProfileRequest();
+        request.setKeycloakUserId("malicious-client-value");
+        request.setFirstName("Hasnain");
+        request.setLastName("Ahmad");
+        request.setGender(com.itclinkedin.userprofile.entity.Gender.MALE);
+        request.setEmail("hasnain@test.com");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("jwt-user-id")
+                .email("hasnain@test.com")
+                .build();
+
+        when(service.create(any())).thenReturn(response);
+
+        controller.create(request, jwt("jwt-user-id"));
+
+        var captor = forClass(CreateProfileRequest.class);
+        verify(service).create(captor.capture());
+        assertThat(captor.getValue().getKeycloakUserId()).isEqualTo("jwt-user-id");
+    }
+
+    @Test
+    void whenGetCurrentProfile_thenUseJwtSubject() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("jwt-user-id")
+                .email("hasnain@test.com")
+                .build();
+
+        when(service.getByKeycloakUserId("jwt-user-id")).thenReturn(response);
+
+        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"));
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("jwt-user-id");
+    }
+
+    @Test
+    void givenNoJwt_whenCreateProfile_thenReturn401() throws Exception {
 
         CreateProfileRequest request = new CreateProfileRequest();
         request.setFirstName("Hasnain");
@@ -49,16 +94,13 @@ class ProfileControllerTest {
                 .email("hasnain@test.com")
                 .build();
 
-        when(service.create(any())).thenReturn(response);
-
         mockMvc.perform(post("/api/profiles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
 
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("hasnain@test.com"));
+                .andExpect(status().isUnauthorized());
 
-        verify(service, times(1)).create(any());
+        verify(service, never()).create(any());
     }
 
     @Test
@@ -122,5 +164,12 @@ class ProfileControllerTest {
                 .andExpect(status().isOk());
 
         verify(service).delete(id);
+    }
+
+    private Jwt jwt(String subject) {
+        return Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .subject(subject)
+                .build();
     }
 }

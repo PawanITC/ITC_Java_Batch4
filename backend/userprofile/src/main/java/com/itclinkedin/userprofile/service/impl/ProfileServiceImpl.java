@@ -10,6 +10,7 @@ import com.itclinkedin.userprofile.repository.UserProfileRepository;
 import com.itclinkedin.userprofile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,12 +26,14 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public ProfileResponse create(CreateProfileRequest request) {
 
-        if (request.getKeycloakUserId() != null) {
-            repository.findByKeycloakUserId(request.getKeycloakUserId())
-                    .ifPresent(existing -> {
-                        throw new RuntimeException("A profile with this Keycloak user already exists.");
-                    });
+        if (!StringUtils.hasText(request.getKeycloakUserId())) {
+            throw new RuntimeException("Authenticated Keycloak user id is required.");
         }
+
+        repository.findByKeycloakUserId(request.getKeycloakUserId())
+                .ifPresent(existing -> {
+                    throw new RuntimeException("A profile with this Keycloak user already exists.");
+                });
 
         if (repository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             throw new RuntimeException("A profile with this email already exists.");

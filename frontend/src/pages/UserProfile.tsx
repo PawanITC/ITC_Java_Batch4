@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
 import { useAppSelector } from "../hooks/reduxHooks";
 import { getKeycloakUser } from "../features/auth/keycloakUser";
 import About from "../features/userprofile/components/About";
@@ -21,39 +21,18 @@ function UserProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { isLoggedIn, loading: authLoading, user: authUser } = useAppSelector(
     (state) => state.auth
   );
-
-  const buildProfilePayload = useCallback((): CreateProfilePayload | null => {
-    const keycloakUser = getKeycloakUser();
-    const email = keycloakUser?.email || authUser?.email;
-
-    if (!email) {
-      return null;
-    }
-
-    return {
-      keycloakUserId: keycloakUser?.id,
-      firstName: keycloakUser?.firstName || authUser?.name || "LinkedIn",
-      lastName: keycloakUser?.lastName || "Member",
-      email,
-      headline: "Profile in progress",
-      about: "This profile was created from the signed-in account.",
-      gender: "PREFER_NOT_TO_SAY",
-      city: "London",
-      country: "UK",
-      openToWork: true,
-      profilePublic: true,
-    };
-  }, [authUser]);
 
   const loadProfile = useCallback(async () => {
     if (authLoading) return;
 
     setLoading(true);
     setError(null);
+    setNeedsOnboarding(false);
 
     if (!isLoggedIn) {
       setProfile(null);
@@ -80,10 +59,9 @@ function UserProfile() {
           throw profileError;
         }
 
-        const payload = buildProfilePayload();
-        if (payload) {
-          selectedProfile = await createProfile(payload);
-        }
+        setProfile(null);
+        setNeedsOnboarding(true);
+        return;
       }
 
       if (!selectedProfile) {
@@ -99,11 +77,19 @@ function UserProfile() {
     } finally {
       setLoading(false);
     }
-  }, [authLoading, authUser, buildProfilePayload, isLoggedIn]);
+  }, [authLoading, authUser, isLoggedIn]);
 
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  const handleCreateProfile = async (payload: CreateProfilePayload) => {
+    setError(null);
+    const createdProfile = await createProfile(payload);
+    const hydratedProfile = await getProfile(createdProfile.id);
+    setProfile(hydratedProfile);
+    setNeedsOnboarding(false);
+  };
 
   if (loading) {
     return <div className="min-h-screen bg-[#F4F2EE] px-6 py-10">Loading profile...</div>;
@@ -113,10 +99,21 @@ function UserProfile() {
     return <div className="min-h-screen bg-[#F4F2EE] px-6 py-10">{error}</div>;
   }
 
+  if (needsOnboarding) {
+    return (
+      <ProfileOnboarding
+        authEmail={getKeycloakUser()?.email || authUser?.email || ""}
+        authFirstName={getKeycloakUser()?.firstName || ""}
+        authLastName={getKeycloakUser()?.lastName || ""}
+        onCreate={handleCreateProfile}
+      />
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-[#F4F2EE] px-6 py-10">
-        Sign in with Keycloak to provision your profile automatically.
+        Sign in with Keycloak to create your profile.
       </div>
     );
   }
@@ -146,6 +143,229 @@ function UserProfile() {
           onSaved={loadProfile}
         />
       </div>
+    </div>
+  );
+}
+
+type ProfileOnboardingProps = {
+  authEmail: string;
+  authFirstName: string;
+  authLastName: string;
+  onCreate: (payload: CreateProfilePayload) => Promise<void>;
+};
+
+function ProfileOnboarding({
+  authEmail,
+  authFirstName,
+  authLastName,
+  onCreate,
+}: ProfileOnboardingProps) {
+  const [values, setValues] = useState({
+    firstName: authFirstName,
+    lastName: authLastName,
+    email: authEmail,
+    gender: "PREFER_NOT_TO_SAY",
+    headline: "",
+    about: "",
+    city: "",
+    country: "",
+    openToWork: false,
+    profilePublic: true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = event.target;
+    setValues((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = event.target;
+    setValues((current) => ({ ...current, [name]: checked }));
+  };
+
+  const optional = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    try {
+      setSaving(true);
+      setError("");
+      await onCreate({
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email: values.email.trim(),
+        gender: values.gender,
+        headline: optional(values.headline),
+        about: optional(values.about),
+        city: optional(values.city),
+        country: optional(values.country),
+        openToWork: values.openToWork,
+        profilePublic: values.profilePublic,
+      });
+    } catch (createError) {
+      console.error(createError);
+      setError("Unable to create your profile. Please check the fields and try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F4F2EE] px-4 py-10">
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto max-w-2xl rounded-lg border border-[#d6d6d6] bg-white p-6 shadow-sm"
+      >
+        <h1 className="text-2xl font-semibold text-gray-900">Create your profile</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Add the details you want people to see. Your account ownership is taken from Keycloak.
+        </p>
+
+        {error && <p className="mt-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium text-gray-700">
+            First name*
+            <input
+              name="firstName"
+              value={values.firstName}
+              onChange={handleChange}
+              required
+              minLength={2}
+              maxLength={50}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+
+          <label className="text-sm font-medium text-gray-700">
+            Last name*
+            <input
+              name="lastName"
+              value={values.lastName}
+              onChange={handleChange}
+              required
+              minLength={2}
+              maxLength={50}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium text-gray-700">
+            Email*
+            <input
+              name="email"
+              type="email"
+              value={values.email}
+              onChange={handleChange}
+              required
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+
+          <label className="text-sm font-medium text-gray-700">
+            Gender*
+            <select
+              name="gender"
+              value={values.gender}
+              onChange={handleChange}
+              required
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </label>
+        </div>
+
+        <label className="mt-4 block text-sm font-medium text-gray-700">
+          Headline
+          <input
+            name="headline"
+            value={values.headline}
+            onChange={handleChange}
+            maxLength={220}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+
+        <label className="mt-4 block text-sm font-medium text-gray-700">
+          About
+          <textarea
+            name="about"
+            value={values.about}
+            onChange={handleChange}
+            rows={4}
+            maxLength={5000}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </label>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium text-gray-700">
+            City
+            <input
+              name="city"
+              value={values.city}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+
+          <label className="text-sm font-medium text-gray-700">
+            Country
+            <input
+              name="country"
+              value={values.country}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          <label className="flex items-center gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="openToWork"
+              checked={values.openToWork}
+              onChange={handleCheckboxChange}
+            />
+            Open to work
+          </label>
+
+          <label className="flex items-center gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="profilePublic"
+              checked={values.profilePublic}
+              onChange={handleCheckboxChange}
+            />
+            Public profile
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-full bg-[#0a66c2] px-6 py-2 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-60"
+          >
+            {saving ? "Creating..." : "Create profile"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

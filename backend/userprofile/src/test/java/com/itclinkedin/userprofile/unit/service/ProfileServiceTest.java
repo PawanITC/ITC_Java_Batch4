@@ -33,6 +33,7 @@ class ProfileServiceTest {
     void givenValidRequest_whenCreateProfile_thenReturnSavedProfile() {
 
         CreateProfileRequest request = new CreateProfileRequest();
+        request.setKeycloakUserId("keycloak-user-1");
         request.setFirstName("Hasnain");
         request.setEmail("hasnain@test.com");
 
@@ -53,6 +54,20 @@ class ProfileServiceTest {
         assertEquals("hasnain@test.com", result.getEmail());
 
         verify(repository, times(1)).save(entity);
+    }
+
+    @Test
+    void givenMissingKeycloakUserId_whenCreateProfile_thenThrowException() {
+
+        CreateProfileRequest request = new CreateProfileRequest();
+        request.setFirstName("Hasnain");
+        request.setEmail("hasnain@test.com");
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> service.create(request));
+
+        assertEquals("Authenticated Keycloak user id is required.", exception.getMessage());
+        verify(repository, never()).save(any());
     }
 
     @Test

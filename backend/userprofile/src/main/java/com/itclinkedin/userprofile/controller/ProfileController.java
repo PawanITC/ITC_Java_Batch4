@@ -9,9 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @RequestMapping("/api/profiles")
@@ -27,15 +30,13 @@ public class ProfileController {
 
     @PostMapping
     public ProfileResponse create(@Valid @RequestBody CreateProfileRequest request, @AuthenticationPrincipal Jwt jwt) {
-        if (jwt != null) {
-            request.setKeycloakUserId(jwt.getSubject());
-        }
+        request.setKeycloakUserId(requiredSubject(jwt));
         return service.create(request);
     }
 
     @GetMapping("/me")
     public ProfileResponse getCurrentProfile(@AuthenticationPrincipal Jwt jwt) {
-        return service.getByKeycloakUserId(jwt.getSubject());
+        return service.getByKeycloakUserId(requiredSubject(jwt));
     }
 
     @PutMapping("/me")
@@ -43,7 +44,7 @@ public class ProfileController {
             @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        return service.updateByKeycloakUserId(jwt.getSubject(), request);
+        return service.updateByKeycloakUserId(requiredSubject(jwt), request);
     }
 
     @GetMapping("/{id}")
@@ -64,5 +65,13 @@ public class ProfileController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         service.delete(id);
+    }
+
+    private String requiredSubject(Jwt jwt) {
+        if (jwt == null || jwt.getSubject() == null || jwt.getSubject().isBlank()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing authenticated user id.");
+        }
+
+        return jwt.getSubject();
     }
 }

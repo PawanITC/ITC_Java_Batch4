@@ -78,6 +78,6 @@ management:
 
 app:
   timeline:
-    seed-demo-data: ${TIMELINE_SEED_DEMO_DATA:true}
+    seed-demo-data: ${TIMELINE_SEED_DEMO_DATA:false}
     reset-demo-data: ${TIMELINE_RESET_DEMO_DATA:false}
     demo-user-id: ${TIMELINE_DEMO_USER_ID:b153813e-ab6d-4e49-8f01-df40055dfd88}

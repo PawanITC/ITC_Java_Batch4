@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -39,6 +40,18 @@ public class GlobalExceptionHandler {
         response.put("message", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+        Map<String, Object> response = new HashMap<>();
+        int statusCode = ex.getStatusCode().value();
+        response.put("timestamp", LocalDateTime.now().toString());
+        response.put("status", statusCode);
+        response.put("error", ex.getStatusCode().toString());
+        response.put("message", ex.getReason());
+
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     // 2. Updated runtime handler to output uniform structured JSON (like Duplicate Emails)
