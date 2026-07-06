@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
 import { addComment, createPost, deletePost, likePost, unlikePost } from "../services/postApi";
 import { getTimeline } from "../services/timelineApi";
+import { getCurrentProfile } from "../features/userprofile/api";
 
 jest.mock("../services/timelineApi", () => ({
   getTimeline: jest.fn(),
@@ -15,6 +16,10 @@ jest.mock("../services/postApi", () => ({
   deletePost: jest.fn(),
 }));
 
+jest.mock("../features/userprofile/api", () => ({
+  getCurrentProfile: jest.fn(),
+}));
+
 jest.mock("../features/auth/keycloak", () => ({
   tokenParsed: { sub: "author-1" },
 }));
@@ -23,6 +28,7 @@ jest.mock("../components/feed/LeftProfileCard", () => () => <aside>Left profile<
 jest.mock("../components/feed/RightNewsCard", () => () => <aside>Right news</aside>);
 
 const mockGetTimeline = getTimeline as jest.Mock;
+const mockGetCurrentProfile = getCurrentProfile as jest.Mock;
 const mockCreatePost = createPost as jest.Mock;
 const mockLikePost = likePost as jest.Mock;
 const mockUnlikePost = unlikePost as jest.Mock;
@@ -41,9 +47,18 @@ const firstPost = {
   createdAt: "2026-06-24T08:00:00.000Z",
 };
 
+const currentProfile = {
+  id: "profile-1",
+  firstName: "Feed",
+  lastName: "User",
+  email: "feed.user@example.com",
+  headline: "Product Engineer",
+};
+
 describe("FeedTimelinePage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetCurrentProfile.mockResolvedValue(currentProfile);
   });
 
   test("shows loading state and then renders timeline posts", async () => {
@@ -78,6 +93,16 @@ describe("FeedTimelinePage", () => {
     expect(screen.queryByText(/loading feed/i)).not.toBeInTheDocument();
 
     consoleError.mockRestore();
+  });
+
+  test("shows onboarding prompt when the signed-in user has no profile", async () => {
+    mockGetCurrentProfile.mockRejectedValue({ response: { status: 404 } });
+    mockGetTimeline.mockResolvedValue([firstPost]);
+
+    render(<FeedTimelinePage />);
+
+    expect(await screen.findByText(/complete your profile to use your feed/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/complete your profile to start posting/i)).toBeDisabled();
   });
 
   test("creates a post and reloads the timeline", async () => {

@@ -56,7 +56,7 @@ class ProfileControllerTest {
 
         when(service.create(any())).thenReturn(response);
 
-        controller.create(request, jwt("jwt-user-id"));
+        controller.create(request, jwt("jwt-user-id"), null);
 
         var captor = forClass(CreateProfileRequest.class);
         verify(service).create(captor.capture());
@@ -74,7 +74,7 @@ class ProfileControllerTest {
 
         when(service.getByKeycloakUserId("jwt-user-id")).thenReturn(response);
 
-        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"));
+        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"), null);
 
         assertThat(actual).isEqualTo(response);
         verify(service).getByKeycloakUserId("jwt-user-id");

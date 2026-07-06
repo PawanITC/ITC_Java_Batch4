@@ -12,6 +12,8 @@ import { FeedPost } from "../../types/feed";
 
 type Props = {
   post: FeedPost;
+  currentUserName?: string;
+  currentUserAvatarUrl?: string;
   onLike?: (postId: number) => Promise<void>;
   onUnlike?: (postId: number) => Promise<void>;
   onDelete?: (postId: number) => Promise<void>;
@@ -33,6 +35,8 @@ function formatDate(value: string) {
 
 export default function FeedPostCard({
   post,
+  currentUserName = "Current user",
+  currentUserAvatarUrl,
   onLike,
   onUnlike,
   onDelete,
@@ -62,7 +66,7 @@ export default function FeedPostCard({
   };
 
   const submitComment = async () => {
-    if (!comment.trim()) return;
+    if (!comment.trim() || readOnly) return;
     await onComment?.(postId, comment.trim());
     setCommentsCount((current) => current + 1);
     setComment("");
@@ -145,7 +149,9 @@ export default function FeedPostCard({
         </button>
 
         <button
-          onClick={() => setShowCommentBox((current) => !current)}
+          onClick={() => {
+            if (!readOnly) setShowCommentBox((current) => !current);
+          }}
           className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
         >
           <MessageCircle size={18} />
@@ -166,7 +172,8 @@ export default function FeedPostCard({
       {showCommentBox && (
         <div className="flex gap-2 border-t border-[#edf0f3] px-4 py-3">
           <Avatar
-            name="Shubhra Tripathi"
+            name={currentUserName}
+            src={currentUserAvatarUrl}
             sizeClassName="h-9 w-9"
             textClassName="text-xs"
           />

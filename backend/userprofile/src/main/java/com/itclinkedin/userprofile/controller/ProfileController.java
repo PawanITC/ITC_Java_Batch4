@@ -29,22 +29,30 @@ public class ProfileController {
     }
 
     @PostMapping
-    public ProfileResponse create(@Valid @RequestBody CreateProfileRequest request, @AuthenticationPrincipal Jwt jwt) {
-        request.setKeycloakUserId(requiredSubject(jwt));
+    public ProfileResponse create(
+            @Valid @RequestBody CreateProfileRequest request,
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+    ) {
+        request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId));
         return service.create(request);
     }
 
     @GetMapping("/me")
-    public ProfileResponse getCurrentProfile(@AuthenticationPrincipal Jwt jwt) {
-        return service.getByKeycloakUserId(requiredSubject(jwt));
+    public ProfileResponse getCurrentProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+    ) {
+        return service.getByKeycloakUserId(requiredSubject(jwt, gatewayUserId));
     }
 
     @PutMapping("/me")
     public ProfileResponse updateCurrentProfile(
             @Valid @RequestBody UpdateProfileRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
     ) {
-        return service.updateByKeycloakUserId(requiredSubject(jwt), request);
+        return service.updateByKeycloakUserId(requiredSubject(jwt, gatewayUserId), request);
     }
 
     @GetMapping("/{id}")
@@ -67,11 +75,15 @@ public class ProfileController {
         service.delete(id);
     }
 
-    private String requiredSubject(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null || jwt.getSubject().isBlank()) {
-            throw new ResponseStatusException(UNAUTHORIZED, "Missing authenticated user id.");
+    private String requiredSubject(Jwt jwt, String gatewayUserId) {
+        if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().isBlank()) {
+            return jwt.getSubject();
         }
 
-        return jwt.getSubject();
+        if (gatewayUserId != null && !gatewayUserId.isBlank()) {
+            return gatewayUserId;
+        }
+
+        throw new ResponseStatusException(UNAUTHORIZED, "Missing authenticated user id.");
     }
 }

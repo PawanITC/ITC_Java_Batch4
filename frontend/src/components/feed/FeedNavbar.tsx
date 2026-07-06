@@ -15,6 +15,25 @@ import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
 import { loadNotifications } from "../../store/notificationSlice";
 import { getUsername } from "../../utils/authUtils";
 
+function accountInitials() {
+  const token = keycloak.tokenParsed;
+  const name = String(
+    token?.name ||
+    [token?.given_name, token?.family_name].filter(Boolean).join(" ") ||
+    token?.preferred_username ||
+    token?.email ||
+    "Me"
+  );
+
+  return name
+    .split(/[\s.@_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "ME";
+}
+
 export default function FeedNavbar() {
   const navigate = useNavigate();
 
@@ -96,7 +115,7 @@ export default function FeedNavbar() {
               className="flex h-full min-w-[58px] flex-col items-center justify-center gap-0.5 border-b-2 border-transparent px-2 text-xs text-gray-600 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0a66c2] text-[10px] font-semibold text-white">
-                ST
+                {accountInitials()}
               </span>
               <span className="leading-none">Me</span>
             </Link>
