@@ -6,6 +6,7 @@ import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.service.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -32,27 +33,30 @@ public class ProfileController {
     public ProfileResponse create(
             @Valid @RequestBody CreateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            Authentication authentication
     ) {
-        request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId));
+        request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication));
         return service.create(request);
     }
 
     @GetMapping("/me")
     public ProfileResponse getCurrentProfile(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            Authentication authentication
     ) {
-        return service.getByKeycloakUserId(requiredSubject(jwt, gatewayUserId));
+        return service.getByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication));
     }
 
     @PutMapping("/me")
     public ProfileResponse updateCurrentProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId
+            @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            Authentication authentication
     ) {
-        return service.updateByKeycloakUserId(requiredSubject(jwt, gatewayUserId), request);
+        return service.updateByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication), request);
     }
 
     @GetMapping("/{id}")
@@ -75,9 +79,28 @@ public class ProfileController {
         service.delete(id);
     }
 
-    private String requiredSubject(Jwt jwt, String gatewayUserId) {
+    private String requiredSubject(Jwt jwt, String gatewayUserId, Authentication authentication) {
         if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().isBlank()) {
             return jwt.getSubject();
+        }
+
+        if (authentication != null) {
+            if (authentication.getPrincipal() instanceof Jwt principalJwt
+                    && principalJwt.getSubject() != null
+                    && !principalJwt.getSubject().isBlank()) {
+                return principalJwt.getSubject();
+            }
+
+            if (authentication.getCredentials() instanceof Jwt credentialsJwt
+                    && credentialsJwt.getSubject() != null
+                    && !credentialsJwt.getSubject().isBlank()) {
+                return credentialsJwt.getSubject();
+            }
+
+            String authenticationName = authentication.getName();
+            if (authenticationName != null && !authenticationName.isBlank() && !"anonymousUser".equals(authenticationName)) {
+                return authenticationName;
+            }
         }
 
         if (gatewayUserId != null && !gatewayUserId.isBlank()) {

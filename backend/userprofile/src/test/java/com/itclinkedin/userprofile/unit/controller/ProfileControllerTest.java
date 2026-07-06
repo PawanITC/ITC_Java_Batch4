@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -56,7 +57,7 @@ class ProfileControllerTest {
 
         when(service.create(any())).thenReturn(response);
 
-        controller.create(request, jwt("jwt-user-id"), null);
+        controller.create(request, jwt("jwt-user-id"), null, null);
 
         var captor = forClass(CreateProfileRequest.class);
         verify(service).create(captor.capture());
@@ -74,10 +75,31 @@ class ProfileControllerTest {
 
         when(service.getByKeycloakUserId("jwt-user-id")).thenReturn(response);
 
-        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"), null);
+        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"), null, null);
 
         assertThat(actual).isEqualTo(response);
         verify(service).getByKeycloakUserId("jwt-user-id");
+    }
+
+    @Test
+    void whenJwtPrincipalIsNotInjected_thenUseAuthenticationName() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("authenticated-user-id")
+                .email("hasnain@test.com")
+                .build();
+
+        when(service.getByKeycloakUserId("authenticated-user-id")).thenReturn(response);
+
+        ProfileResponse actual = controller.getCurrentProfile(
+                null,
+                null,
+                new TestingAuthenticationToken("authenticated-user-id", "token")
+        );
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("authenticated-user-id");
     }
 
     @Test
