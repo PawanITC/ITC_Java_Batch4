@@ -58,6 +58,7 @@ class GatewayRouteConfigTest {
                 .values()
                 .toString();
 
+        assertTrue(pathPredicate.contains("/api/profiles"));
         assertTrue(pathPredicate.contains("/api/profiles/**"));
         assertTrue(pathPredicate.contains("/api/skills"));
         assertTrue(pathPredicate.contains("/api/skills/**"));
