@@ -110,7 +110,11 @@ export default function FeedTimelinePage() {
     loadCurrentProfile();
   }, [loadCurrentProfile]);
 
-  const currentUserId = keycloak.tokenParsed?.sub ?? "";
+  const currentUserId =
+    keycloak.tokenParsed?.sub ??
+    keycloak.tokenParsed?.preferred_username ??
+    keycloak.tokenParsed?.email ??
+    "";
   const currentUserName = profile
     ? `${profile.firstName} ${profile.lastName}`.trim() || "Current user"
     : "Current user";

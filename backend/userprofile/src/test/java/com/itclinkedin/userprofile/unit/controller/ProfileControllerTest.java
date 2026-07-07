@@ -7,6 +7,7 @@ import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
 import com.itclinkedin.userprofile.service.ProfileService;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,6 +40,11 @@ class ProfileControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void whenCreateCurrentUserProfile_thenUseJwtSubjectAsOwner() {
@@ -82,6 +89,29 @@ class ProfileControllerTest {
     }
 
     @Test
+    void whenJwtSubjectIsMissing_thenUsePreferredUsername() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("user.demo")
+                .email("user.demo@example.com")
+                .build();
+
+        when(service.getByKeycloakUserId("user.demo")).thenReturn(response);
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("preferred_username", "user.demo")
+                .claim("email", "user.demo@example.com")
+                .build();
+
+        ProfileResponse actual = controller.getCurrentProfile(jwt, null, null, null);
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("user.demo");
+    }
+
+    @Test
     void whenJwtPrincipalIsNotInjected_thenUseAuthenticationName() {
         ProfileController controller = new ProfileController(service);
         ProfileResponse response = ProfileResponse.builder()
@@ -123,6 +153,48 @@ class ProfileControllerTest {
 
         assertThat(actual).isEqualTo(response);
         verify(service).getByKeycloakUserId("token-user-id");
+    }
+
+    @Test
+    void whenBearerTokenSubjectIsMissing_thenUsePreferredUsernameClaim() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("user.demo")
+                .email("user.demo@example.com")
+                .build();
+
+        when(service.getByKeycloakUserId("user.demo")).thenReturn(response);
+
+        ProfileResponse actual = controller.getCurrentProfile(
+                null,
+                null,
+                bearerTokenWithClaims(null, "user.demo", "user.demo@example.com"),
+                null
+        );
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("user.demo");
+    }
+
+    @Test
+    void whenMethodAuthenticationIsMissing_thenUseSecurityContextAuthentication() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("security-context-user-id")
+                .email("hasnain@test.com")
+                .build();
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken("security-context-user-id", "token"));
+
+        when(service.getByKeycloakUserId("security-context-user-id")).thenReturn(response);
+
+        ProfileResponse actual = controller.getCurrentProfile(null, null, null, null);
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("security-context-user-id");
     }
 
     @Test
@@ -219,10 +291,32 @@ class ProfileControllerTest {
     }
 
     private String bearerTokenWithSubject(String subject) {
+        return bearerTokenWithClaims(subject, null, null);
+    }
+
+    private String bearerTokenWithClaims(String subject, String preferredUsername, String email) {
         String header = java.util.Base64.getUrlEncoder().withoutPadding()
                 .encodeToString("{\"alg\":\"none\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        StringBuilder payloadJson = new StringBuilder("{");
+        appendJsonField(payloadJson, "sub", subject);
+        appendJsonField(payloadJson, "preferred_username", preferredUsername);
+        appendJsonField(payloadJson, "email", email);
+        payloadJson.append("}");
+
         String payload = java.util.Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(("{\"sub\":\"" + subject + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                .encodeToString(payloadJson.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
         return "Bearer " + header + "." + payload + ".signature";
+    }
+
+    private void appendJsonField(StringBuilder json, String name, String value) {
+        if (value == null) {
+            return;
+        }
+
+        if (json.length() > 1) {
+            json.append(",");
+        }
+
+        json.append("\"").append(name).append("\":\"").append(value).append("\"");
     }
 }

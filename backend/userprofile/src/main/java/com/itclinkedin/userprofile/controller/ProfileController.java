@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -88,27 +89,19 @@ public class ProfileController {
     }
 
     private String requiredSubject(Jwt jwt, String gatewayUserId, String authorization, Authentication authentication) {
-        if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().isBlank()) {
-            return jwt.getSubject();
+        String jwtSubject = userIdFromJwt(jwt);
+        if (jwtSubject != null) {
+            return jwtSubject;
         }
 
-        if (authentication != null) {
-            if (authentication.getPrincipal() instanceof Jwt principalJwt
-                    && principalJwt.getSubject() != null
-                    && !principalJwt.getSubject().isBlank()) {
-                return principalJwt.getSubject();
-            }
+        String authenticationSubject = userIdFromAuthentication(authentication);
+        if (authenticationSubject != null) {
+            return authenticationSubject;
+        }
 
-            if (authentication.getCredentials() instanceof Jwt credentialsJwt
-                    && credentialsJwt.getSubject() != null
-                    && !credentialsJwt.getSubject().isBlank()) {
-                return credentialsJwt.getSubject();
-            }
-
-            String authenticationName = authentication.getName();
-            if (authenticationName != null && !authenticationName.isBlank() && !"anonymousUser".equals(authenticationName)) {
-                return authenticationName;
-            }
+        String securityContextSubject = userIdFromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        if (securityContextSubject != null) {
+            return securityContextSubject;
         }
 
         if (gatewayUserId != null && !gatewayUserId.isBlank()) {
@@ -121,6 +114,45 @@ public class ProfileController {
         }
 
         throw new ResponseStatusException(UNAUTHORIZED, "Missing authenticated user id.");
+    }
+
+    private String userIdFromAuthentication(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+
+        if (authentication.getPrincipal() instanceof Jwt principalJwt) {
+            String principalSubject = userIdFromJwt(principalJwt);
+            if (principalSubject != null) {
+                return principalSubject;
+            }
+        }
+
+        if (authentication.getCredentials() instanceof Jwt credentialsJwt) {
+            String credentialsSubject = userIdFromJwt(credentialsJwt);
+            if (credentialsSubject != null) {
+                return credentialsSubject;
+            }
+        }
+
+        String authenticationName = authentication.getName();
+        if (authenticationName != null && !authenticationName.isBlank() && !"anonymousUser".equals(authenticationName)) {
+            return authenticationName;
+        }
+
+        return null;
+    }
+
+    private String userIdFromJwt(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+
+        return firstPresent(
+                jwt.getSubject(),
+                jwt.getClaimAsString("preferred_username"),
+                jwt.getClaimAsString("email")
+        );
     }
 
     private String subjectFromAuthorizationHeader(String authorization) {
@@ -137,10 +169,23 @@ public class ProfileController {
         try {
             byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
             JsonNode payload = OBJECT_MAPPER.readTree(new String(decodedPayload, StandardCharsets.UTF_8));
-            String subject = payload.path("sub").asText(null);
-            return subject == null || subject.isBlank() ? null : subject;
+            return firstPresent(
+                    payload.path("sub").asText(null),
+                    payload.path("preferred_username").asText(null),
+                    payload.path("email").asText(null)
+            );
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private String firstPresent(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return null;
     }
 }

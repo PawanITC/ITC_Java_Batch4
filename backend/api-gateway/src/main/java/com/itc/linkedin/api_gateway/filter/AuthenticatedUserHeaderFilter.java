@@ -38,7 +38,15 @@ public class AuthenticatedUserHeaderFilter implements GlobalFilter, Ordered {
                     headers.remove(USER_ID_HEADER);
                     headers.remove(USERNAME_HEADER);
                     headers.remove(EMAIL_HEADER);
-                    headers.set(USER_ID_HEADER, jwt.getSubject());
+
+                    String userId = firstPresent(
+                            jwt.getSubject(),
+                            jwt.getClaimAsString("preferred_username"),
+                            jwt.getClaimAsString("email")
+                    );
+                    if (userId != null) {
+                        headers.set(USER_ID_HEADER, userId);
+                    }
 
                     String username = jwt.getClaimAsString("preferred_username");
                     if (username != null && !username.isBlank()) {
@@ -53,6 +61,16 @@ public class AuthenticatedUserHeaderFilter implements GlobalFilter, Ordered {
                 .build();
 
         return exchange.mutate().request(request).build();
+    }
+
+    private String firstPresent(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private ServerWebExchange stripUserHeaders(ServerWebExchange exchange) {
