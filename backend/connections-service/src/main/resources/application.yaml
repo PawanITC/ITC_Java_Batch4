@@ -74,5 +74,5 @@ connection-service:
       user-blocked: connection.user.blocked
       user-unblocked: connection.user.unblocked
   outbox:
-    publisher-delay-ms: 5000
+    publisher-delay-ms: 20000
 
