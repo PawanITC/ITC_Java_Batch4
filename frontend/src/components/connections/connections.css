@@ -1,0 +1,126 @@
+.connections-container {
+  max-width: 850px;
+  margin: 30px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.connections-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #0a66c2;
+  background: white;
+  color: #0a66c2;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.tab.active {
+  background: #0a66c2;
+  color: white;
+}
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.connection-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  background: white;
+}
+
+.avatar {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #e8f3ff;
+  color: #0a66c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.connection-info {
+  flex: 1;
+}
+
+.connection-info h3 {
+  margin: 0 0 6px;
+}
+
+.connection-info p {
+  margin: 4px 0;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.connection-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.connection-btn {
+  border-radius: 20px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.connection-btn.primary {
+  background: #0a66c2;
+  color: white;
+}
+
+.connection-btn.secondary {
+  background: white;
+  color: #0a66c2;
+  border-color: #0a66c2;
+}
+
+.connection-btn.connected {
+  background: #eef3f8;
+  color: #333;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.connection-btn.danger {
+  background: #ffecec;
+  color: #b00020;
+  border-color: #b00020;
+  cursor: not-allowed;
+}
+
+.connection-btn.disabled {
+  background: #eee;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.connection-message {
+  font-size: 13px;
+  color: #555;
+  margin-top: 6px;
+}
+
+.connection-alert {
+  background: #eef3f8;
+  border: 1px solid #c9dff5;
+  padding: 10px;
+  border-radius: 8px;
+}
