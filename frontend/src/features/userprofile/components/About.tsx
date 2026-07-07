@@ -1,9 +1,5 @@
-import React, { useState } from "react";
-import {
-  Pencil,
-  Gem,
-  ArrowRight,
-} from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Gem, Pencil } from "lucide-react";
 import SkillsModal from "./SkillsModal";
 import type { Profile } from "../api";
 
@@ -13,96 +9,50 @@ type AboutProps = {
 };
 
 function About({ profile, onEdit }: AboutProps) {
-  const [showMore, setShowMore] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const hasProfileAbout = Boolean(profile?.about?.trim());
-  const aboutText =
-    profile?.about ||
-    "👋 I'm a passionate MERN stack developer with 3 years of hands-on experience building responsive, scalable web applications. I specialize in developing full-stack solutions using MongoDB, Express.js, React, and Node.js, with a focus on performance, clean code, and user experience.";
+  const topSkills =
+    profile?.skills?.slice(0, 5).map((skill) => skill.skillName).filter(Boolean) || [];
 
   return (
     <>
-      <div className="bg-white rounded-xl border p-8">
-        <div className="flex justify-between items-start">
-          <h2 className="text-3xl font-bold">
-            About
-          </h2>
+      <div className="rounded-xl border bg-white p-8">
+        <div className="flex items-start justify-between">
+          <h2 className="text-3xl font-bold">About</h2>
 
-          <Pencil
-            size={22}
-            className="cursor-pointer"
-            onClick={onEdit}
-          />
+          <Pencil size={22} className="cursor-pointer" onClick={onEdit} />
         </div>
 
         <div className="mt-8 text-md leading-relaxed">
-          <p>{aboutText}</p>
-
-          {!hasProfileAbout && showMore && (
-            <div className="mt-4 space-y-4">
-              <p>
-                I enjoy solving real-world problems
-                through code and love working in agile
-                teams that value collaboration,
-                learning, and shipping great products.
-                Whether it's optimizing backend APIs
-                or building sleek frontend interfaces,
-                I thrive on creating meaningful
-                digital experiences.
-              </p>
-
-              <p>
-                🔍 Currently open to new opportunities
-                where I can grow, contribute to
-                impactful projects, and continue
-                learning from experienced developers.
-              </p>
-
-              <p>Let's connect!</p>
-            </div>
-          )}
-
-          {!hasProfileAbout && (
-            <button
-              className="text-gray-500 mt-3 text-xl"
-              onClick={() => setShowMore(!showMore)}
-            >
-              {showMore ? "Show less" : "... more"}
-            </button>
+          {profile?.about?.trim() ? (
+            <p>{profile.about}</p>
+          ) : (
+            <p className="text-gray-500">No about section added yet.</p>
           )}
         </div>
 
-        {/* Skills Card */}
-        <div className="border rounded-2xl p-8 mt-8">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-5">
-              <Gem size={40} />
+        {topSkills.length > 0 && (
+          <div className="mt-8 rounded-2xl border p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-5">
+                <Gem size={40} />
 
-              <div>
-                <h3 className="font-bold text-2xl">
-                  Top skills
-                </h3>
-
-                <p className="text-xl mt-1">
-                  React.js • Node.js • JavaScript •
-                  Next.js • Express.js
-                </p>
+                <div>
+                  <h3 className="text-2xl font-bold">Top skills</h3>
+                  <p className="mt-1 text-xl">{topSkills.join(" - ")}</p>
+                </div>
               </div>
-            </div>
 
-            <ArrowRight
-              size={25}
-              className="cursor-pointer"
-              onClick={() => setOpenModal(true)}
-            />
+              <ArrowRight
+                size={25}
+                className="cursor-pointer"
+                onClick={() => setOpenModal(true)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <SkillsModal
-        isOpen={openModal}
-        onClose={() => setOpenModal(false)}
-      />
+      <SkillsModal isOpen={openModal} onClose={() => setOpenModal(false)} skills={topSkills} />
     </>
   );
 }

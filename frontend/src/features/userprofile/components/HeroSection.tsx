@@ -1,9 +1,8 @@
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Pencil, X, Camera, Trash2 } from "lucide-react";
-import profileimage from "../../../assets/profile.jpeg";
-import coverimage from "../../../assets/cover.jpeg";
 import type { Profile } from "../api";
+import Avatar from "../../../components/common/Avatar";
 
 type HeroSectionProps = {
   profile?: Profile | null;
@@ -12,11 +11,13 @@ type HeroSectionProps = {
 const HeroSection = ({ profile }: HeroSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   
-  const [currentCover, setCurrentCover] = useState<string>(
-    profile?.coverPhotoUrl || coverimage
-  );
+  const [currentCover, setCurrentCover] = useState<string>(profile?.coverPhotoUrl || "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setCurrentCover(profile?.coverPhotoUrl || "");
+  }, [profile?.coverPhotoUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -62,11 +63,14 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
         )}
 
         {/* Profile Avatar Frame */}
-        <img
-          src={profile?.profilePictureUrl || profileimage}
-          alt="Profile"
-          className="w-40 h-40 rounded-full object-cover absolute top-48 ml-10 border-4 border-white shadow-sm"
-        />
+        <div className="absolute top-48 ml-10 rounded-full border-4 border-white shadow-sm">
+          <Avatar
+            name={`${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || "Your profile"}
+            src={profile?.profilePictureUrl}
+            sizeClassName="h-40 w-40"
+            textClassName="text-3xl"
+          />
+        </div>
 
         {/* Edit Cover Trigger Action Button (Pencil Icon) */}
         <button

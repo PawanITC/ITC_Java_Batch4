@@ -124,7 +124,7 @@ function UserProfile() {
         <HeroSection profile={profile} />
         <ProfileInfo profile={profile} onEdit={() => setIsEditModalOpen(true)} />
         <About profile={profile} onEdit={() => setIsEditModalOpen(true)} />
-        <Services />
+        <Services profile={profile} />
         <Experience
           experiences={profile.experiences || []}
           profileId={profile.id}
