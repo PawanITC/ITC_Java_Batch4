@@ -1,5 +1,7 @@
 package com.itclinkedin.userprofile.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itclinkedin.userprofile.dto.request.CreateProfileRequest;
 import com.itclinkedin.userprofile.dto.request.UpdateProfileRequest;
 import com.itclinkedin.userprofile.dto.response.ProfileResponse;
@@ -12,6 +14,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +27,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class ProfileController {
 
     private final ProfileService service;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @GetMapping("/test")
     public String home() {
@@ -34,9 +39,10 @@ public class ProfileController {
             @Valid @RequestBody CreateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
             Authentication authentication
     ) {
-        request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication));
+        request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId, authorization, authentication));
         return service.create(request);
     }
 
@@ -44,9 +50,10 @@ public class ProfileController {
     public ProfileResponse getCurrentProfile(
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
             Authentication authentication
     ) {
-        return service.getByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication));
+        return service.getByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authorization, authentication));
     }
 
     @PutMapping("/me")
@@ -54,9 +61,10 @@ public class ProfileController {
             @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
             Authentication authentication
     ) {
-        return service.updateByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authentication), request);
+        return service.updateByKeycloakUserId(requiredSubject(jwt, gatewayUserId, authorization, authentication), request);
     }
 
     @GetMapping("/{id}")
@@ -79,7 +87,7 @@ public class ProfileController {
         service.delete(id);
     }
 
-    private String requiredSubject(Jwt jwt, String gatewayUserId, Authentication authentication) {
+    private String requiredSubject(Jwt jwt, String gatewayUserId, String authorization, Authentication authentication) {
         if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().isBlank()) {
             return jwt.getSubject();
         }
@@ -107,6 +115,32 @@ public class ProfileController {
             return gatewayUserId;
         }
 
+        String tokenSubject = subjectFromAuthorizationHeader(authorization);
+        if (tokenSubject != null) {
+            return tokenSubject;
+        }
+
         throw new ResponseStatusException(UNAUTHORIZED, "Missing authenticated user id.");
+    }
+
+    private String subjectFromAuthorizationHeader(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authorization.substring("Bearer ".length()).trim();
+        String[] parts = token.split("\\.");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        try {
+            byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
+            JsonNode payload = OBJECT_MAPPER.readTree(new String(decodedPayload, StandardCharsets.UTF_8));
+            String subject = payload.path("sub").asText(null);
+            return subject == null || subject.isBlank() ? null : subject;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

@@ -57,7 +57,7 @@ class ProfileControllerTest {
 
         when(service.create(any())).thenReturn(response);
 
-        controller.create(request, jwt("jwt-user-id"), null, null);
+        controller.create(request, jwt("jwt-user-id"), null, null, null);
 
         var captor = forClass(CreateProfileRequest.class);
         verify(service).create(captor.capture());
@@ -75,7 +75,7 @@ class ProfileControllerTest {
 
         when(service.getByKeycloakUserId("jwt-user-id")).thenReturn(response);
 
-        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"), null, null);
+        ProfileResponse actual = controller.getCurrentProfile(jwt("jwt-user-id"), null, null, null);
 
         assertThat(actual).isEqualTo(response);
         verify(service).getByKeycloakUserId("jwt-user-id");
@@ -95,11 +95,34 @@ class ProfileControllerTest {
         ProfileResponse actual = controller.getCurrentProfile(
                 null,
                 null,
+                null,
                 new TestingAuthenticationToken("authenticated-user-id", "token")
         );
 
         assertThat(actual).isEqualTo(response);
         verify(service).getByKeycloakUserId("authenticated-user-id");
+    }
+
+    @Test
+    void whenPrincipalAndGatewayHeaderAreMissing_thenUseAuthenticatedBearerTokenSubject() {
+        ProfileController controller = new ProfileController(service);
+        ProfileResponse response = ProfileResponse.builder()
+                .id(UUID.randomUUID())
+                .keycloakUserId("token-user-id")
+                .email("hasnain@test.com")
+                .build();
+
+        when(service.getByKeycloakUserId("token-user-id")).thenReturn(response);
+
+        ProfileResponse actual = controller.getCurrentProfile(
+                null,
+                null,
+                bearerTokenWithSubject("token-user-id"),
+                null
+        );
+
+        assertThat(actual).isEqualTo(response);
+        verify(service).getByKeycloakUserId("token-user-id");
     }
 
     @Test
@@ -193,5 +216,13 @@ class ProfileControllerTest {
                 .header("alg", "none")
                 .subject(subject)
                 .build();
+    }
+
+    private String bearerTokenWithSubject(String subject) {
+        String header = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"alg\":\"none\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String payload = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(("{\"sub\":\"" + subject + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return "Bearer " + header + "." + payload + ".signature";
     }
 }
