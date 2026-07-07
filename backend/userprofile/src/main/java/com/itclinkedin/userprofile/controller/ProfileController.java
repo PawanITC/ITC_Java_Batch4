@@ -40,10 +40,15 @@ public class ProfileController {
             @Valid @RequestBody CreateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "X-User-Id", required = false) String gatewayUserId,
+            @RequestHeader(value = "X-Email", required = false) String gatewayEmail,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             Authentication authentication
     ) {
         request.setKeycloakUserId(requiredSubject(jwt, gatewayUserId, authorization, authentication));
+        String authenticatedEmail = emailFromAuthenticatedUser(jwt, gatewayEmail, authorization, authentication);
+        if (authenticatedEmail != null) {
+            request.setEmail(authenticatedEmail);
+        }
         return service.create(request);
     }
 
@@ -155,7 +160,53 @@ public class ProfileController {
         );
     }
 
+    private String emailFromAuthenticatedUser(
+            Jwt jwt,
+            String gatewayEmail,
+            String authorization,
+            Authentication authentication
+    ) {
+        return firstPresent(
+                emailFromJwt(jwt),
+                emailFromAuthentication(authentication),
+                emailFromAuthentication(SecurityContextHolder.getContext().getAuthentication()),
+                gatewayEmail,
+                claimFromAuthorizationHeader(authorization, "email")
+        );
+    }
+
+    private String emailFromAuthentication(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+
+        if (authentication.getPrincipal() instanceof Jwt principalJwt) {
+            String email = emailFromJwt(principalJwt);
+            if (email != null) {
+                return email;
+            }
+        }
+
+        if (authentication.getCredentials() instanceof Jwt credentialsJwt) {
+            return emailFromJwt(credentialsJwt);
+        }
+
+        return null;
+    }
+
+    private String emailFromJwt(Jwt jwt) {
+        return jwt == null ? null : firstPresent(jwt.getClaimAsString("email"));
+    }
+
     private String subjectFromAuthorizationHeader(String authorization) {
+        return firstPresent(
+                claimFromAuthorizationHeader(authorization, "sub"),
+                claimFromAuthorizationHeader(authorization, "preferred_username"),
+                claimFromAuthorizationHeader(authorization, "email")
+        );
+    }
+
+    private String claimFromAuthorizationHeader(String authorization, String claimName) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             return null;
         }
@@ -169,11 +220,7 @@ public class ProfileController {
         try {
             byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
             JsonNode payload = OBJECT_MAPPER.readTree(new String(decodedPayload, StandardCharsets.UTF_8));
-            return firstPresent(
-                    payload.path("sub").asText(null),
-                    payload.path("preferred_username").asText(null),
-                    payload.path("email").asText(null)
-            );
+            return firstPresent(payload.path(claimName).asText(null));
         } catch (Exception ignored) {
             return null;
         }

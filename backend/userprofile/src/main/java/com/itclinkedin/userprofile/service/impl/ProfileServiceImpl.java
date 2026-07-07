@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -30,12 +31,20 @@ public class ProfileServiceImpl implements ProfileService {
             throw new RuntimeException("Authenticated Keycloak user id is required.");
         }
 
-        repository.findByKeycloakUserId(request.getKeycloakUserId())
-                .ifPresent(existing -> {
-                    throw new RuntimeException("A profile with this Keycloak user already exists.");
-                });
+        Optional<UserProfile> existingByKeycloakUser = repository.findByKeycloakUserId(request.getKeycloakUserId());
+        if (existingByKeycloakUser.isPresent()) {
+            return mapper.toResponse(existingByKeycloakUser.get());
+        }
 
-        if (repository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
+        Optional<UserProfile> existingByEmail = repository.findByEmailIgnoreCase(request.getEmail());
+        if (existingByEmail.isPresent()) {
+            UserProfile existing = existingByEmail.get();
+            if (isBootstrapPlaceholderOwner(existing)) {
+                existing.setKeycloakUserId(request.getKeycloakUserId());
+                applyCreateRequest(existing, request);
+                return mapper.toResponse(repository.save(existing));
+            }
+
             throw new RuntimeException("A profile with this email already exists.");
         }
 
@@ -135,6 +144,24 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         return mapper.toResponse(repository.save(profile));
+    }
+
+    private boolean isBootstrapPlaceholderOwner(UserProfile profile) {
+        return profile.getId() != null
+                && profile.getId().toString().equals(profile.getKeycloakUserId());
+    }
+
+    private void applyCreateRequest(UserProfile profile, CreateProfileRequest request) {
+        profile.setFirstName(request.getFirstName());
+        profile.setLastName(request.getLastName());
+        profile.setEmail(request.getEmail());
+        profile.setHeadline(request.getHeadline());
+        profile.setAbout(request.getAbout());
+        profile.setGender(request.getGender());
+        profile.setCity(request.getCity());
+        profile.setCountry(request.getCountry());
+        profile.setOpenToWork(request.getOpenToWork());
+        profile.setProfilePublic(request.getProfilePublic());
     }
 
     @Override

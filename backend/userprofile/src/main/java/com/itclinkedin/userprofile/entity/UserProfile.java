@@ -25,7 +25,7 @@ public class UserProfile {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "keycloak_user_id", unique = true, nullable = false, updatable = false)
+    @Column(name = "keycloak_user_id", unique = true, nullable = false)
     private String keycloakUserId;
 
     @NotBlank(message = "First name is required")

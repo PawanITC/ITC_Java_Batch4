@@ -64,7 +64,7 @@ class ProfileControllerTest {
 
         when(service.create(any())).thenReturn(response);
 
-        controller.create(request, jwt("jwt-user-id"), null, null, null);
+        controller.create(request, jwt("jwt-user-id"), null, null, null, null);
 
         var captor = forClass(CreateProfileRequest.class);
         verify(service).create(captor.capture());

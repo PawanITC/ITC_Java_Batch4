@@ -57,6 +57,71 @@ class ProfileServiceTest {
     }
 
     @Test
+    void givenExistingProfileForKeycloakUser_whenCreateProfile_thenReturnExistingProfile() {
+
+        CreateProfileRequest request = new CreateProfileRequest();
+        request.setKeycloakUserId("user.demo");
+        request.setFirstName("Demo");
+        request.setLastName("User");
+        request.setEmail("user.demo@example.com");
+
+        UserProfile existing = new UserProfile();
+        existing.setKeycloakUserId("user.demo");
+        existing.setEmail("user.demo@example.com");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .email("user.demo@example.com")
+                .build();
+
+        when(repository.findByKeycloakUserId("user.demo")).thenReturn(Optional.of(existing));
+        when(mapper.toResponse(existing)).thenReturn(response);
+
+        ProfileResponse result = service.create(request);
+
+        assertEquals("user.demo@example.com", result.getEmail());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void givenBootstrapPlaceholderProfileWithSameEmail_whenCreateProfile_thenClaimAndUpdateProfile() {
+
+        UUID id = UUID.randomUUID();
+
+        CreateProfileRequest request = new CreateProfileRequest();
+        request.setKeycloakUserId("user.demo");
+        request.setFirstName("Updated");
+        request.setLastName("User");
+        request.setEmail("user.demo@example.com");
+        request.setGender(com.itclinkedin.userprofile.entity.Gender.PREFER_NOT_TO_SAY);
+        request.setHeadline("Updated headline");
+
+        UserProfile existing = new UserProfile();
+        existing.setId(id);
+        existing.setKeycloakUserId(id.toString());
+        existing.setEmail("user.demo@example.com");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .id(id)
+                .keycloakUserId("user.demo")
+                .firstName("Updated")
+                .email("user.demo@example.com")
+                .build();
+
+        when(repository.findByKeycloakUserId("user.demo")).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoreCase("user.demo@example.com")).thenReturn(Optional.of(existing));
+        when(repository.save(existing)).thenReturn(existing);
+        when(mapper.toResponse(existing)).thenReturn(response);
+
+        ProfileResponse result = service.create(request);
+
+        assertEquals("user.demo", existing.getKeycloakUserId());
+        assertEquals("Updated", existing.getFirstName());
+        assertEquals("Updated headline", existing.getHeadline());
+        assertEquals("user.demo", result.getKeycloakUserId());
+        verify(repository).save(existing);
+    }
+
+    @Test
     void givenMissingKeycloakUserId_whenCreateProfile_thenThrowException() {
 
         CreateProfileRequest request = new CreateProfileRequest();
