@@ -39,11 +39,7 @@ public class AuthenticatedUserHeaderFilter implements GlobalFilter, Ordered {
                     headers.remove(USERNAME_HEADER);
                     headers.remove(EMAIL_HEADER);
 
-                    String userId = firstPresent(
-                            jwt.getSubject(),
-                            jwt.getClaimAsString("preferred_username"),
-                            jwt.getClaimAsString("email")
-                    );
+                    String userId = firstPresent(jwt.getSubject());
                     if (userId != null) {
                         headers.set(USER_ID_HEADER, userId);
                     }

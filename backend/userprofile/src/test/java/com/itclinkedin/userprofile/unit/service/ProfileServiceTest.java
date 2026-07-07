@@ -33,7 +33,7 @@ class ProfileServiceTest {
     void givenValidRequest_whenCreateProfile_thenReturnSavedProfile() {
 
         CreateProfileRequest request = new CreateProfileRequest();
-        request.setKeycloakUserId("keycloak-user-1");
+        request.setKeycloakUserId(UUID.randomUUID().toString());
         request.setFirstName("Hasnain");
         request.setEmail("hasnain@test.com");
 
@@ -60,20 +60,20 @@ class ProfileServiceTest {
     void givenExistingProfileForKeycloakUser_whenCreateProfile_thenReturnExistingProfile() {
 
         CreateProfileRequest request = new CreateProfileRequest();
-        request.setKeycloakUserId("user.demo");
+        request.setKeycloakUserId(UUID.randomUUID().toString());
         request.setFirstName("Demo");
         request.setLastName("User");
         request.setEmail("user.demo@example.com");
 
         UserProfile existing = new UserProfile();
-        existing.setKeycloakUserId("user.demo");
+        existing.setKeycloakUserId(request.getKeycloakUserId());
         existing.setEmail("user.demo@example.com");
 
         ProfileResponse response = ProfileResponse.builder()
                 .email("user.demo@example.com")
                 .build();
 
-        when(repository.findByKeycloakUserId("user.demo")).thenReturn(Optional.of(existing));
+        when(repository.findByKeycloakUserId(request.getKeycloakUserId())).thenReturn(Optional.of(existing));
         when(mapper.toResponse(existing)).thenReturn(response);
 
         ProfileResponse result = service.create(request);
@@ -88,7 +88,8 @@ class ProfileServiceTest {
         UUID id = UUID.randomUUID();
 
         CreateProfileRequest request = new CreateProfileRequest();
-        request.setKeycloakUserId("user.demo");
+        String authenticatedSubject = UUID.randomUUID().toString();
+        request.setKeycloakUserId(authenticatedSubject);
         request.setFirstName("Updated");
         request.setLastName("User");
         request.setEmail("user.demo@example.com");
@@ -102,22 +103,61 @@ class ProfileServiceTest {
 
         ProfileResponse response = ProfileResponse.builder()
                 .id(id)
-                .keycloakUserId("user.demo")
+                .keycloakUserId(authenticatedSubject)
                 .firstName("Updated")
                 .email("user.demo@example.com")
                 .build();
 
-        when(repository.findByKeycloakUserId("user.demo")).thenReturn(Optional.empty());
+        when(repository.findByKeycloakUserId(authenticatedSubject)).thenReturn(Optional.empty());
         when(repository.findByEmailIgnoreCase("user.demo@example.com")).thenReturn(Optional.of(existing));
         when(repository.save(existing)).thenReturn(existing);
         when(mapper.toResponse(existing)).thenReturn(response);
 
         ProfileResponse result = service.create(request);
 
-        assertEquals("user.demo", existing.getKeycloakUserId());
+        assertEquals(authenticatedSubject, existing.getKeycloakUserId());
         assertEquals("Updated", existing.getFirstName());
         assertEquals("Updated headline", existing.getHeadline());
-        assertEquals("user.demo", result.getKeycloakUserId());
+        assertEquals(authenticatedSubject, result.getKeycloakUserId());
+        verify(repository).save(existing);
+    }
+
+    @Test
+    void givenLegacyUsernameOwnedProfileWithSameEmail_whenCreateProfile_thenClaimWithKeycloakSubject() {
+
+        String authenticatedSubject = UUID.randomUUID().toString();
+
+        CreateProfileRequest request = new CreateProfileRequest();
+        request.setKeycloakUserId(authenticatedSubject);
+        request.setFirstName("John");
+        request.setLastName("Smith");
+        request.setEmail("john@test.com");
+        request.setGender(com.itclinkedin.userprofile.entity.Gender.MALE);
+        request.setHeadline("DevOps Engineer");
+
+        UserProfile existing = new UserProfile();
+        existing.setId(UUID.randomUUID());
+        existing.setKeycloakUserId("john");
+        existing.setEmail("john@test.com");
+
+        ProfileResponse response = ProfileResponse.builder()
+                .id(existing.getId())
+                .keycloakUserId(authenticatedSubject)
+                .firstName("John")
+                .email("john@test.com")
+                .build();
+
+        when(repository.findByKeycloakUserId(authenticatedSubject)).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoreCase("john@test.com")).thenReturn(Optional.of(existing));
+        when(repository.save(existing)).thenReturn(existing);
+        when(mapper.toResponse(existing)).thenReturn(response);
+
+        ProfileResponse result = service.create(request);
+
+        assertEquals(authenticatedSubject, existing.getKeycloakUserId());
+        assertEquals("John", existing.getFirstName());
+        assertEquals("DevOps Engineer", existing.getHeadline());
+        assertEquals(authenticatedSubject, result.getKeycloakUserId());
         verify(repository).save(existing);
     }
 

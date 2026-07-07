@@ -14,13 +14,14 @@ import java.security.Principal;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthenticatedUserHeaderFilterTest {
 
     private final AuthenticatedUserHeaderFilter filter = new AuthenticatedUserHeaderFilter();
 
     @Test
-    void shouldUsePreferredUsernameHeaderWhenSubjectIsMissing() {
+    void shouldNotUsePreferredUsernameAsUserIdWhenSubjectIsMissing() {
         MockServerWebExchange exchange = MockServerWebExchange.builder(
                 MockServerHttpRequest.get("/api/profiles/me")
                         .header(AuthenticatedUserHeaderFilter.USER_ID_HEADER, "spoofed-user")
@@ -35,11 +36,8 @@ class AuthenticatedUserHeaderFilterTest {
         StepVerifier.create(filter.filter(exchange, chain))
                 .verifyComplete();
 
-        assertEquals(
-                "user.demo",
-                capturedExchange.get().getRequest().getHeaders()
-                        .getFirst(AuthenticatedUserHeaderFilter.USER_ID_HEADER)
-        );
+        assertNull(capturedExchange.get().getRequest().getHeaders()
+                .getFirst(AuthenticatedUserHeaderFilter.USER_ID_HEADER));
         assertEquals(
                 "user.demo",
                 capturedExchange.get().getRequest().getHeaders()

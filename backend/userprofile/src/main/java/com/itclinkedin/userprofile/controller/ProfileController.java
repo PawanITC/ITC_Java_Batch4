@@ -154,9 +154,7 @@ public class ProfileController {
         }
 
         return firstPresent(
-                jwt.getSubject(),
-                jwt.getClaimAsString("preferred_username"),
-                jwt.getClaimAsString("email")
+                jwt.getSubject()
         );
     }
 
@@ -200,9 +198,7 @@ public class ProfileController {
 
     private String subjectFromAuthorizationHeader(String authorization) {
         return firstPresent(
-                claimFromAuthorizationHeader(authorization, "sub"),
-                claimFromAuthorizationHeader(authorization, "preferred_username"),
-                claimFromAuthorizationHeader(authorization, "email")
+                claimFromAuthorizationHeader(authorization, "sub")
         );
     }
 

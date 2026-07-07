@@ -39,7 +39,7 @@ public class ProfileServiceImpl implements ProfileService {
         Optional<UserProfile> existingByEmail = repository.findByEmailIgnoreCase(request.getEmail());
         if (existingByEmail.isPresent()) {
             UserProfile existing = existingByEmail.get();
-            if (isBootstrapPlaceholderOwner(existing)) {
+            if (isBootstrapPlaceholderOwner(existing) || isLegacyNonSubjectOwner(existing)) {
                 existing.setKeycloakUserId(request.getKeycloakUserId());
                 applyCreateRequest(existing, request);
                 return mapper.toResponse(repository.save(existing));
@@ -149,6 +149,20 @@ public class ProfileServiceImpl implements ProfileService {
     private boolean isBootstrapPlaceholderOwner(UserProfile profile) {
         return profile.getId() != null
                 && profile.getId().toString().equals(profile.getKeycloakUserId());
+    }
+
+    private boolean isLegacyNonSubjectOwner(UserProfile profile) {
+        String keycloakUserId = profile.getKeycloakUserId();
+        if (!StringUtils.hasText(keycloakUserId)) {
+            return true;
+        }
+
+        try {
+            UUID.fromString(keycloakUserId);
+            return false;
+        } catch (IllegalArgumentException ignored) {
+            return true;
+        }
     }
 
     private void applyCreateRequest(UserProfile profile, CreateProfileRequest request) {

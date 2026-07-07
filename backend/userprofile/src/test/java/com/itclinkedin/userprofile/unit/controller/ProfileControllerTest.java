@@ -22,9 +22,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -89,15 +91,8 @@ class ProfileControllerTest {
     }
 
     @Test
-    void whenJwtSubjectIsMissing_thenUsePreferredUsername() {
+    void whenJwtSubjectIsMissing_thenRejectPreferredUsernameAsOwner() {
         ProfileController controller = new ProfileController(service);
-        ProfileResponse response = ProfileResponse.builder()
-                .id(UUID.randomUUID())
-                .keycloakUserId("user.demo")
-                .email("user.demo@example.com")
-                .build();
-
-        when(service.getByKeycloakUserId("user.demo")).thenReturn(response);
 
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
@@ -105,10 +100,11 @@ class ProfileControllerTest {
                 .claim("email", "user.demo@example.com")
                 .build();
 
-        ProfileResponse actual = controller.getCurrentProfile(jwt, null, null, null);
-
-        assertThat(actual).isEqualTo(response);
-        verify(service).getByKeycloakUserId("user.demo");
+        assertThatThrownBy(() -> controller.getCurrentProfile(jwt, null, null, null))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .extracting("statusCode")
+                .isEqualTo(UNAUTHORIZED);
+        verify(service, never()).getByKeycloakUserId(any());
     }
 
     @Test
@@ -156,25 +152,19 @@ class ProfileControllerTest {
     }
 
     @Test
-    void whenBearerTokenSubjectIsMissing_thenUsePreferredUsernameClaim() {
+    void whenBearerTokenSubjectIsMissing_thenRejectPreferredUsernameClaimAsOwner() {
         ProfileController controller = new ProfileController(service);
-        ProfileResponse response = ProfileResponse.builder()
-                .id(UUID.randomUUID())
-                .keycloakUserId("user.demo")
-                .email("user.demo@example.com")
-                .build();
 
-        when(service.getByKeycloakUserId("user.demo")).thenReturn(response);
-
-        ProfileResponse actual = controller.getCurrentProfile(
-                null,
-                null,
-                bearerTokenWithClaims(null, "user.demo", "user.demo@example.com"),
-                null
-        );
-
-        assertThat(actual).isEqualTo(response);
-        verify(service).getByKeycloakUserId("user.demo");
+        assertThatThrownBy(() -> controller.getCurrentProfile(
+                        null,
+                        null,
+                        bearerTokenWithClaims(null, "user.demo", "user.demo@example.com"),
+                        null
+                ))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .extracting("statusCode")
+                .isEqualTo(UNAUTHORIZED);
+        verify(service, never()).getByKeycloakUserId(any());
     }
 
     @Test
