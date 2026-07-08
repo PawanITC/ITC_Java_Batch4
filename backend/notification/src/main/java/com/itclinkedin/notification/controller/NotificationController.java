@@ -15,8 +15,7 @@ public class NotificationController {
     }
 
     @GetMapping
-    public List<Notification> getForUser(Authentication auth) {
-        String userId = currentUserService.getUserId(auth);
+    public List<Notification> getForUser(@RequestParam String userId){
         return notificationService.getNotificationsForUser(userId);
     }
 

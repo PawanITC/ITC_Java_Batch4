@@ -204,7 +204,8 @@ class PostServiceTest {
 
         assertThat(event.commentId()).isEqualTo(55L);
         assertThat(event.postId()).isEqualTo(12L);
-        assertThat(event.authorName()).isEqualTo("User One");
+        assertThat(event.postAuthorId()).isEqualTo("author-1");
+        assertThat(event.actorName()).isEqualTo("User One");
         assertThat(event.commentsCount()).isEqualTo(1);
     }
 

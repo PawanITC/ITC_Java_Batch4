@@ -1,7 +1,9 @@
 package com.itclinkedin.notification.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itclinkedin.notification.event.CommentCreatedEvent;
 import com.itclinkedin.notification.event.NotificationEvent;
+import com.itclinkedin.notification.event.PostLikedEvent;
 import com.itclinkedin.notification.model.Notification;
 import com.itclinkedin.notification.service.NotificationService;
 import org.springframework.dao.DataIntegrityViolationException;

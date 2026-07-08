@@ -110,7 +110,7 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        publishPostLiked(postId, userId, (int) likesCount);
+        publishPostLiked(post, userId, (int) likesCount);
         return mapToResponse(post);
     }
 
@@ -125,7 +125,7 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        publishPostLiked(postId, userId, (int) likesCount);
+        publishPostLiked(post, userId, (int) likesCount);
         return mapToResponse(post);
     }
 
@@ -151,7 +151,7 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        publishCommentCreated(postId, comment, (int) commentsCount);
+        publishCommentCreated(post, comment, (int) commentsCount);
         return mapToResponse(post);
     }
 
@@ -193,15 +193,15 @@ public class PostService {
         }
     }
 
-    private void publishPostLiked(Long postId, String userId, int likesCount) {
+    private void publishPostLiked(Post post, String userId, int likesCount) {
         try {
             saveOutboxEvent(
-                    postId,
+                    post.getId(),
                     "post.liked",
                     "post.liked",
                     new PostLikedEvent(
                             nextEventId(),
-                            postId,
+                            post.getId(),
                             post.getAuthorId(),
                             userId,
                             userId,
@@ -214,16 +214,16 @@ public class PostService {
         }
     }
 
-    private void publishCommentCreated(Long postId, Comment comment, int commentsCount) {
+    private void publishCommentCreated(Post post, Comment comment, int commentsCount) {
         try {
             saveOutboxEvent(
-                    postId,
+                    post.getId(),
                     "comment.created",
                     "comment.created",
                     new CommentCreatedEvent(
                             nextEventId(),
                             comment.getId(),
-                            postId,
+                            post.getId(),
                             post.getAuthorId(),
                             comment.getAuthorId(),
                             comment.getAuthorName(),
