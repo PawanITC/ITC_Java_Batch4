@@ -2,15 +2,21 @@ package com.itc.linkedin.postandtimeline.controller;
 
 import com.itc.linkedin.postandtimeline.dto.request.CreateCommentRequest;
 import com.itc.linkedin.postandtimeline.dto.request.CreatePostRequest;
+import com.itc.linkedin.postandtimeline.dto.response.CommentResponse;
+import com.itc.linkedin.postandtimeline.dto.response.MediaUploadResponse;
 import com.itc.linkedin.postandtimeline.dto.response.PostResponse;
 import com.itc.linkedin.postandtimeline.security.CurrentUserService;
+import com.itc.linkedin.postandtimeline.service.PostMediaService;
 import com.itc.linkedin.postandtimeline.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
@@ -20,6 +26,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 public class PostController {
 
     private final PostService postService;
+    private final PostMediaService postMediaService;
     private final CurrentUserService currentUserService;
 
     @PostMapping
@@ -38,6 +45,14 @@ public class PostController {
         }
 
         return postService.createPost(userId, username, request);
+    }
+
+    @PostMapping("/media")
+    public MediaUploadResponse uploadMedia(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return postMediaService.upload(requiredUserId(authentication), file);
     }
 
     @PostMapping("/{postId}/like")
@@ -68,6 +83,11 @@ public class PostController {
                 requiredUsername(authentication),
                 request
         );
+    }
+
+    @GetMapping("/{postId}/comments")
+    public List<CommentResponse> getComments(@PathVariable Long postId) {
+        return postService.getComments(postId);
     }
 
     @DeleteMapping("/{postId}")

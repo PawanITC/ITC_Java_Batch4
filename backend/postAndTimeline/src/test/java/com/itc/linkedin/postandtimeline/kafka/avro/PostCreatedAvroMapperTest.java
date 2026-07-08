@@ -24,6 +24,8 @@ class PostCreatedAvroMapperTest {
                 "user.demo",
                 "LinkedIn Member",
                 "Avro payload",
+                "posts/user.demo/photo.jpg",
+                "IMAGE",
                 LocalDateTime.of(2026, 6, 23, 18, 0)
         );
 
@@ -34,5 +36,7 @@ class PostCreatedAvroMapperTest {
         assertThat(record.get("eventVersion")).isEqualTo(1);
         assertThat(record.get("postId")).isEqualTo(55L);
         assertThat(record.get("authorId").toString()).isEqualTo("user.demo");
+        assertThat(record.get("mediaObjectKey").toString()).isEqualTo("posts/user.demo/photo.jpg");
+        assertThat(record.get("mediaType").toString()).isEqualTo("IMAGE");
     }
 }

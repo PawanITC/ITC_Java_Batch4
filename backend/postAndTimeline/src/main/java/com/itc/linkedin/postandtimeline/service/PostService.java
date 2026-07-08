@@ -3,6 +3,7 @@ package com.itc.linkedin.postandtimeline.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.postandtimeline.dto.request.CreateCommentRequest;
 import com.itc.linkedin.postandtimeline.dto.request.CreatePostRequest;
+import com.itc.linkedin.postandtimeline.dto.response.CommentResponse;
 import com.itc.linkedin.postandtimeline.dto.response.PostResponse;
 import com.itc.linkedin.postandtimeline.entity.Comment;
 import com.itc.linkedin.postandtimeline.entity.Post;
@@ -22,10 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+    private final PostMediaService postMediaService;
 
     @Transactional
     public PostResponse createPost(
@@ -43,12 +47,19 @@ public class PostService {
             String username,
             CreatePostRequest request
     ) {
+        String content = request.content() == null ? "" : request.content().trim();
+        if (content.isBlank() && (request.mediaObjectKey() == null || request.mediaObjectKey().isBlank())) {
+            throw new ResponseStatusException(BAD_REQUEST, "Post must include text, photo, or video.");
+        }
+
         Post post = Post.builder()
                 .authorId(userId)
                 .authorName(username)
                 .authorHeadline("LinkedIn Member")
                 .authorAvatarUrl(null)
-                .content(request.content())
+                .content(content)
+                .mediaObjectKey(request.mediaObjectKey())
+                .mediaType(normalizeMediaType(request.mediaType(), request.mediaObjectKey()))
                 .likesCount(0)
                 .commentsCount(0)
                 .createdAt(LocalDateTime.now())
@@ -68,6 +79,8 @@ public class PostService {
                     savedPost.getAuthorName(),
                     savedPost.getAuthorHeadline(),
                     savedPost.getContent(),
+                    savedPost.getMediaObjectKey(),
+                    savedPost.getMediaType(),
                     savedPost.getCreatedAt()
             );
 
@@ -140,6 +153,15 @@ public class PostService {
 
         publishCommentCreated(postId, comment, (int) commentsCount);
         return mapToResponse(post);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getComments(Long postId) {
+        getPostOrThrow(postId);
+        return commentRepository.findByPostIdOrderByCreatedAtAsc(postId)
+                .stream()
+                .map(this::mapCommentToResponse)
+                .toList();
     }
 
     @Transactional
@@ -240,9 +262,39 @@ public class PostService {
                 .authorHeadline(post.getAuthorHeadline())
                 .authorAvatarUrl(post.getAuthorAvatarUrl())
                 .content(post.getContent())
+                .mediaUrl(postMediaService.presignedUrl(post.getMediaObjectKey()))
+                .mediaObjectKey(post.getMediaObjectKey())
+                .mediaType(post.getMediaType())
                 .likesCount(post.getLikesCount())
                 .commentsCount(post.getCommentsCount())
                 .createdAt(post.getCreatedAt())
                 .build();
+    }
+
+    private CommentResponse mapCommentToResponse(Comment comment) {
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .postId(comment.getPostId())
+                .authorId(comment.getAuthorId())
+                .authorName(comment.getAuthorName())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build();
+    }
+
+    private String normalizeMediaType(String mediaType, String mediaObjectKey) {
+        if (mediaObjectKey == null || mediaObjectKey.isBlank()) {
+            return null;
+        }
+        if (mediaType == null || mediaType.isBlank()) {
+            throw new ResponseStatusException(BAD_REQUEST, "Media type is required when media URL is provided.");
+        }
+
+        String normalized = mediaType.trim().toUpperCase();
+        if (!normalized.equals("IMAGE") && !normalized.equals("VIDEO")) {
+            throw new ResponseStatusException(BAD_REQUEST, "Media type must be IMAGE or VIDEO.");
+        }
+
+        return normalized;
     }
 }

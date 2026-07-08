@@ -24,6 +24,9 @@ public class PostCreatedAvroMapper {
                 {"name": "authorName", "type": "string"},
                 {"name": "authorHeadline", "type": "string"},
                 {"name": "content", "type": "string"},
+                {"name": "mediaObjectKey", "type": ["null", "string"], "default": null},
+                {"name": "mediaUrl", "type": ["null", "string"], "default": null},
+                {"name": "mediaType", "type": ["null", "string"], "default": null},
                 {"name": "createdAt", "type": "string"}
               ]
             }
@@ -42,6 +45,9 @@ public class PostCreatedAvroMapper {
         record.put("authorName", event.authorName());
         record.put("authorHeadline", event.authorHeadline());
         record.put("content", event.content());
+        record.put("mediaObjectKey", event.mediaObjectKey());
+        record.put("mediaUrl", null);
+        record.put("mediaType", event.mediaType());
         record.put("createdAt", event.createdAt().toString());
         return record;
     }

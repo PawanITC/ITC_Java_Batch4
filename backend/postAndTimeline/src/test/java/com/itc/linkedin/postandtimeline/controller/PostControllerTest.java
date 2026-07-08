@@ -4,6 +4,7 @@ import com.itc.linkedin.postandtimeline.dto.request.CreateCommentRequest;
 import com.itc.linkedin.postandtimeline.dto.request.CreatePostRequest;
 import com.itc.linkedin.postandtimeline.dto.response.PostResponse;
 import com.itc.linkedin.postandtimeline.security.CurrentUserService;
+import com.itc.linkedin.postandtimeline.service.PostMediaService;
 import com.itc.linkedin.postandtimeline.service.PostService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ class PostControllerTest {
     private PostService postService;
 
     @Mock
+    private PostMediaService postMediaService;
+
+    @Mock
     private CurrentUserService currentUserService;
 
     @Mock
@@ -37,7 +41,7 @@ class PostControllerTest {
 
     @Test
     void shouldCreatePostFromJwtIdentity() {
-        CreatePostRequest request = new CreatePostRequest("content");
+        CreatePostRequest request = new CreatePostRequest("content", null, null);
         PostResponse response = response();
 
         when(currentUserService.getUserId(authentication)).thenReturn("jwt-user");
@@ -55,7 +59,7 @@ class PostControllerTest {
         when(currentUserService.getUserId(authentication)).thenReturn(null);
         when(currentUserService.getUsername(authentication)).thenReturn(null);
 
-        assertThatThrownBy(() -> postController.createPost(authentication, new CreatePostRequest("content")))
+        assertThatThrownBy(() -> postController.createPost(authentication, new CreatePostRequest("content", null, null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("401 UNAUTHORIZED")
                 .hasMessageContaining("Missing user identity");

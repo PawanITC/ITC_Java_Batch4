@@ -1,9 +1,14 @@
-import { useState } from "react";
-import { CalendarDays, Image, Newspaper, PlaySquare, Send } from "lucide-react";
+import { ChangeEvent, useRef, useState } from "react";
+import { CalendarDays, Image, Newspaper, PlaySquare, Send, X } from "lucide-react";
 import Avatar from "../common/Avatar";
+import { MediaUploadResponse } from "../../types/feed";
 
 type Props = {
-  onCreate: (content: string) => Promise<void>;
+  onCreate: (
+    content: string,
+    media?: Pick<MediaUploadResponse, "mediaObjectKey" | "objectKey" | "mediaType">
+  ) => Promise<void>;
+  onUploadMedia?: (file: File) => Promise<MediaUploadResponse>;
   currentUserName: string;
   currentUserAvatarUrl?: string;
   disabled?: boolean;
@@ -11,6 +16,7 @@ type Props = {
 
 export default function CreatePostCard({
   onCreate,
+  onUploadMedia,
   currentUserName,
   currentUserAvatarUrl,
   disabled = false,
@@ -19,21 +25,62 @@ export default function CreatePostCard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [media, setMedia] = useState<MediaUploadResponse | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const acceptedMediaRef = useRef("image/*");
 
   const submit = async () => {
-    if (!content.trim() || submitting || disabled) return;
+    if ((!content.trim() && !media) || submitting || disabled || uploading) return;
 
     try {
       setSubmitting(true);
       setError("");
-      await onCreate(content.trim());
+      if (media) {
+        await onCreate(content.trim(), {
+          mediaObjectKey: media.mediaObjectKey,
+          objectKey: media.objectKey,
+          mediaType: media.mediaType,
+        });
+      } else {
+        await onCreate(content.trim());
+      }
       setContent("");
+      setMedia(null);
       setExpanded(false);
     } catch (error) {
       console.error("Post creation error", error);
       setError("Post could not be shared. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const chooseMedia = (accept: string) => {
+    if (disabled || uploading || submitting) return;
+    acceptedMediaRef.current = accept;
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = accept;
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !onUploadMedia) return;
+
+    try {
+      setUploading(true);
+      setError("");
+      const uploaded = await onUploadMedia(file);
+      setMedia(uploaded);
+      setExpanded(true);
+    } catch (error) {
+      console.error("Media upload error", error);
+      setError("Media could not be uploaded. Use a photo or video up to 50 MB.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -61,13 +108,46 @@ export default function CreatePostCard({
 
       {error && <p className="mt-2 px-1 text-sm text-red-600">{error}</p>}
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={acceptedMediaRef.current}
+        onChange={handleFileSelected}
+        className="hidden"
+      />
+
+      {media && (
+        <div className="relative mt-3 overflow-hidden rounded-lg border border-[#d6d6d6] bg-black">
+          <button
+            onClick={() => setMedia(null)}
+            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+            title="Remove media"
+          >
+            <X size={18} />
+          </button>
+          {media.mediaType === "IMAGE" ? (
+            <img src={media.mediaUrl} alt="" className="max-h-[420px] w-full object-contain" />
+          ) : (
+            <video src={media.mediaUrl} controls className="max-h-[420px] w-full bg-black" />
+          )}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between border-t border-[#edf0f3] pt-2">
         <div className="grid flex-1 grid-cols-4 text-sm font-semibold text-gray-600">
-          <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+          <button
+            type="button"
+            onClick={() => chooseMedia("image/*")}
+            className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100"
+          >
             <Image size={20} className="text-[#378fe9]" />
             <span className="hidden sm:inline">Photo</span>
           </button>
-          <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100">
+          <button
+            type="button"
+            onClick={() => chooseMedia("video/*")}
+            className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-gray-100"
+          >
             <PlaySquare size={20} className="text-[#5f9b41]" />
             <span className="hidden sm:inline">Video</span>
           </button>
@@ -83,11 +163,11 @@ export default function CreatePostCard({
 
         <button
           onClick={submit}
-          disabled={!content.trim() || submitting || disabled}
+          disabled={(!content.trim() && !media) || submitting || disabled || uploading}
           className="ml-2 flex h-9 items-center gap-2 rounded-full bg-[#0a66c2] px-4 text-sm font-semibold text-white transition hover:bg-[#004182] disabled:cursor-not-allowed disabled:bg-gray-300"
         >
           <Send size={16} />
-          {submitting ? "Posting" : "Post"}
+          {uploading ? "Uploading" : submitting ? "Posting" : "Post"}
         </button>
       </div>
     </div>

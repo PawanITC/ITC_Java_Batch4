@@ -36,6 +36,7 @@ public class TimelineService {
 
     private final TimelinePostRepository timelinePostRepository;
     private final FollowEdgeRepository followEdgeRepository;
+    private final MediaUrlService mediaUrlService;
 
     @Cacheable(value = "timeline", key = "#userId")
     public List<TimelinePostResponse> getTimeline(String userId) {
@@ -155,6 +156,9 @@ public class TimelineService {
                 .authorHeadline(post.getAuthorHeadline())
                 .authorAvatarUrl(post.getAuthorAvatarUrl())
                 .content(post.getContent())
+                .mediaUrl(mediaUrlService.presignedUrl(post.getMediaObjectKey()))
+                .mediaObjectKey(post.getMediaObjectKey())
+                .mediaType(post.getMediaType())
                 .likesCount(post.getLikesCount())
                 .commentsCount(post.getCommentsCount())
                 .createdAt(post.getCreatedAt())
@@ -299,6 +303,8 @@ public class TimelineService {
                 .authorHeadline(event.authorHeadline())
                 .authorAvatarUrl(null)
                 .content(event.content())
+                .mediaObjectKey(event.mediaObjectKey())
+                .mediaType(event.mediaType())
                 .likesCount(0)
                 .commentsCount(0)
                 .createdAt(event.createdAt())
@@ -323,6 +329,8 @@ public class TimelineService {
                 .authorHeadline(sourcePost.getAuthorHeadline())
                 .authorAvatarUrl(sourcePost.getAuthorAvatarUrl())
                 .content(sourcePost.getContent())
+                .mediaObjectKey(sourcePost.getMediaObjectKey())
+                .mediaType(sourcePost.getMediaType())
                 .likesCount(sourcePost.getLikesCount())
                 .commentsCount(sourcePost.getCommentsCount())
                 .createdAt(sourcePost.getCreatedAt())
