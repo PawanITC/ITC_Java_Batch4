@@ -24,6 +24,7 @@ export default function AppRoutes() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/user-profile" element={<Navigate to="/profile" replace />} />
+
           <Route path="/connections" element={<ConnectionsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
