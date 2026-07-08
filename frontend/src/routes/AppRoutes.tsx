@@ -6,7 +6,7 @@ import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
 import JobPosting from "../pages/JobPosting";
 import NotificationsPage from "../pages/NotificationsPage";
-import ConnectionsPage from "./pages/ConnectionsPage";
+import ConnectionsPage from "../pages/ConnectionsPage";
 
 export default function AppRoutes() {
 
@@ -24,7 +24,6 @@ export default function AppRoutes() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/user-profile" element={<Navigate to="/profile" replace />} />
-          <Route path="//connections" element={</>} />
           <Route path="/connections" element={<ConnectionsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

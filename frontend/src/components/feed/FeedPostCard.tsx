@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Avatar from "../common/Avatar";
-import { FeedPost } from "../../types/feed";
+import { FeedComment, FeedPost } from "../../types/feed";
 
 type Props = {
   post: FeedPost;
@@ -18,6 +18,7 @@ type Props = {
   onUnlike?: (postId: number) => Promise<void>;
   onDelete?: (postId: number) => Promise<void>;
   onComment?: (postId: number, content: string) => Promise<void>;
+  onLoadComments?: (postId: number) => Promise<FeedComment[]>;
   readOnly?: boolean;
 };
 
@@ -41,6 +42,7 @@ export default function FeedPostCard({
   onUnlike,
   onDelete,
   onComment,
+  onLoadComments,
   readOnly = false,
 }: Props) {
   const postId = post.postId ?? post.id;
@@ -48,6 +50,10 @@ export default function FeedPostCard({
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<FeedComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState("");
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -69,8 +75,36 @@ export default function FeedPostCard({
     if (!comment.trim() || readOnly) return;
     await onComment?.(postId, comment.trim());
     setCommentsCount((current) => current + 1);
+    setComments((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        postId,
+        authorId: "",
+        authorName: currentUserName,
+        content: comment.trim(),
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setComment("");
-    setShowCommentBox(false);
+    setShowComments(true);
+  };
+
+  const toggleComments = async () => {
+    const nextVisible = !showComments;
+    setShowComments(nextVisible);
+    if (!nextVisible || comments.length > 0 || !onLoadComments) return;
+
+    try {
+      setCommentsLoading(true);
+      setCommentsError("");
+      setComments(await onLoadComments(postId));
+    } catch (error) {
+      console.error("Comment loading error", error);
+      setCommentsError("Comments could not be loaded.");
+    } finally {
+      setCommentsLoading(false);
+    }
   };
 
   return (
@@ -127,6 +161,16 @@ export default function FeedPostCard({
         {post.content}
       </p>
 
+      {post.mediaUrl && (
+        <div className="border-y border-[#edf0f3] bg-black">
+          {post.mediaType === "VIDEO" ? (
+            <video src={post.mediaUrl} controls className="max-h-[560px] w-full bg-black" />
+          ) : (
+            <img src={post.mediaUrl} alt="" className="max-h-[560px] w-full object-contain" />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-b border-[#edf0f3] px-4 pb-2 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#0a66c2] text-[10px] text-white">
@@ -134,7 +178,14 @@ export default function FeedPostCard({
           </span>
           {likesCount} reactions
         </span>
-        <span>{commentsCount} comments</span>
+        <button
+          type="button"
+          aria-label="Show discussion"
+          onClick={toggleComments}
+          className="rounded px-1 hover:text-[#0a66c2] hover:underline"
+        >
+          {commentsCount} comments
+        </button>
       </div>
 
       <div className="grid grid-cols-4 px-2 py-1 text-sm font-semibold text-gray-600">
@@ -149,8 +200,13 @@ export default function FeedPostCard({
         </button>
 
         <button
+          type="button"
+          aria-label="Comment"
           onClick={() => {
-            if (!readOnly) setShowCommentBox((current) => !current);
+            if (!readOnly) {
+              setShowCommentBox((current) => !current);
+              if (!showComments) void toggleComments();
+            }
           }}
           className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
         >
@@ -196,6 +252,32 @@ export default function FeedPostCard({
               <Send size={16} />
             </button>
           </div>
+        </div>
+      )}
+
+      {showComments && (
+        <div className="space-y-3 border-t border-[#edf0f3] px-4 py-3">
+          {commentsLoading ? (
+            <p className="text-sm text-gray-500">Loading comments...</p>
+          ) : commentsError ? (
+            <p className="text-sm text-red-600">{commentsError}</p>
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-gray-500">No comments yet.</p>
+          ) : (
+            comments.map((item) => (
+              <div key={item.id} className="flex gap-2">
+                <Avatar
+                  name={item.authorName}
+                  sizeClassName="h-8 w-8"
+                  textClassName="text-xs"
+                />
+                <div className="min-w-0 rounded-2xl bg-[#f3f2ef] px-3 py-2">
+                  <p className="text-xs font-semibold text-[#191919]">{item.authorName}</p>
+                  <p className="whitespace-pre-wrap text-sm text-[#191919]">{item.content}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </article>

@@ -2,7 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import keycloak from "../features/auth/keycloak";
 import { FeedPost } from "../types/feed";
 import { getTimeline, TimelineSortMode } from "../services/timelineApi";
-import { addComment, createPost, deletePost, likePost, unlikePost } from "../services/postApi";
+import {
+  addComment,
+  createPost,
+  deletePost,
+  getComments,
+  likePost,
+  unlikePost,
+  uploadPostMedia,
+} from "../services/postApi";
 import { getCurrentProfile, Profile } from "../features/userprofile/api";
 
 import CreatePostCard from "../components/feed/CreatePostCard";
@@ -55,9 +63,12 @@ export default function FeedTimelinePage() {
     }
   }, []);
 
-  const handleCreatePost = async (content: string) => {
+  const handleCreatePost = async (
+    content: string,
+    media?: { mediaObjectKey?: string; objectKey?: string; mediaType: "IMAGE" | "VIDEO" }
+  ) => {
     setError("");
-    const created = await createPost(content);
+    const created = await createPost(content, media);
     setPosts((currentPosts) => [created, ...currentPosts]);
     await loadFeed();
   };
@@ -151,6 +162,7 @@ export default function FeedTimelinePage() {
 
           <CreatePostCard
             onCreate={handleCreatePost}
+            onUploadMedia={uploadPostMedia}
             currentUserName={currentUserName}
             currentUserAvatarUrl={profile?.profilePictureUrl}
             disabled={!profileReady}
@@ -214,6 +226,7 @@ export default function FeedTimelinePage() {
                 onLike={handleLike}
                 onUnlike={handleUnlike}
                 onComment={profileReady ? handleComment : undefined}
+                onLoadComments={getComments}
                 onDelete={
                   post.authorId === currentUserId ? handleDelete : undefined
                 }

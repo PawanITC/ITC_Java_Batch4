@@ -56,6 +56,8 @@ class TimelineEventConsumerTest {
                 "user.demo",
                 "LinkedIn Member",
                 "Kafka test",
+                null,
+                null,
                 LocalDateTime.now()
         );
         GenericRecord record = avroMapper.toGenericRecord(event);
@@ -80,6 +82,8 @@ class TimelineEventConsumerTest {
                 "user.demo",
                 "LinkedIn Member",
                 "duplicate",
+                null,
+                null,
                 LocalDateTime.now()
         );
         GenericRecord record = avroMapper.toGenericRecord(event);
@@ -104,6 +108,8 @@ class TimelineEventConsumerTest {
                 "user.demo",
                 "LinkedIn Member",
                 "bad version",
+                null,
+                null,
                 LocalDateTime.now()
         );
         GenericRecord record = avroMapper.toGenericRecord(event);
