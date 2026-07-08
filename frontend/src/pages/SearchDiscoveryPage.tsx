@@ -23,6 +23,7 @@ import JobResultCard from "../components/search/JobResultCard";
 import CompanyResultCard from "../components/search/CompanyResultCard";
 import DiscoverySuggestions from "../components/search/DiscoverySuggestions";
 import TrendingTopics from "../components/search/TrendingTopics";
+import JobPosting from "./JobPosting";
 
 const SEARCH_TABS: SearchType[] = ["people", "posts", "jobs", "companies"];
 const ALL_FILTER = "All";
@@ -313,6 +314,11 @@ export default function SearchDiscoveryPage() {
 
             <div className="space-y-4">{renderResults()}</div>
           </div>
+          {activeTab === "jobs" && (
+            <div className="w-full mt-4">
+              <JobPosting />
+            </div>
+          )}
         </section>
 
         <aside className="space-y-4">
