@@ -5,7 +5,7 @@ import {
   loadNotifications,
   readNotification,
 } from "../store/notificationSlice";
-import { getUsername } from "../utils/authUtils";
+import { getUserId } from "../utils/authUtils";
 import { AppNotification } from "../types/notification";
 
 export default function NotificationsPage() {
@@ -15,7 +15,7 @@ export default function NotificationsPage() {
   );
 
   useEffect(() => {
-    const userId = getUsername();
+    const userId = getUserId();
     if (userId) {
       dispatch(loadNotifications(userId));
     }

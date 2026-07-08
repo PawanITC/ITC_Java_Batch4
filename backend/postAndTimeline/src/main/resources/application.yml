@@ -5,6 +5,11 @@ spring:
   application:
     name: post-service
 
+  servlet:
+    multipart:
+      max-file-size: ${POST_MEDIA_MAX_FILE_SIZE:50MB}
+      max-request-size: ${POST_MEDIA_MAX_REQUEST_SIZE:55MB}
+
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5436/postdb}
     username: ${POSTGRES_USER:postgres}

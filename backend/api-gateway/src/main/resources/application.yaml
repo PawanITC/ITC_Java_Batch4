@@ -6,6 +6,15 @@ spring:
   application:
     name: api-gateway
 
+  codec:
+    max-in-memory-size: ${GATEWAY_MAX_IN_MEMORY_SIZE:60MB}
+
+  webflux:
+    multipart:
+      max-in-memory-size: ${GATEWAY_MULTIPART_MAX_IN_MEMORY_SIZE:60MB}
+      max-disk-usage-per-part: ${GATEWAY_MULTIPART_MAX_DISK_USAGE_PER_PART:60MB}
+      max-parts: ${GATEWAY_MULTIPART_MAX_PARTS:16}
+
   security:
     oauth2:
       resourceserver:

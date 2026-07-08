@@ -13,7 +13,7 @@ import keycloak from "../../features/auth/keycloak";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
 import { loadNotifications } from "../../store/notificationSlice";
-import { getUsername } from "../../utils/authUtils";
+import { getUserId } from "../../utils/authUtils";
 
 function accountInitials() {
   const token = keycloak.tokenParsed;
@@ -43,7 +43,7 @@ export default function FeedNavbar() {
   );
 
   useEffect(() => {
-    const userId = getUsername();
+    const userId = getUserId();
     if (!userId) return;
 
     dispatch(loadNotifications(userId));
