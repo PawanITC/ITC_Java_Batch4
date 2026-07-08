@@ -16,8 +16,6 @@ export default function AppRoutes() {
       <Routes>
 
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/jobposting" element={<JobPosting/>} />
-
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<FeedTimelinePage />} />
           <Route path="/search" element={<SearchDiscoveryPage />} />
