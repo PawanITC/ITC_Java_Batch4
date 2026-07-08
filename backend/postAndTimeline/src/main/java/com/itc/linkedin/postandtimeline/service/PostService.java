@@ -202,6 +202,8 @@ public class PostService {
                     new PostLikedEvent(
                             nextEventId(),
                             postId,
+                            post.getAuthorId(),
+                            userId,
                             userId,
                             likesCount,
                             LocalDateTime.now()
@@ -222,6 +224,7 @@ public class PostService {
                             nextEventId(),
                             comment.getId(),
                             postId,
+                            post.getAuthorId(),
                             comment.getAuthorId(),
                             comment.getAuthorName(),
                             commentsCount,

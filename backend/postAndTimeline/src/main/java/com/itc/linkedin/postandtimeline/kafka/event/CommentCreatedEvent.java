@@ -6,9 +6,9 @@ public record CommentCreatedEvent(
         Long eventId,
         Long commentId,
         Long postId,
-        String authorId,
-        String authorName,
+        String postAuthorId,
+        String actorUserId,
+        String actorName,
         int commentsCount,
         LocalDateTime createdAt
-) {
-}
+) {}

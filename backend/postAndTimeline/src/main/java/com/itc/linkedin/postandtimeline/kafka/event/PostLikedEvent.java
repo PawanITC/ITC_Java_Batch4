@@ -5,8 +5,9 @@ import java.time.LocalDateTime;
 public record PostLikedEvent(
         Long eventId,
         Long postId,
-        String userId,
+        String postAuthorId,
+        String actorUserId,
+        String actorName,
         int likesCount,
         LocalDateTime likedAt
-) {
-}
+) {}

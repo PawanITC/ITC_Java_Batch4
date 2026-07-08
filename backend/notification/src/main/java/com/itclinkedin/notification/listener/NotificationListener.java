@@ -33,4 +33,35 @@ public class NotificationListener {
         }
         acknowledgment.acknowledge();
     }
+    @KafkaListener(topics = "post.liked", groupId = "notification-service")
+    public void onPostLiked(String message, Acknowledgment ack) throws Exception {
+        PostLikedEvent event = objectMapper.readValue(message, PostLikedEvent.class);
+
+        if (!event.postAuthorId().equals(event.actorUserId())) {
+            notificationService.createFromEvent(new NotificationEvent(
+                    String.valueOf(event.eventId()),
+                    event.postAuthorId(),
+                    "POST_LIKED",
+                    event.actorName() + " liked your post"
+            ));
+        }
+
+        ack.acknowledge();
+    }
+
+    @KafkaListener(topics = "comment.created", groupId = "notification-service")
+    public void onCommentCreated(String message, Acknowledgment ack) throws Exception {
+        CommentCreatedEvent event = objectMapper.readValue(message, CommentCreatedEvent.class);
+
+        if (!event.postAuthorId().equals(event.actorUserId())) {
+            notificationService.createFromEvent(new NotificationEvent(
+                    String.valueOf(event.eventId()),
+                    event.postAuthorId(),
+                    "POST_COMMENTED",
+                    event.actorName() + " commented on your post"
+            ));
+        }
+
+        ack.acknowledge();
+    }
 }
