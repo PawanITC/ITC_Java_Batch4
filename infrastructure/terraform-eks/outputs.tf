@@ -37,3 +37,7 @@ output "s3_upload_bucket_name" {
 output "s3_upload_bucket_arn" {
   value = aws_s3_bucket.app_uploads.arn
 }
+
+output "media_service_role_arn" {
+  value = aws_iam_role.media_service.arn
+}

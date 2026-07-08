@@ -64,3 +64,68 @@ resource "aws_s3_bucket_lifecycle_configuration" "app_uploads" {
     }
   }
 }
+
+data "aws_iam_policy_document" "media_service_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:linkedin-prod:media-service-account"]
+    }
+  }
+}
+
+resource "aws_iam_role" "media_service" {
+  name               = "${var.app_name}-${var.environment}-media-service"
+  assume_role_policy = data.aws_iam_policy_document.media_service_assume_role.json
+
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-media-service"
+    Environment = var.environment
+    Project     = var.app_name
+  }
+}
+
+data "aws_iam_policy_document" "media_service_s3" {
+  statement {
+    sid = "MediaObjectAccess"
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
+
+    resources = ["${aws_s3_bucket.app_uploads.arn}/posts/*"]
+  }
+}
+
+resource "aws_iam_policy" "media_service_s3" {
+  name        = "${var.app_name}-${var.environment}-media-service-s3"
+  description = "Allow media services to upload and presign post media objects."
+  policy      = data.aws_iam_policy_document.media_service_s3.json
+
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-media-service-s3"
+    Environment = var.environment
+    Project     = var.app_name
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "media_service_s3" {
+  role       = aws_iam_role.media_service.name
+  policy_arn = aws_iam_policy.media_service_s3.arn
+}
