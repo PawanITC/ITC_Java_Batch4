@@ -7,6 +7,8 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
+
+
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
@@ -14,5 +16,8 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8088
+
+RUN mkdir -p /opentelemetry
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.10.0/opentelemetry-javaagent.jar /opentelemetry/opentelemetry-javaagent.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
