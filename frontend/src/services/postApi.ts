@@ -74,6 +74,17 @@ export async function likePost(postId: number) {
   return toPost(data.data ?? data);
 }
 
+export async function getPost(postId: number): Promise<CreatePostResponse> {
+  const res = await fetch(`${API_BASE}/api/posts/${postId}`, {
+    headers: await authHeaders(),
+  });
+
+  if (!res.ok) throw new Error(`Get post failed: ${res.status}`);
+
+  const data = await res.json();
+  return toPost(data.data ?? data);
+}
+
 export async function uploadPostMedia(file: File): Promise<MediaUploadResponse> {
   await keycloak.updateToken(30);
 

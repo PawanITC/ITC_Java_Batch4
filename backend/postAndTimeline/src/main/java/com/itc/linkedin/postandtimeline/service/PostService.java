@@ -156,6 +156,11 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public PostResponse getPost(Long postId) {
+        return mapToResponse(getPostOrThrow(postId));
+    }
+
+    @Transactional(readOnly = true)
     public List<CommentResponse> getComments(Long postId) {
         getPostOrThrow(postId);
         return commentRepository.findByPostIdOrderByCreatedAtAsc(postId)

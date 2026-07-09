@@ -6,7 +6,7 @@ import {
   Send,
   ThumbsUp,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Avatar from "../common/Avatar";
 import { FeedComment, FeedPost } from "../../types/feed";
 
@@ -14,10 +14,10 @@ type Props = {
   post: FeedPost;
   currentUserName?: string;
   currentUserAvatarUrl?: string;
-  onLike?: (postId: number) => Promise<void>;
-  onUnlike?: (postId: number) => Promise<void>;
+  onLike?: (postId: number) => Promise<Partial<FeedPost> | void>;
+  onUnlike?: (postId: number) => Promise<Partial<FeedPost> | void>;
   onDelete?: (postId: number) => Promise<void>;
-  onComment?: (postId: number, content: string) => Promise<void>;
+  onComment?: (postId: number, content: string) => Promise<Partial<FeedPost> | void>;
   onLoadComments?: (postId: number) => Promise<FeedComment[]>;
   onRepost?: (post: FeedPost) => Promise<void>;
   onSend?: (post: FeedPost) => Promise<void>;
@@ -64,6 +64,14 @@ export default function FeedPostCard({
   const [reposting, setReposting] = useState(false);
   const [sending, setSending] = useState(false);
 
+  useEffect(() => {
+    setLikesCount(post.likesCount);
+  }, [post.likesCount]);
+
+  useEffect(() => {
+    setCommentsCount(post.commentsCount);
+  }, [post.commentsCount]);
+
   const handleLike = async () => {
     if (readOnly) return;
 
@@ -72,16 +80,25 @@ export default function FeedPostCard({
     setLikesCount((current) => current + (nextLiked ? 1 : -1));
 
     if (nextLiked) {
-      await onLike?.(postId);
+      const updated = await onLike?.(postId);
+      if (updated?.likesCount !== undefined) {
+        setLikesCount(updated.likesCount);
+      }
     } else {
-      await onUnlike?.(postId);
+      const updated = await onUnlike?.(postId);
+      if (updated?.likesCount !== undefined) {
+        setLikesCount(updated.likesCount);
+      }
     }
   };
 
   const submitComment = async () => {
     if (!comment.trim() || readOnly) return;
-    await onComment?.(postId, comment.trim());
+    const updated = await onComment?.(postId, comment.trim());
     setCommentsCount((current) => current + 1);
+    if (updated?.commentsCount !== undefined) {
+      setCommentsCount(updated.commentsCount);
+    }
     setComments((current) => [
       ...current,
       {

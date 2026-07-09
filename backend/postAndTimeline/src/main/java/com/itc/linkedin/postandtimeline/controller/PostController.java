@@ -55,6 +55,11 @@ public class PostController {
         return postMediaService.upload(requiredUserId(authentication), file);
     }
 
+    @GetMapping("/{postId}")
+    public PostResponse getPost(@PathVariable Long postId) {
+        return postService.getPost(postId);
+    }
+
     @PostMapping("/{postId}/like")
     public PostResponse likePost(
             Authentication authentication,
