@@ -6,9 +6,21 @@ public record CommentCreatedEvent(
         Long eventId,
         Long commentId,
         Long postId,
-        String authorId,
-        String authorName,
+        String postAuthorId,
+        String actorUserId,
+        String actorName,
         int commentsCount,
         LocalDateTime createdAt
 ) {
+    public CommentCreatedEvent(
+            Long eventId,
+            Long commentId,
+            Long postId,
+            String actorUserId,
+            String actorName,
+            int commentsCount,
+            LocalDateTime createdAt
+    ) {
+        this(eventId, commentId, postId, null, actorUserId, actorName, commentsCount, createdAt);
+    }
 }
