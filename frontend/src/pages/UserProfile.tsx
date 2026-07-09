@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useAppSelector } from "../hooks/reduxHooks";
 import { getKeycloakUser } from "../features/auth/keycloakUser";
 import About from "../features/userprofile/components/About";
@@ -18,6 +19,7 @@ import {
 } from "../features/userprofile/api";
 
 function UserProfile() {
+  const { profileId } = useParams();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +28,7 @@ function UserProfile() {
   const { isLoggedIn, loading: authLoading, user: authUser } = useAppSelector(
     (state) => state.auth
   );
+  const isViewingOwnProfile = !profileId;
 
   const loadProfile = useCallback(async () => {
     if (authLoading) return;
@@ -37,6 +40,20 @@ function UserProfile() {
     if (!isLoggedIn) {
       setProfile(null);
       setLoading(false);
+      return;
+    }
+
+    if (profileId) {
+      try {
+        const selectedProfile = await getProfile(profileId);
+        setProfile(selectedProfile);
+      } catch (loadError) {
+        console.error(loadError);
+        setProfile(null);
+        setError("Unable to load this profile right now.");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -77,7 +94,7 @@ function UserProfile() {
     } finally {
       setLoading(false);
     }
-  }, [authLoading, authUser, isLoggedIn]);
+  }, [authLoading, authUser, isLoggedIn, profileId]);
 
   useEffect(() => {
     loadProfile();
@@ -122,26 +139,38 @@ function UserProfile() {
     <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
       <div className="w-[65%] mx-auto flex flex-col gap-6">
         <HeroSection profile={profile} />
-        <ProfileInfo profile={profile} onEdit={() => setIsEditModalOpen(true)} />
-        <About profile={profile} onEdit={() => setIsEditModalOpen(true)} />
+        <ProfileInfo
+          profile={profile}
+          onEdit={() => setIsEditModalOpen(true)}
+          canEdit={isViewingOwnProfile}
+        />
+        <About
+          profile={profile}
+          onEdit={() => setIsEditModalOpen(true)}
+          canEdit={isViewingOwnProfile}
+        />
         <Services profile={profile} />
         <Experience
           experiences={profile.experiences || []}
           profileId={profile.id}
           onRefresh={loadProfile}
+          canEdit={isViewingOwnProfile}
         />
-        <Education profile={profile} onRefresh={loadProfile} />
+        <Education profile={profile} onRefresh={loadProfile} canEdit={isViewingOwnProfile} />
         <Skills
           skills={profile.skills || []}
           profileId={profile.id}
           onRefresh={loadProfile}
+          canEdit={isViewingOwnProfile}
         />
-        <ProfileEditModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          profile={profile}
-          onSaved={loadProfile}
-        />
+        {isViewingOwnProfile && (
+          <ProfileEditModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            profile={profile}
+            onSaved={loadProfile}
+          />
+        )}
       </div>
     </div>
   );

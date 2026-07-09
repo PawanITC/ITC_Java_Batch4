@@ -7,6 +7,7 @@ interface SkillsModal2Props {
   skills: any[];
   onEditClick: (skill: any) => void;
   onDeleteClick: (id: string) => void;
+  canEdit?: boolean;
 }
 
 export default function SkillsModal2({ 
@@ -14,7 +15,8 @@ export default function SkillsModal2({
   onClose, 
   skills, 
   onEditClick, 
-  onDeleteClick 
+  onDeleteClick,
+  canEdit = true,
 }: SkillsModal2Props) {
   
   if (!isOpen) return null;
@@ -50,29 +52,31 @@ export default function SkillsModal2({
                 </div>
 
                 {/* Edit & Delete Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover/skill-row:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => {
-                      onClose(); // Close the "Show All" modal view
-                      onEditClick(skill); // Open the Edit Form modal
-                    }}
-                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="Edit skill"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete ${skill.skillName}?`)) {
-                        onDeleteClick(skill.id);
-                      }
-                    }}
-                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete skill"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover/skill-row:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        onClose(); // Close the "Show All" modal view
+                        onEditClick(skill); // Open the Edit Form modal
+                      }}
+                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      title="Edit skill"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete ${skill.skillName}?`)) {
+                          onDeleteClick(skill.id);
+                        }
+                      }}
+                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete skill"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
 
               </div>
             ))

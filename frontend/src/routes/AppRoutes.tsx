@@ -20,6 +20,7 @@ export default function AppRoutes() {
           <Route path="/" element={<FeedTimelinePage />} />
           <Route path="/search" element={<SearchDiscoveryPage />} />
           <Route path="/posts/:postId" element={<PostDetailPage />} />
+          <Route path="/profiles/:profileId" element={<UserProfile />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/user-profile" element={<Navigate to="/profile" replace />} />

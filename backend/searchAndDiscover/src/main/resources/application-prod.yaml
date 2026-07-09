@@ -49,4 +49,4 @@ management:
 
 app:
   search:
-    seed-demo-data: ${SEARCH_SEED_DEMO_DATA:true}
+    seed-demo-data: ${SEARCH_SEED_DEMO_DATA:false}

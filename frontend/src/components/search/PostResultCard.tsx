@@ -1,10 +1,11 @@
 import { MessageCircle, ThumbsUp } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PostSearchResult } from "../../types/search";
 
 export default function PostResultCard({ post }: { post: PostSearchResult }) {
   return (
-    <a
-      href={`/posts/${post.id}`}
+    <Link
+      to={`/posts/${post.id}`}
       className="block rounded-lg bg-white p-4 shadow transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#0a66c2]"
     >
       <h3 className="font-semibold">{post.authorName}</h3>
@@ -19,6 +20,6 @@ export default function PostResultCard({ post }: { post: PostSearchResult }) {
           {post.commentsCount}
         </span>
       </p>
-    </a>
+    </Link>
   );
 }

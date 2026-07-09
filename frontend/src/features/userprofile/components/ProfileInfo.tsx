@@ -4,9 +4,10 @@ import type { Profile } from "../api";
 type ProfileInfoProps = {
   profile: Profile | null;
   onEdit: () => void;
+  canEdit?: boolean;
 };
 
-function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
+function ProfileInfo({ profile, onEdit, canEdit = true }: ProfileInfoProps) {
   if (!profile) return null;
 
   const location = [profile.city, profile.country].filter(Boolean).join(", ");
@@ -20,10 +21,12 @@ function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
             {profile.firstName} {profile.lastName}
           </h1>
 
-          <button className="flex items-center gap-2 rounded-full border-2 border-dashed border-blue-600 px-5 py-1 font-semibold text-blue-700">
-            <ShieldCheck size={15} />
-            Add verification badge
-          </button>
+          {canEdit && (
+            <button className="flex items-center gap-2 rounded-full border-2 border-dashed border-blue-600 px-5 py-1 font-semibold text-blue-700">
+              <ShieldCheck size={15} />
+              Add verification badge
+            </button>
+          )}
         </div>
 
         <p className="mt-2 text-xl text-gray-900">{headline}</p>
@@ -39,15 +42,17 @@ function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
       </div>
 
       <div className="ml-10 w-80 space-y-8">
-        <div className="flex justify-end">
-          <button
-            onClick={onEdit}
-            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
-            title="Edit profile"
-          >
-            <Pencil size={20} />
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex justify-end">
+            <button
+              onClick={onEdit}
+              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+              title="Edit profile"
+            >
+              <Pencil size={20} />
+            </button>
+          </div>
+        )}
 
         {profile.currentCompany && (
           <div className="flex items-center gap-4">

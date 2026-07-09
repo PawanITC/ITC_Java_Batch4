@@ -6,9 +6,10 @@ import type { Profile } from "../api";
 type AboutProps = {
   profile?: Profile | null;
   onEdit?: () => void;
+  canEdit?: boolean;
 };
 
-function About({ profile, onEdit }: AboutProps) {
+function About({ profile, onEdit, canEdit = true }: AboutProps) {
   const [openModal, setOpenModal] = useState(false);
   const topSkills =
     profile?.skills?.slice(0, 5).map((skill) => skill.skillName).filter(Boolean) || [];
@@ -19,7 +20,7 @@ function About({ profile, onEdit }: AboutProps) {
         <div className="flex items-start justify-between">
           <h2 className="text-3xl font-bold">About</h2>
 
-          <Pencil size={22} className="cursor-pointer" onClick={onEdit} />
+          {canEdit && <Pencil size={22} className="cursor-pointer" onClick={onEdit} />}
         </div>
 
         <div className="mt-8 text-md leading-relaxed">
