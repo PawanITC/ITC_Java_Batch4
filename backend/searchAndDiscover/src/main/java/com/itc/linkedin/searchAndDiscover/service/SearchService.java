@@ -9,6 +9,8 @@ import com.itc.linkedin.searchAndDiscover.kafka.event.CommentCreatedEvent;
 import com.itc.linkedin.searchAndDiscover.kafka.event.PostCreatedEvent;
 import com.itc.linkedin.searchAndDiscover.kafka.event.PostDeletedEvent;
 import com.itc.linkedin.searchAndDiscover.kafka.event.PostLikedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.ProfileDeletedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.ProfileIndexEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +59,35 @@ public class SearchService {
         );
     }
 
+    public void indexProfile(ProfileIndexEvent event) {
+        if (Boolean.FALSE.equals(event.profilePublic())) {
+            deleteProfile(new ProfileDeletedEvent(
+                    event.eventId(),
+                    "profile.deleted",
+                    event.eventVersion(),
+                    event.occurredAt(),
+                    event.profileId(),
+                    event.keycloakUserId()
+            ));
+            return;
+        }
+
+        openSearchClient.bulkIndex(PEOPLE_INDEX, List.of(toPeopleDocument(event)), PeopleDocument::getId);
+    }
+
+    public void indexProfiles(List<ProfileIndexEvent> profiles) {
+        List<PeopleDocument> documents = profiles.stream()
+                .filter(profile -> !Boolean.FALSE.equals(profile.profilePublic()))
+                .map(this::toPeopleDocument)
+                .toList();
+
+        openSearchClient.bulkIndex(PEOPLE_INDEX, documents, PeopleDocument::getId);
+    }
+
+    public void deleteProfile(ProfileDeletedEvent event) {
+        openSearchClient.deleteDocument(PEOPLE_INDEX, event.profileId());
+    }
+
     public List<PostSearchResponse> searchPosts(String q, String userId) {
         return search(
                 q,
@@ -83,6 +115,22 @@ public class SearchService {
                         .comments(0)
                         .build()
         ), PostDocument::getId);
+    }
+
+    public void indexPosts(List<PostCreatedEvent> events) {
+        openSearchClient.bulkIndex(
+                POSTS_INDEX,
+                events.stream()
+                        .map(event -> PostDocument.builder()
+                                .id(String.valueOf(event.postId()))
+                                .authorName(event.authorName())
+                                .content(event.content())
+                                .likes(0)
+                                .comments(0)
+                                .build())
+                        .toList(),
+                PostDocument::getId
+        );
     }
 
     public void deletePost(PostDeletedEvent event) {
@@ -258,5 +306,29 @@ public class SearchService {
                 "size", 20,
                 "query", Map.of("bool", bool)
         ));
+    }
+
+    private PeopleDocument toPeopleDocument(ProfileIndexEvent event) {
+        return PeopleDocument.builder()
+                .id(event.profileId())
+                .fullName(fullName(event.firstName(), event.lastName()))
+                .headline(event.headline())
+                .location(location(event.city(), event.country()))
+                .skills("")
+                .build();
+    }
+
+    private String fullName(String firstName, String lastName) {
+        return Stream.of(firstName, lastName)
+                .filter(value -> value != null && !value.isBlank())
+                .reduce((left, right) -> left + " " + right)
+                .orElse("");
+    }
+
+    private String location(String city, String country) {
+        return Stream.of(city, country)
+                .filter(value -> value != null && !value.isBlank())
+                .reduce((left, right) -> left + ", " + right)
+                .orElse("");
     }
 }
