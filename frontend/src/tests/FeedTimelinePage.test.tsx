@@ -170,9 +170,11 @@ describe("FeedTimelinePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /like/i }));
     await waitFor(() => expect(mockLikePost).toHaveBeenCalledWith(1));
+    expect(await screen.findByText(/3 reactions/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /like/i }));
     await waitFor(() => expect(mockUnlikePost).toHaveBeenCalledWith(1));
+    expect(await screen.findByText(/2 reactions/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /comment/i }));
     fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
@@ -180,6 +182,7 @@ describe("FeedTimelinePage", () => {
     });
     fireEvent.click(screen.getByTitle(/post comment/i));
     await waitFor(() => expect(mockAddComment).toHaveBeenCalledWith(1, "Looks good"));
+    expect(await screen.findByText(/2 comments/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByTitle(/more/i));
     fireEvent.click(screen.getByText(/delete post/i));

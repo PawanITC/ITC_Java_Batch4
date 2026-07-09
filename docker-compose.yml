@@ -44,16 +44,16 @@ services:
     image: apache/kafka:3.9.0
     container_name: linkedin-kafka
     ports:
-      - "9099:9092"
+      - "9099:9094"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9099
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -170,11 +170,16 @@ services:
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_DB: userprofile
+      POSTGRES_DB: userprofiledb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: hasnain4890
     volumes:
       - userprofile_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d userprofiledb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
   userprofile-service:
@@ -183,12 +188,18 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      - userprofile-postgres
-      - kafka
+      userprofile-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofile
+      SPRING_DATASOURCE_URL: jdbc:postgresql://userprofile-postgres:5432/userprofiledb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: hasnain4890
+      POSTGRES_URL: jdbc:postgresql://userprofile-postgres:5432/userprofiledb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hasnain4890
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KEYCLOAK_ISSUER_URI: http://localhost:8080/realms/linkedin-app
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/linkedin-app/protocol/openid-connect/certs

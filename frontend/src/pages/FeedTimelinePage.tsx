@@ -82,6 +82,7 @@ export default function FeedTimelinePage() {
           : post
       )
     );
+    return updated;
   };
 
   const handleUnlike = async (postId: number) => {
@@ -93,6 +94,7 @@ export default function FeedTimelinePage() {
           : post
       )
     );
+    return updated;
   };
 
   const handleComment = async (postId: number, content: string) => {
@@ -104,6 +106,7 @@ export default function FeedTimelinePage() {
           : post
       )
     );
+    return updated;
   };
 
   const handleRepost = async (post: FeedPost) => {
