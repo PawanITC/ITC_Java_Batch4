@@ -135,6 +135,51 @@ public class OpenSearchHttpClient {
         }
     }
 
+    public void updateDocument(String indexName, String id, Map<String, Object> fields) {
+        if (fields.isEmpty()) {
+            return;
+        }
+
+        try {
+            HttpRequest request = requestBuilder(indexName + "/_update/" + id)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of("doc", fields))))
+                    .build();
+            HttpResponse<String> response = send(request);
+
+            if (response.statusCode() == 404) {
+                return;
+            }
+
+            requireSuccess(response, "Update document failed");
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Unable to update OpenSearch document " + id + " in " + indexName, error);
+        } catch (IOException error) {
+            throw new IllegalStateException("Unable to update OpenSearch document " + id + " in " + indexName, error);
+        }
+    }
+
+    public void deleteDocument(String indexName, String id) {
+        try {
+            HttpRequest request = requestBuilder(indexName + "/_doc/" + id)
+                    .DELETE()
+                    .build();
+            HttpResponse<String> response = send(request);
+
+            if (response.statusCode() == 404) {
+                return;
+            }
+
+            requireSuccess(response, "Delete document failed");
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Unable to delete OpenSearch document " + id + " in " + indexName, error);
+        } catch (IOException error) {
+            throw new IllegalStateException("Unable to delete OpenSearch document " + id + " in " + indexName, error);
+        }
+    }
+
     private HttpRequest.Builder requestBuilder(String path) {
         HttpRequest.Builder builder = HttpRequest.newBuilder(uri(path))
                 .timeout(Duration.ofSeconds(15))

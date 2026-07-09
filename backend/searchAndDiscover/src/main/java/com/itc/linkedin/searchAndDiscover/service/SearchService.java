@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.searchAndDiscover.document.*;
 import com.itc.linkedin.searchAndDiscover.dto.*;
 import com.itc.linkedin.searchAndDiscover.client.OpenSearchHttpClient;
+import com.itc.linkedin.searchAndDiscover.kafka.event.CommentCreatedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.PostCreatedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.PostDeletedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.PostLikedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +70,38 @@ public class SearchService {
                 ),
                 "content^5",
                 "authorName^3"
+        );
+    }
+
+    public void indexPost(PostCreatedEvent event) {
+        openSearchClient.bulkIndex(POSTS_INDEX, List.of(
+                PostDocument.builder()
+                        .id(String.valueOf(event.postId()))
+                        .authorName(event.authorName())
+                        .content(event.content())
+                        .likes(0)
+                        .comments(0)
+                        .build()
+        ), PostDocument::getId);
+    }
+
+    public void deletePost(PostDeletedEvent event) {
+        openSearchClient.deleteDocument(POSTS_INDEX, String.valueOf(event.postId()));
+    }
+
+    public void updatePostLikes(PostLikedEvent event) {
+        openSearchClient.updateDocument(
+                POSTS_INDEX,
+                String.valueOf(event.postId()),
+                Map.of("likes", event.likesCount())
+        );
+    }
+
+    public void updatePostComments(CommentCreatedEvent event) {
+        openSearchClient.updateDocument(
+                POSTS_INDEX,
+                String.valueOf(event.postId()),
+                Map.of("comments", event.commentsCount())
         );
     }
 

@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import keycloak from "../../features/auth/keycloak";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
 import { loadNotifications } from "../../store/notificationSlice";
 import { getUserId } from "../../utils/authUtils";
@@ -36,6 +36,7 @@ function accountInitials() {
 
 export default function FeedNavbar() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const dispatch = useAppDispatch();
   const unreadCount = useAppSelector(
@@ -62,6 +63,16 @@ export default function FeedNavbar() {
     { label: "Notifications", to: "/notifications", icon: Bell },
   ];
 
+  const submitSearch = () => {
+    const query = searchQuery.trim();
+    if (!query) {
+      navigate("/search");
+      return;
+    }
+
+    navigate(`/search?type=people&q=${encodeURIComponent(query)}`);
+  };
+
   return (
     <>
       <nav className="sticky top-0 z-50 border-b border-[#d0d7de] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
@@ -79,7 +90,18 @@ export default function FeedNavbar() {
               <Search size={17} />
               <input
                 placeholder="Search"
-                onFocus={() => navigate("/search")}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onFocus={() => {
+                  if (!searchQuery.trim()) {
+                    navigate("/search");
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    submitSearch();
+                  }
+                }}
                 className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500"
               />
             </label>

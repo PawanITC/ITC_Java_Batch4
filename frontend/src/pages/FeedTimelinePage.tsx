@@ -68,7 +68,7 @@ export default function FeedTimelinePage() {
     media?: { mediaObjectKey?: string; objectKey?: string; mediaType: "IMAGE" | "VIDEO" }
   ) => {
     setError("");
-    const created = await createPost(content, media);
+    const created = media ? await createPost(content, media) : await createPost(content);
     setPosts((currentPosts) => [created, ...currentPosts]);
     await loadFeed();
   };
@@ -104,6 +104,43 @@ export default function FeedTimelinePage() {
           : post
       )
     );
+  };
+
+  const handleRepost = async (post: FeedPost) => {
+    const authorName = post.authorName || "LinkedIn member";
+    const originalContent = post.content?.trim();
+    const repostContent = originalContent
+      ? `Reposting ${authorName}'s post:\n\n${originalContent}`
+      : `Reposting ${authorName}'s post`;
+
+    const created = await createPost(
+      repostContent,
+      post.mediaObjectKey && post.mediaType
+        ? {
+            mediaObjectKey: post.mediaObjectKey,
+            mediaType: post.mediaType,
+          }
+        : undefined
+    );
+
+    setPosts((currentPosts) => [created, ...currentPosts]);
+  };
+
+  const handleSend = async (post: FeedPost) => {
+    const postId = post.postId ?? post.id;
+    const url = `${window.location.origin}/?postId=${postId}`;
+    const text = `${post.authorName}: ${post.content}`.trim();
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "LinkedIn post",
+        text,
+        url,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
   };
 
   const handleDelete = async (postId: number) => {
@@ -227,6 +264,8 @@ export default function FeedTimelinePage() {
                 onUnlike={handleUnlike}
                 onComment={profileReady ? handleComment : undefined}
                 onLoadComments={getComments}
+                onRepost={profileReady ? handleRepost : undefined}
+                onSend={handleSend}
                 onDelete={
                   post.authorId === currentUserId ? handleDelete : undefined
                 }

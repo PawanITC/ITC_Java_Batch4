@@ -19,6 +19,8 @@ type Props = {
   onDelete?: (postId: number) => Promise<void>;
   onComment?: (postId: number, content: string) => Promise<void>;
   onLoadComments?: (postId: number) => Promise<FeedComment[]>;
+  onRepost?: (post: FeedPost) => Promise<void>;
+  onSend?: (post: FeedPost) => Promise<void>;
   readOnly?: boolean;
 };
 
@@ -43,6 +45,8 @@ export default function FeedPostCard({
   onDelete,
   onComment,
   onLoadComments,
+  onRepost,
+  onSend,
   readOnly = false,
 }: Props) {
   const postId = post.postId ?? post.id;
@@ -56,6 +60,9 @@ export default function FeedPostCard({
   const [commentsError, setCommentsError] = useState("");
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [reposting, setReposting] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const handleLike = async () => {
     if (readOnly) return;
@@ -88,6 +95,38 @@ export default function FeedPostCard({
     ]);
     setComment("");
     setShowComments(true);
+  };
+
+  const handleRepost = async () => {
+    if (readOnly || reposting) return;
+
+    try {
+      setReposting(true);
+      setActionMessage("");
+      await onRepost?.(post);
+      setActionMessage("Reposted to your feed.");
+    } catch (error) {
+      console.error("Repost error", error);
+      setActionMessage("Repost failed. Please try again.");
+    } finally {
+      setReposting(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (sending) return;
+
+    try {
+      setSending(true);
+      setActionMessage("");
+      await onSend?.(post);
+      setActionMessage("Post link ready to share.");
+    } catch (error) {
+      console.error("Send error", error);
+      setActionMessage("Send failed. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const toggleComments = async () => {
@@ -214,16 +253,32 @@ export default function FeedPostCard({
           <span className="hidden sm:inline">Comment</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
+        <button
+          type="button"
+          onClick={handleRepost}
+          disabled={readOnly || reposting}
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2] disabled:cursor-not-allowed disabled:text-gray-300"
+        >
           <Repeat2 size={18} />
-          <span className="hidden sm:inline">Repost</span>
+          <span className="hidden sm:inline">{reposting ? "Reposting" : "Repost"}</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending}
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2] disabled:cursor-not-allowed disabled:text-gray-300"
+        >
           <Send size={18} />
-          <span className="hidden sm:inline">Send</span>
+          <span className="hidden sm:inline">{sending ? "Sending" : "Send"}</span>
         </button>
       </div>
+
+      {actionMessage && (
+        <p className="border-t border-[#edf0f3] px-4 py-2 text-xs text-gray-500">
+          {actionMessage}
+        </p>
+      )}
 
       {showCommentBox && (
         <div className="flex gap-2 border-t border-[#edf0f3] px-4 py-3">

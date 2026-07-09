@@ -30,21 +30,21 @@ export default function LeftProfileCard({ profile, loading = false, missing = fa
   return (
     <aside className="sticky top-[68px] space-y-2">
       <div className="overflow-hidden rounded-lg border border-[#d6d6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
-        <div className="relative h-16 overflow-hidden bg-[#0a66c2]">
-          {profile?.coverPhotoUrl ? (
-            <img
-              src={profile.coverPhotoUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.28)_0,rgba(255,255,255,0.28)_12%,transparent_13%),radial-gradient(circle_at_78%_28%,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_10%,transparent_11%),linear-gradient(135deg,#0a66c2_0%,#004182_100%)]" />
-          )}
-          <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/10 to-transparent" />
-        </div>
+        <div className="relative h-[116px] bg-white">
+          <div className="absolute inset-x-0 top-0 h-20 overflow-hidden bg-[#0a66c2]">
+            {profile?.coverPhotoUrl ? (
+              <img
+                src={profile.coverPhotoUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.28)_0,rgba(255,255,255,0.28)_12%,transparent_13%),radial-gradient(circle_at_78%_28%,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_10%,transparent_11%),linear-gradient(135deg,#0a66c2_0%,#004182_100%)]" />
+            )}
+            <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/10 to-transparent" />
+          </div>
 
-        <div className="px-3 pb-4 text-center">
-          <div className="mx-auto -mt-10 w-fit rounded-full border-4 border-white shadow-sm">
+          <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 rounded-full border-4 border-white bg-white shadow-sm">
             <Avatar
               name={name}
               src={profile?.profilePictureUrl}
@@ -52,7 +52,9 @@ export default function LeftProfileCard({ profile, loading = false, missing = fa
               textClassName="text-lg"
             />
           </div>
+        </div>
 
+        <div className="px-3 pb-4 text-center">
           <Link
             to="/profile"
             className="mt-3 block text-base font-semibold hover:underline"
