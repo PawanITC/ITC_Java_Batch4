@@ -9,6 +9,7 @@ import com.itclinkedin.userprofile.repository.UserProfileRepository;
 import com.itclinkedin.userprofile.service.impl.ProfileServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,6 +27,9 @@ class ProfileServiceTest {
     @Mock
     private ProfileMapper mapper;
 
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private ProfileServiceImpl service;
 
@@ -38,12 +42,17 @@ class ProfileServiceTest {
         request.setEmail("hasnain@test.com");
 
         UserProfile entity = new UserProfile();
+        entity.setId(UUID.randomUUID());
+        entity.setKeycloakUserId(request.getKeycloakUserId());
+        entity.setEmail("hasnain@test.com");
 
         ProfileResponse response = ProfileResponse.builder()
-                .id(UUID.randomUUID())
+                .id(entity.getId())
                 .email("hasnain@test.com")
                 .build();
 
+        when(repository.findByKeycloakUserId(request.getKeycloakUserId())).thenReturn(Optional.empty());
+        when(repository.findByEmailIgnoreCase("hasnain@test.com")).thenReturn(Optional.empty());
         when(mapper.toEntity(request)).thenReturn(entity);
         when(repository.save(entity)).thenReturn(entity);
         when(mapper.toResponse(entity)).thenReturn(response);
@@ -66,6 +75,7 @@ class ProfileServiceTest {
         request.setEmail("user.demo@example.com");
 
         UserProfile existing = new UserProfile();
+        existing.setId(UUID.randomUUID());
         existing.setKeycloakUserId(request.getKeycloakUserId());
         existing.setEmail("user.demo@example.com");
 
@@ -223,6 +233,7 @@ class ProfileServiceTest {
         entity.setId(id);
         entity.setFirstName("Old");
         entity.setLastName("Name");
+        entity.setKeycloakUserId(UUID.randomUUID().toString());
 
         ProfileResponse response = ProfileResponse.builder()
                 .id(id)
@@ -247,11 +258,15 @@ class ProfileServiceTest {
     void givenValidId_whenDeleteProfile_thenRepositoryCalled() {
 
         UUID id = UUID.randomUUID();
+        UserProfile entity = new UserProfile();
+        entity.setId(id);
+        entity.setKeycloakUserId(UUID.randomUUID().toString());
 
-        doNothing().when(repository).deleteById(id);
+        when(repository.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(repository).delete(entity);
 
         service.delete(id);
 
-        verify(repository, times(1)).deleteById(id);
+        verify(repository, times(1)).delete(entity);
     }
 }

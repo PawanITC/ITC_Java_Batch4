@@ -40,6 +40,10 @@ export default function PeopleResultCard({ person }: Props) {
       </Link>
 
       <button className="self-start rounded-full border border-[#0A66C2] px-4 py-1 font-semibold text-[#0A66C2]">
+        Follow
+      </button>
+      
+      <button className="self-start rounded-full border border-[#0A66C2] px-4 py-1 font-semibold text-[#0A66C2]">
         Connect
       </button>
     </div>
