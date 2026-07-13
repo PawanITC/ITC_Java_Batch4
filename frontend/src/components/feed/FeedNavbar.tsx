@@ -57,7 +57,7 @@ export default function FeedNavbar() {
 
   const navItems = [
     { label: "Home", to: "/", icon: Home },
-    { label: "My Network", to: "/search", icon: Users },
+    { label: "My Network", to: "/connections", icon: Users },
     { label: "Jobs", to: "/search?type=jobs", icon: BriefcaseBusiness },
     { label: "Messaging", to: "/", icon: MessageSquare },
     { label: "Notifications", to: "/notifications", icon: Bell },
