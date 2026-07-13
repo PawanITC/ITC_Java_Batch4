@@ -10,6 +10,8 @@ import ProfileInfo from "../features/userprofile/components/ProfileInfo";
 import ProfileEditModal from "../features/userprofile/components/ProfileEditModal";
 import Services from "../features/userprofile/components/Services";
 import Skills from "../features/userprofile/components/Skills";
+import ConnectionButton from "../components/connections/ConnectionButton";
+import FollowActionButton from "../features/userprofile/components/FollowActionButton";
 import {
   createProfile,
   getCurrentProfile,
@@ -29,7 +31,8 @@ function UserProfile() {
   const { isLoggedIn, loading: authLoading, user: authUser } = useAppSelector(
     (state) => state.auth
   );
-  const isViewingOwnProfile = !profileId;
+  const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
+  const isViewingOwnProfile = !profileId || currentProfile?.id === profileId;
 
   const loadProfile = useCallback(async () => {
     if (authLoading) return;
@@ -46,8 +49,12 @@ function UserProfile() {
 
     if (profileId) {
       try {
-        const selectedProfile = await getProfile(profileId);
+        const [selectedProfile, signedInProfile] = await Promise.all([
+          getProfile(profileId),
+          getCurrentProfile().catch(() => null),
+        ]);
         setProfile(selectedProfile);
+        setCurrentProfile(signedInProfile);
       } catch (loadError) {
         console.error(loadError);
         setProfile(null);
@@ -72,6 +79,7 @@ function UserProfile() {
 
       try {
         selectedProfile = await getCurrentProfile();
+        setCurrentProfile(selectedProfile);
       } catch (profileError: any) {
         if (profileError?.response?.status !== 404) {
           throw profileError;
@@ -157,12 +165,26 @@ function UserProfile() {
     <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
       <div className="w-[65%] mx-auto flex flex-col gap-6">
         {/* Pass down the callback handler to trigger media changes */}
-        <HeroSection profile={profile} onProfileUpdate={handleProfileUpdate} />
+        <HeroSection
+          profile={profile}
+          onProfileUpdate={handleProfileUpdate}
+          canEdit={isViewingOwnProfile}
+        />
         
         <ProfileInfo
           profile={profile}
           onEdit={() => setIsEditModalOpen(true)}
           canEdit={isViewingOwnProfile}
+          actions={
+            !isViewingOwnProfile ? (
+              <>
+                <FollowActionButton targetProfileId={profile.id} />
+                {profile.keycloakUserId && (
+                  <ConnectionButton targetUserId={profile.keycloakUserId} />
+                )}
+              </>
+            ) : undefined
+          }
         />
         <About
           profile={profile}

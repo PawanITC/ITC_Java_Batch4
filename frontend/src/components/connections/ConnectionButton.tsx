@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import keycloak from "../../features/auth/keycloak";
+import { apiBaseUrl } from "../../config/runtimeConfig";
 import "./connections.css";
 
 type RelationshipStatus =
@@ -24,11 +26,7 @@ type Props = {
   targetUserId: string;
 };
 
-const BASE_URL = "http://localhost:8085/api/v1/connections";
-
-function getToken() {
-  return localStorage.getItem("access_token");
-}
+const BASE_URL = `${apiBaseUrl}/api/v1/connections`;
 
 export default function ConnectionButton({ targetUserId }: Props) {
   const [status, setStatus] = useState<RelationshipStatus>("NONE");
@@ -36,13 +34,19 @@ export default function ConnectionButton({ targetUserId }: Props) {
   const [message, setMessage] = useState("");
 
   async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
-    const token = getToken();
+    if (keycloak.authenticated) {
+      try {
+        await keycloak.updateToken(30);
+      } catch {
+        // The request will fail normally if the token is expired.
+      }
+    }
 
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
+        Authorization: keycloak.token ? `Bearer ${keycloak.token}` : "",
         ...options?.headers,
       },
     });

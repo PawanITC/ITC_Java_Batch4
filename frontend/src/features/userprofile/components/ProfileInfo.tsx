@@ -1,13 +1,15 @@
 import { BriefcaseBusiness, Building2, MapPin, Pencil, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import type { Profile } from "../api";
 
 type ProfileInfoProps = {
   profile: Profile | null;
   onEdit: () => void;
   canEdit?: boolean;
+  actions?: ReactNode;
 };
 
-function ProfileInfo({ profile, onEdit, canEdit = true }: ProfileInfoProps) {
+function ProfileInfo({ profile, onEdit, canEdit = true, actions }: ProfileInfoProps) {
   if (!profile) return null;
 
   const location = [profile.city, profile.country].filter(Boolean).join(", ");
@@ -30,6 +32,8 @@ function ProfileInfo({ profile, onEdit, canEdit = true }: ProfileInfoProps) {
         </div>
 
         <p className="mt-2 text-xl text-gray-900">{headline}</p>
+
+        {actions && <div className="mt-4 flex flex-wrap items-center gap-3">{actions}</div>}
 
         {location && (
           <div className="mt-2 flex items-center gap-2 text-xl text-gray-500">

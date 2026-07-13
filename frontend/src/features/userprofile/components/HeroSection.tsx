@@ -5,12 +5,13 @@ import Avatar from "../../../components/common/Avatar";
 
 type HeroSectionProps = {
   profile?: Profile | null;
-  onProfileUpdate: (updatedFields: Partial<Profile>) => Promise<void>;
+  onProfileUpdate?: (updatedFields: Partial<Profile>) => Promise<void>;
+  canEdit?: boolean;
 };
 
 type UploadTarget = "cover" | "avatar";
 
-const HeroSection = ({ profile, onProfileUpdate }: HeroSectionProps) => {
+const HeroSection = ({ profile, onProfileUpdate, canEdit = true }: HeroSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTarget, setModalTarget] = useState<UploadTarget>("cover");
   
@@ -25,6 +26,8 @@ const HeroSection = ({ profile, onProfileUpdate }: HeroSectionProps) => {
   }, [profile?.coverPhotoUrl, profile?.profilePictureUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEdit || !onProfileUpdate) return;
+
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -45,15 +48,21 @@ const HeroSection = ({ profile, onProfileUpdate }: HeroSectionProps) => {
   };
 
   const openUploadModal = (target: UploadTarget) => {
+    if (!canEdit) return;
+
     setModalTarget(target);
     setIsModalOpen(true);
   };
 
   const triggerGallery = () => {
+    if (!canEdit) return;
+
     fileInputRef.current?.click();
   };
 
   const handleDeletePhoto = async () => {
+    if (!canEdit || !onProfileUpdate) return;
+
     if (modalTarget === "cover") {
       setCurrentCover(""); 
       await onProfileUpdate({ coverPhotoUrl: "" });
@@ -88,20 +97,24 @@ const HeroSection = ({ profile, onProfileUpdate }: HeroSectionProps) => {
         )}
 
         {/* Edit Cover Trigger Action Button (Pencil Icon) */}
-        <button
-          onClick={() => openUploadModal("cover")}
-          className="absolute right-6 top-4 h-10 w-10 rounded-full bg-white cursor-pointer flex items-center justify-center shadow hover:bg-gray-100 transition z-10"
-          aria-label="Edit cover photo"
-        >
-          <Pencil size={18} className="text-gray-700" />
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => openUploadModal("cover")}
+            className="absolute right-6 top-4 h-10 w-10 rounded-full bg-white cursor-pointer flex items-center justify-center shadow hover:bg-gray-100 transition z-10"
+            aria-label="Edit cover photo"
+          >
+            <Pencil size={18} className="text-gray-700" />
+          </button>
+        )}
       </div>
 
       {/* Profile Avatar Frame — Perfectly aligned layout anchor */}
       <div className="relative pl-10 h-24">
         <div 
           onClick={() => openUploadModal("avatar")}
-          className="absolute -top-24 left-10 rounded-full border-4 border-white shadow-md cursor-pointer group relative overflow-hidden bg-white z-30"
+          className={`absolute -top-24 left-10 rounded-full border-4 border-white shadow-md group relative overflow-hidden bg-white z-30 ${
+            canEdit ? "cursor-pointer" : ""
+          }`}
           style={{ width: "160px", height: "160px" }}
         >
           <Avatar
@@ -110,11 +123,12 @@ const HeroSection = ({ profile, onProfileUpdate }: HeroSectionProps) => {
             sizeClassName="h-full w-full"
             textClassName="text-4xl font-bold tracking-wider text-[#1d4ed8]"
           />
-          {/* Hover overlay mask */}
-          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200 rounded-full">
-            <Camera size={26} className="text-white mb-0.5" />
-            <span className="text-white text-xs font-semibold">Edit Photo</span>
-          </div>
+          {canEdit && (
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200 rounded-full">
+              <Camera size={26} className="text-white mb-0.5" />
+              <span className="text-white text-xs font-semibold">Edit Photo</span>
+            </div>
+          )}
         </div>
       </div>
 
