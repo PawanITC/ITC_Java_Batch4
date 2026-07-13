@@ -53,10 +53,13 @@ export const NetworkModal: React.FC<NetworkModalProps> = ({
   // Handle follow/unfollow toggle interaction via the API
   const handleFollowToggle = async (targetProfileId: string) => {
     try {
-      await toggleFollowUser({
-        followerId: currentProfile.id,
-        followingId: targetProfileId,
-      });
+      await toggleFollowUser(
+        {
+          followerId: currentProfile.id,
+          followingId: targetProfileId,
+        },
+        followingIds.has(targetProfileId)
+      );
 
       // Optimistically update local follow status states immediately
       setFollowingIds((prev) => {

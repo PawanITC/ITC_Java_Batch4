@@ -227,9 +227,18 @@ export async function deleteExperience(experienceId: string) {
   await userProfileApi.delete(`/api/experiences/${experienceId}`);
 }
 
-export async function toggleFollowUser(payload: FollowPayload) {
+export async function followUser(payload: FollowPayload) {
   const response = await userProfileApi.post<any>("/api/follows/follow", payload);
   return response.data;
+}
+
+export async function unfollowUser(payload: FollowPayload) {
+  const response = await userProfileApi.post<any>("/api/follows/unfollow", payload);
+  return response.data;
+}
+
+export async function toggleFollowUser(payload: FollowPayload, isFollowing: boolean) {
+  return isFollowing ? unfollowUser(payload) : followUser(payload);
 }
 
 /**
@@ -237,8 +246,10 @@ export async function toggleFollowUser(payload: FollowPayload) {
  * GET /api/follows/{profileId}/followers
  */
 export async function getFollowers(profileId: string) {
-  const response = await userProfileApi.get<Profile[]>(`/api/follows/${profileId}/followers`);
-  return response.data;
+  const response = await userProfileApi.get<Profile[] | { content?: Profile[] }>(
+    `/api/follows/${profileId}/followers`
+  );
+  return Array.isArray(response.data) ? response.data : response.data.content ?? [];
 }
 
 /**
@@ -246,8 +257,10 @@ export async function getFollowers(profileId: string) {
  * GET /api/follows/{profileId}/following
  */
 export async function getFollowing(profileId: string) {
-  const response = await userProfileApi.get<Profile[]>(`/api/follows/${profileId}/following`);
-  return response.data;
+  const response = await userProfileApi.get<Profile[] | { content?: Profile[] }>(
+    `/api/follows/${profileId}/following`
+  );
+  return Array.isArray(response.data) ? response.data : response.data.content ?? [];
 }
 
 /**
