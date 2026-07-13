@@ -27,6 +27,7 @@ type Props = {
 };
 
 const BASE_URL = `${apiBaseUrl}/api/v1/connections`;
+const silentStatusMessages: RelationshipStatus[] = ["NONE", "CONNECTED"];
 
 export default function ConnectionButton({ targetUserId }: Props) {
   const [status, setStatus] = useState<RelationshipStatus>("NONE");
@@ -69,7 +70,7 @@ export default function ConnectionButton({ targetUserId }: Props) {
       );
 
       setStatus(data.status);
-      setMessage(data.message);
+      setMessage(silentStatusMessages.includes(data.status) ? "" : data.message);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to load status");
     } finally {

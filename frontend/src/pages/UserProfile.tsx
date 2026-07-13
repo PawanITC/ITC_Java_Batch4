@@ -162,8 +162,8 @@ function UserProfile() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
-      <div className="w-[65%] mx-auto flex flex-col gap-6">
+    <div className="min-h-screen w-full bg-[#F4F2EE] py-10 pb-24">
+      <div className="mx-auto flex w-[92%] max-w-[1128px] flex-col gap-6">
         {/* Pass down the callback handler to trigger media changes */}
         <HeroSection
           profile={profile}
@@ -191,7 +191,7 @@ function UserProfile() {
           onEdit={() => setIsEditModalOpen(true)}
           canEdit={isViewingOwnProfile}
         />
-        <Services profile={profile} />
+        <Services profile={profile} canEdit={isViewingOwnProfile} />
         <Experience
           experiences={profile.experiences || []}
           profileId={profile.id}

@@ -4,31 +4,47 @@ import type { Profile } from "../api";
 
 type ServicesProps = {
   profile?: Profile | null;
+  canEdit?: boolean;
 };
 
-function Services({ profile }: ServicesProps) {
+function Services({ profile, canEdit = true }: ServicesProps) {
   const services = [profile?.industry, profile?.currentPosition].filter(
     (service): service is string => Boolean(service?.trim())
   );
 
+  if (!canEdit && services.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="mt-5 rounded-xl border bg-white">
+    <div className="mt-5 rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="p-8">
         <div className="flex items-start justify-between">
-          <h2 className="text-3xl font-semibold">Services</h2>
+          <h2 className="text-2xl font-semibold text-gray-950">Services</h2>
 
-          <Pencil size={28} className="cursor-pointer" />
+          {canEdit && (
+            <button
+              type="button"
+              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+              title="Edit services"
+            >
+              <Pencil size={20} />
+            </button>
+          )}
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-4">
+        <div className="mt-6 flex flex-wrap gap-3">
           {services.length > 0 ? (
             services.map((service) => (
-              <span key={service} className="rounded-lg bg-gray-100 px-5 py-2 text-xl">
+              <span
+                key={service}
+                className="rounded-full border border-gray-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-gray-800"
+              >
                 {service}
               </span>
             ))
           ) : (
-            <p className="text-gray-500">No services added yet.</p>
+            canEdit && <p className="text-gray-500">No services added yet.</p>
           )}
         </div>
       </div>

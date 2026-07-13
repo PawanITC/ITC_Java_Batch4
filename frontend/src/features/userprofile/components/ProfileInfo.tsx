@@ -16,67 +16,73 @@ function ProfileInfo({ profile, onEdit, canEdit = true, actions }: ProfileInfoPr
   const headline = profile.headline || profile.currentPosition || "Complete your profile";
 
   return (
-    <div className="flex justify-between bg-white p-8">
-      <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">
-            {profile.firstName} {profile.lastName}
-          </h1>
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="grid gap-8 p-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-normal text-gray-950">
+              {profile.firstName} {profile.lastName}
+            </h1>
 
-          {canEdit && (
-            <button className="flex items-center gap-2 rounded-full border-2 border-dashed border-blue-600 px-5 py-1 font-semibold text-blue-700">
-              <ShieldCheck size={15} />
-              Add verification badge
-            </button>
+            {canEdit && (
+              <button className="inline-flex items-center gap-2 rounded-full border border-dashed border-blue-600 px-4 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
+                <ShieldCheck size={15} />
+                Add verification badge
+              </button>
+            )}
+          </div>
+
+          <p className="mt-3 max-w-3xl text-lg leading-7 text-gray-900">{headline}</p>
+
+          {location && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-base text-gray-600">
+              <MapPin size={18} />
+              <span>{location}</span>
+              <span className="text-gray-300">-</span>
+              <button className="font-semibold text-blue-700 hover:underline">Contact info</button>
+            </div>
           )}
+
+          {actions && <div className="mt-6 flex flex-wrap items-center gap-3">{actions}</div>}
         </div>
 
-        <p className="mt-2 text-xl text-gray-900">{headline}</p>
-
-        {actions && <div className="mt-4 flex flex-wrap items-center gap-3">{actions}</div>}
-
-        {location && (
-          <div className="mt-2 flex items-center gap-2 text-xl text-gray-500">
-            <MapPin size={18} />
-            <span>{location}</span>
-            <span>-</span>
-            <button className="font-semibold text-blue-700">Contact info</button>
-          </div>
-        )}
-      </div>
-
-      <div className="ml-10 w-80 space-y-8">
-        {canEdit && (
-          <div className="flex justify-end">
+        <aside className="relative min-w-0 border-t border-gray-100 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+          {canEdit && (
             <button
               onClick={onEdit}
-              className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+              className="absolute right-0 top-0 rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
               title="Edit profile"
             >
               <Pencil size={20} />
             </button>
-          </div>
-        )}
+          )}
 
-        {profile.currentCompany && (
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-              <Building2 size={28} />
-            </div>
-            <h3 className="text-xl font-semibold">{profile.currentCompany}</h3>
-          </div>
-        )}
+          <div className="space-y-5 pr-10">
+            {profile.currentCompany && (
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <Building2 size={23} />
+                </div>
+                <h3 className="break-words text-lg font-semibold text-gray-950">
+                  {profile.currentCompany}
+                </h3>
+              </div>
+            )}
 
-        {profile.currentPosition && (
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-              <BriefcaseBusiness size={28} />
-            </div>
-            <h3 className="text-xl font-semibold">{profile.currentPosition}</h3>
+            {profile.currentPosition && (
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <BriefcaseBusiness size={23} />
+                </div>
+                <h3 className="break-words text-lg font-semibold text-gray-950">
+                  {profile.currentPosition}
+                </h3>
+              </div>
+            )}
           </div>
-        )}
+        </aside>
       </div>
-    </div>
+    </section>
   );
 }
 
