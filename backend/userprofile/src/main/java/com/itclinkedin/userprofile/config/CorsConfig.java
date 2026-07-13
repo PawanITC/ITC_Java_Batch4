@@ -11,25 +11,25 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig {
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer(
-            @Value("${app.cors.allowed-origins:http://localhost:3000}") String allowedOrigins
-    ) {
-        String[] originPatterns = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isBlank())
-                .toArray(String[]::new);
-
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns(originPatterns)
-                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .exposedHeaders("X-User-Id", "X-Username", "X-Email")
-                        .allowCredentials(true);
-            }
-        };
-    }
+//    @Bean
+//    public WebMvcConfigurer corsConfigurer(
+//            @Value("${app.cors.allowed-origins:http://localhost:3000}") String allowedOrigins
+//    ) {
+//        String[] originPatterns = Arrays.stream(allowedOrigins.split(","))
+//                .map(String::trim)
+//                .filter(origin -> !origin.isBlank())
+//                .toArray(String[]::new);
+//
+//        return new WebMvcConfigurer() {
+//            @Override
+//            public void addCorsMappings(CorsRegistry registry) {
+//                registry.addMapping("/**")
+//                        .allowedOriginPatterns(originPatterns)
+//                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+//                        .allowedHeaders("*")
+//                        .exposedHeaders("X-User-Id", "X-Username", "X-Email")
+//                        .allowCredentials(true);
+//            }
+//        };
+//    }
 }

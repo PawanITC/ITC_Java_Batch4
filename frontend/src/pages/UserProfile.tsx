@@ -14,6 +14,7 @@ import {
   createProfile,
   getCurrentProfile,
   getProfile,
+  updateProfile, // <-- Imported the update API function
   type CreateProfilePayload,
   type Profile,
 } from "../features/userprofile/api";
@@ -108,6 +109,23 @@ function UserProfile() {
     setNeedsOnboarding(false);
   };
 
+  // Synchronize image transformations with the PostgreSQL backend
+  const handleProfileUpdate = async (updatedFields: Partial<Profile>) => {
+    if (!profile?.id) return;
+
+    try {
+      // 1. Submit asynchronous PUT payload to gateway endpoint
+      const updatedData = await updateProfile(profile.id, updatedFields);
+      
+      // 2. Refresh state using the returned updated entity from database
+      setProfile(updatedData);
+      console.log("Profile assets updated successfully.");
+    } catch (updateError) {
+      console.error("Database update failed:", updateError);
+      alert("Failed to save image. Please verify file sizes are within acceptable limits.");
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-[#F4F2EE] px-6 py-10">Loading profile...</div>;
   }
@@ -138,7 +156,9 @@ function UserProfile() {
   return (
     <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
       <div className="w-[65%] mx-auto flex flex-col gap-6">
-        <HeroSection profile={profile} />
+        {/* Pass down the callback handler to trigger media changes */}
+        <HeroSection profile={profile} onProfileUpdate={handleProfileUpdate} />
+        
         <ProfileInfo
           profile={profile}
           onEdit={() => setIsEditModalOpen(true)}
