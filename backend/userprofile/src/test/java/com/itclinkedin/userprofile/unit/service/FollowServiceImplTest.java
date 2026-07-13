@@ -54,8 +54,20 @@ class FollowServiceImplTest {
         followRequest.setFollowerId(followerId);
         followRequest.setFollowingId(followingId);
 
-        follower = UserProfile.builder().id(followerId).firstName("Hassan").lastName("Khan").email("hassan@gmail.com").build();
-        following = UserProfile.builder().id(followingId).firstName("Ali").lastName("Khan").email("ali@gmail.com").build();
+        follower = UserProfile.builder()
+                .id(followerId)
+                .keycloakUserId("kc-follower")
+                .firstName("Hassan")
+                .lastName("Khan")
+                .email("hassan@gmail.com")
+                .build();
+        following = UserProfile.builder()
+                .id(followingId)
+                .keycloakUserId("kc-following")
+                .firstName("Ali")
+                .lastName("Khan")
+                .email("ali@gmail.com")
+                .build();
     }
 
     // ==========================================
@@ -73,7 +85,7 @@ class FollowServiceImplTest {
         assertDoesNotThrow(() -> followService.followUser(followRequest));
 
         verify(followRepository, times(1)).save(any(Follow.class));
-        verify(kafkaTemplate, times(1)).send(eq("social-follow-events"), eq(followerId.toString()), any());
+        verify(kafkaTemplate, times(1)).send(eq("social-follow-events"), eq("kc-follower"), any());
     }
 
     @Test
@@ -125,11 +137,17 @@ class FollowServiceImplTest {
 
     @Test
     void unfollowUser_Success() {
-        Follow mockFollow = new Follow();
+        Follow mockFollow = Follow.builder()
+                .id(new FollowId(followerId, followingId))
+                .follower(follower)
+                .following(following)
+                .build();
         when(followRepository.findById(any(FollowId.class))).thenReturn(Optional.of(mockFollow));
+        when(kafkaTemplate.send(any(), any(), any())).thenReturn(mock(CompletableFuture.class));
 
         assertDoesNotThrow(() -> followService.unfollowUser(followRequest));
         verify(followRepository, times(1)).delete(mockFollow);
+        verify(kafkaTemplate, times(1)).send(eq("social-unfollow-events"), eq("kc-follower"), any());
     }
 
     @Test

@@ -29,7 +29,8 @@ public class FollowServiceImpl implements FollowService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ProfileMapper profileMapper;
 
-    private static final String TOPIC = "social-follow-events";
+    private static final String FOLLOW_TOPIC = "social-follow-events";
+    private static final String UNFOLLOW_TOPIC = "social-unfollow-events";
 
     @Override
     @Transactional
@@ -58,10 +59,13 @@ public class FollowServiceImpl implements FollowService {
         followRepository.save(follow);
 
         // 2. Stream event out to Kafka instantly
+        String followerTimelineId = timelineUserId(follower);
+        String followingTimelineId = timelineUserId(following);
+
         UserFollowedEvent event = new UserFollowedEvent(
                 UUID.randomUUID().toString(),
-                follower.getId().toString(),
-                following.getId().toString(),
+                followerTimelineId,
+                followingTimelineId,
                 follower.getFirstName(),
                 follower.getLastName(),
                 follower.getEmail(),
@@ -71,8 +75,8 @@ public class FollowServiceImpl implements FollowService {
                 LocalDateTime.now().toString()
         );
 
-        // Keying by followerId ensures predictable, sequential distribution inside Kafka partitions
-        kafkaTemplate.send(TOPIC, follower.getId().toString(), event);
+        // Keying by the timeline identity keeps follow fanout aligned with post authors.
+        kafkaTemplate.send(FOLLOW_TOPIC, followerTimelineId, event);
     }
 
     @Override
@@ -82,7 +86,26 @@ public class FollowServiceImpl implements FollowService {
         Follow follow = followRepository.findById(followId)
                 .orElseThrow(() -> new RuntimeException("Active follow relationship not found"));
 
+        UserProfile follower = follow.getFollower();
+        UserProfile following = follow.getFollowing();
+        String followerTimelineId = timelineUserId(follower);
+
         followRepository.delete(follow);
+
+        UserFollowedEvent event = new UserFollowedEvent(
+                UUID.randomUUID().toString(),
+                followerTimelineId,
+                timelineUserId(following),
+                follower.getFirstName(),
+                follower.getLastName(),
+                follower.getEmail(),
+                following.getFirstName(),
+                following.getLastName(),
+                following.getEmail(),
+                LocalDateTime.now().toString()
+        );
+
+        kafkaTemplate.send(UNFOLLOW_TOPIC, followerTimelineId, event);
     }
 
     @Override
@@ -119,5 +142,12 @@ public class FollowServiceImpl implements FollowService {
         return followRepository.findById_FollowerId(profileId, pageable)
                 .map(Follow::getFollowing)
                 .map(profileMapper::toResponse);
+    }
+
+    private String timelineUserId(UserProfile profile) {
+        if (profile.getKeycloakUserId() != null && !profile.getKeycloakUserId().isBlank()) {
+            return profile.getKeycloakUserId();
+        }
+        return profile.getId().toString();
     }
 }

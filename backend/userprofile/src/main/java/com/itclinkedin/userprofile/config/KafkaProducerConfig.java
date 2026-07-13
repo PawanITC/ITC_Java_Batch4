@@ -17,6 +17,14 @@ public class KafkaProducerConfig {
     }
 
     @Bean
+    public NewTopic unfollowEventsTopic() {
+        return TopicBuilder.name("social-unfollow-events")
+                .partitions(4)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
     public NewTopic profileCreatedTopic() {
         return TopicBuilder.name("profile.created")
                 .partitions(3)

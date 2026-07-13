@@ -1,5 +1,7 @@
 package com.itc.linkedin.feedAndTimeline.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.feedAndTimeline.dto.response.TimelinePostResponse;
 import com.itc.linkedin.feedAndTimeline.entity.FollowEdge;
 import com.itc.linkedin.feedAndTimeline.entity.TimelinePost;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +40,8 @@ public class TimelineService {
     private final TimelinePostRepository timelinePostRepository;
     private final FollowEdgeRepository followEdgeRepository;
     private final MediaUrlService mediaUrlService;
+    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> stringKafkaTemplate;
 
     @Cacheable(value = "timeline", key = "#userId")
     public List<TimelinePostResponse> getTimeline(String userId) {
@@ -68,9 +73,11 @@ public class TimelineService {
     public void handlePostCreated(PostCreatedEvent event) {
         log.info("Handling post.created event: postId={}, authorId={}", event.postId(), event.authorId());
 
+        List<String> followerIds = followEdgeRepository.findFollowerIdsByFolloweeId(event.authorId());
+
         List<String> recipientIds = new ArrayList<>();
         recipientIds.add(event.authorId());
-        recipientIds.addAll(followEdgeRepository.findFollowerIdsByFolloweeId(event.authorId()));
+        recipientIds.addAll(followerIds);
 
         int insertedCount = 0;
         for (String recipientId : recipientIds.stream().filter(Objects::nonNull).distinct().toList()) {
@@ -79,6 +86,8 @@ public class TimelineService {
 
         log.info("Fanout complete for postId={} authorId={} recipientsInserted={}",
                 event.postId(), event.authorId(), insertedCount);
+
+        publishPostCreatedNotifications(event, followerIds);
     }
 
     @Transactional
@@ -109,6 +118,19 @@ public class TimelineService {
 
         log.info("Follow backfill complete followerId={} followingId={} insertedPosts={}",
                 event.followerId(), event.followingId(), backfilledCount);
+    }
+
+    @Transactional
+    @CacheEvict(value = "timeline", allEntries = true)
+    public void handleUserUnfollowed(UserFollowedEvent event) {
+        log.info("Handling social-unfollow-events: followerId={}, followingId={}", event.followerId(), event.followingId());
+
+        if (event.followerId() == null || event.followingId() == null || event.followerId().equals(event.followingId())) {
+            log.info("Ignoring invalid unfollow event followerId={} followingId={}", event.followerId(), event.followingId());
+            return;
+        }
+
+        followEdgeRepository.deleteByFollowerIdAndFolloweeId(event.followerId(), event.followingId());
     }
 
     @Transactional
@@ -342,6 +364,40 @@ public class TimelineService {
         return true;
     }
 
+    private void publishPostCreatedNotifications(PostCreatedEvent event, List<String> followerIds) {
+        for (String followerId : followerIds.stream().filter(Objects::nonNull).distinct().toList()) {
+            if (followerId.equals(event.authorId())) {
+                continue;
+            }
+
+            try {
+                String eventId = "%s:post-created:%s".formatted(event.eventId(), followerId);
+                String payload = objectMapper.writeValueAsString(new NotificationEvent(
+                        eventId,
+                        followerId,
+                        "POST_CREATED",
+                        event.authorName() + " created a new post"
+                ));
+
+                stringKafkaTemplate.send("notifications", followerId, payload);
+            } catch (JsonProcessingException ex) {
+                log.error("Failed to serialize post-created notification for postId={} recipientId={}",
+                        event.postId(), followerId, ex);
+            } catch (Exception ex) {
+                log.error("Failed to publish post-created notification for postId={} recipientId={}",
+                        event.postId(), followerId, ex);
+            }
+        }
+    }
+
     private record ScoredTimelinePost(TimelinePost post, int score) {
+    }
+
+    private record NotificationEvent(
+            String eventId,
+            String recipientUserId,
+            String type,
+            String content
+    ) {
     }
 }

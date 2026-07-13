@@ -29,6 +29,16 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    public NewTopic notificationsTopic() {
+        return TopicBuilder.name("notifications").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic socialUnfollowEventsTopic() {
+        return TopicBuilder.name("social-unfollow-events").partitions(4).replicas(1).build();
+    }
+
+    @Bean
     public NewTopic postCreatedDltTopic() {
         return TopicBuilder.name("post.created.dlt").partitions(3).replicas(1).build();
     }
