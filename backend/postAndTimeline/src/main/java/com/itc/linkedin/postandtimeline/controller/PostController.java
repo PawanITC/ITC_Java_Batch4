@@ -65,7 +65,7 @@ public class PostController {
             Authentication authentication,
             @PathVariable Long postId
     ) {
-        return postService.likePost(postId, requiredUserId(authentication));
+        return postService.likePost(postId, requiredUserId(authentication), requiredUsername(authentication));
     }
 
     @DeleteMapping("/{postId}/like")
@@ -73,7 +73,7 @@ public class PostController {
             Authentication authentication,
             @PathVariable Long postId
     ) {
-        return postService.unlikePost(postId, requiredUserId(authentication));
+        return postService.unlikePost(postId, requiredUserId(authentication), requiredUsername(authentication));
     }
 
     @PostMapping("/{postId}/comments")

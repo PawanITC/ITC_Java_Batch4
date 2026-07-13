@@ -8,6 +8,7 @@ public record PostLikedEvent(
         String postAuthorId,
         String actorUserId,
         String actorName,
+        boolean liked,
         int likesCount,
         LocalDateTime likedAt
 ) {
@@ -18,6 +19,6 @@ public record PostLikedEvent(
             int likesCount,
             LocalDateTime likedAt
     ) {
-        this(eventId, postId, null, actorUserId, actorUserId, likesCount, likedAt);
+        this(eventId, postId, null, actorUserId, actorUserId, true, likesCount, likedAt);
     }
 }

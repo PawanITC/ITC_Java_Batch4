@@ -139,8 +139,8 @@ class PostServiceTest {
         when(postLikeRepository.existsByPostIdAndUserId(11L, "user-1")).thenReturn(false);
         when(postLikeRepository.countByPostId(11L)).thenReturn(1L, 0L);
 
-        postService.likePost(11L, "user-1");
-        postService.unlikePost(11L, "user-1");
+        postService.likePost(11L, "user-1", "User One");
+        postService.unlikePost(11L, "user-1", "User One");
 
         verify(postLikeRepository).save(any(PostLike.class));
         verify(postLikeRepository).deleteByPostIdAndUserId(11L, "user-1");
@@ -158,7 +158,11 @@ class PostServiceTest {
         );
 
         assertThat(likeEvent.likesCount()).isEqualTo(1);
+        assertThat(likeEvent.actorName()).isEqualTo("User One");
+        assertThat(likeEvent.liked()).isTrue();
         assertThat(unlikeEvent.likesCount()).isEqualTo(0);
+        assertThat(unlikeEvent.actorName()).isEqualTo("User One");
+        assertThat(unlikeEvent.liked()).isFalse();
     }
 
     @Test
