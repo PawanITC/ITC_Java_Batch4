@@ -27,10 +27,10 @@ public class UpdateProfileRequest {
     private String city;
     private String country;
 
-    @URL(message = "Profile picture must be a valid URL link")
+//    @URL(message = "Profile picture must be a valid URL link")
     private String profilePictureUrl;
 
-    @URL(message = "Cover photo must be a valid URL link")
+//    @URL(message = "Cover photo must be a valid URL link")
     private String coverPhotoUrl;
 
     private String industry;
