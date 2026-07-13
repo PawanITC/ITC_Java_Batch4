@@ -132,6 +132,23 @@ export type ExperiencePayload = {
   current: boolean;
 };
 
+
+export type FollowPayload = {
+  followerId: string;
+  followingId: string;
+};
+
+export type FollowResponse = {
+  id?: string;
+  followerId: string;
+  followingId: string;
+  createdAt?: string;
+};
+
+export type FollowCountResponse = {
+  count: number;
+};
+
 export async function listProfiles() {
   const response = await userProfileApi.get<Profile[]>("/api/profiles");
   return response.data;
@@ -208,4 +225,51 @@ export async function updateExperience(experienceId: string, payload: Experience
 
 export async function deleteExperience(experienceId: string) {
   await userProfileApi.delete(`/api/experiences/${experienceId}`);
+}
+
+export async function toggleFollowUser(payload: FollowPayload) {
+  const response = await userProfileApi.post<any>("/api/follows/follow", payload);
+  return response.data;
+}
+
+/**
+ * Get profiles of users who are following the specified profile.
+ * GET /api/follows/{profileId}/followers
+ */
+export async function getFollowers(profileId: string) {
+  const response = await userProfileApi.get<Profile[]>(`/api/follows/${profileId}/followers`);
+  return response.data;
+}
+
+/**
+ * Get profiles of users that the specified profile is currently following.
+ * GET /api/follows/{profileId}/following
+ */
+export async function getFollowing(profileId: string) {
+  const response = await userProfileApi.get<Profile[]>(`/api/follows/${profileId}/following`);
+  return response.data;
+}
+
+/**
+ * Get total count of profiles that the specified profile is following.
+ * GET /api/follows/{profileId}/following/count
+ */
+export async function getFollowingCount(profileId: string) {
+  // If your API returns a raw number instead of an object, change type to: userProfileApi.get<number>
+  const response = await userProfileApi.get<FollowCountResponse | number>(
+    `/api/follows/${profileId}/following/count`
+  );
+  return typeof response.data === "number" ? response.data : response.data.count;
+}
+
+/**
+ * Get total count of followers for the specified profile.
+ * GET /api/follows/{profileId}/followers/count
+ */
+export async function getFollowersCount(profileId: string) {
+  // If your API returns a raw number instead of an object, change type to: userProfileApi.get<number>
+  const response = await userProfileApi.get<FollowCountResponse | number>(
+    `/api/follows/${profileId}/followers/count`
+  );
+  return typeof response.data === "number" ? response.data : response.data.count;
 }
