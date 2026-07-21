@@ -23,6 +23,7 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**",
+                                "/actuator/prometheus",
                                 "/gateway/health"
                         ).permitAll()
                         .pathMatchers("/api/**").authenticated()
