@@ -45,6 +45,11 @@ public class TimelinePost {
     @Column(length = 5000)
     private String content;
 
+    @Column(length = 2048)
+    private String mediaObjectKey;
+
+    private String mediaType;
+
     private int likesCount;
 
     private int commentsCount;

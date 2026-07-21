@@ -8,14 +8,19 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Avatar from "../common/Avatar";
-import { FeedPost } from "../../types/feed";
+import { FeedComment, FeedPost } from "../../types/feed";
 
 type Props = {
   post: FeedPost;
+  currentUserName?: string;
+  currentUserAvatarUrl?: string;
   onLike?: (postId: number) => Promise<void>;
   onUnlike?: (postId: number) => Promise<void>;
   onDelete?: (postId: number) => Promise<void>;
   onComment?: (postId: number, content: string) => Promise<void>;
+  onLoadComments?: (postId: number) => Promise<FeedComment[]>;
+  onRepost?: (post: FeedPost) => Promise<void>;
+  onSend?: (post: FeedPost) => Promise<void>;
   readOnly?: boolean;
 };
 
@@ -33,10 +38,15 @@ function formatDate(value: string) {
 
 export default function FeedPostCard({
   post,
+  currentUserName = "Current user",
+  currentUserAvatarUrl,
   onLike,
   onUnlike,
   onDelete,
   onComment,
+  onLoadComments,
+  onRepost,
+  onSend,
   readOnly = false,
 }: Props) {
   const postId = post.postId ?? post.id;
@@ -44,8 +54,15 @@ export default function FeedPostCard({
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<FeedComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState("");
   const [comment, setComment] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [reposting, setReposting] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const handleLike = async () => {
     if (readOnly) return;
@@ -62,11 +79,71 @@ export default function FeedPostCard({
   };
 
   const submitComment = async () => {
-    if (!comment.trim()) return;
+    if (!comment.trim() || readOnly) return;
     await onComment?.(postId, comment.trim());
     setCommentsCount((current) => current + 1);
+    setComments((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        postId,
+        authorId: "",
+        authorName: currentUserName,
+        content: comment.trim(),
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setComment("");
-    setShowCommentBox(false);
+    setShowComments(true);
+  };
+
+  const handleRepost = async () => {
+    if (readOnly || reposting) return;
+
+    try {
+      setReposting(true);
+      setActionMessage("");
+      await onRepost?.(post);
+      setActionMessage("Reposted to your feed.");
+    } catch (error) {
+      console.error("Repost error", error);
+      setActionMessage("Repost failed. Please try again.");
+    } finally {
+      setReposting(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (sending) return;
+
+    try {
+      setSending(true);
+      setActionMessage("");
+      await onSend?.(post);
+      setActionMessage("Post link ready to share.");
+    } catch (error) {
+      console.error("Send error", error);
+      setActionMessage("Send failed. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const toggleComments = async () => {
+    const nextVisible = !showComments;
+    setShowComments(nextVisible);
+    if (!nextVisible || comments.length > 0 || !onLoadComments) return;
+
+    try {
+      setCommentsLoading(true);
+      setCommentsError("");
+      setComments(await onLoadComments(postId));
+    } catch (error) {
+      console.error("Comment loading error", error);
+      setCommentsError("Comments could not be loaded.");
+    } finally {
+      setCommentsLoading(false);
+    }
   };
 
   return (
@@ -123,6 +200,16 @@ export default function FeedPostCard({
         {post.content}
       </p>
 
+      {post.mediaUrl && (
+        <div className="border-y border-[#edf0f3] bg-black">
+          {post.mediaType === "VIDEO" ? (
+            <video src={post.mediaUrl} controls className="max-h-[560px] w-full bg-black" />
+          ) : (
+            <img src={post.mediaUrl} alt="" className="max-h-[560px] w-full object-contain" />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-b border-[#edf0f3] px-4 pb-2 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#0a66c2] text-[10px] text-white">
@@ -130,7 +217,14 @@ export default function FeedPostCard({
           </span>
           {likesCount} reactions
         </span>
-        <span>{commentsCount} comments</span>
+        <button
+          type="button"
+          aria-label="Show discussion"
+          onClick={toggleComments}
+          className="rounded px-1 hover:text-[#0a66c2] hover:underline"
+        >
+          {commentsCount} comments
+        </button>
       </div>
 
       <div className="grid grid-cols-4 px-2 py-1 text-sm font-semibold text-gray-600">
@@ -145,28 +239,52 @@ export default function FeedPostCard({
         </button>
 
         <button
-          onClick={() => setShowCommentBox((current) => !current)}
+          type="button"
+          aria-label="Comment"
+          onClick={() => {
+            if (!readOnly) {
+              setShowCommentBox((current) => !current);
+              if (!showComments) void toggleComments();
+            }
+          }}
           className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
         >
           <MessageCircle size={18} />
           <span className="hidden sm:inline">Comment</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
+        <button
+          type="button"
+          onClick={handleRepost}
+          disabled={readOnly || reposting}
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2] disabled:cursor-not-allowed disabled:text-gray-300"
+        >
           <Repeat2 size={18} />
-          <span className="hidden sm:inline">Repost</span>
+          <span className="hidden sm:inline">{reposting ? "Reposting" : "Repost"}</span>
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2]">
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending}
+          className="flex items-center justify-center gap-2 rounded px-2 py-3 hover:bg-[#f3f6f8] hover:text-[#0a66c2] disabled:cursor-not-allowed disabled:text-gray-300"
+        >
           <Send size={18} />
-          <span className="hidden sm:inline">Send</span>
+          <span className="hidden sm:inline">{sending ? "Sending" : "Send"}</span>
         </button>
       </div>
+
+      {actionMessage && (
+        <p className="border-t border-[#edf0f3] px-4 py-2 text-xs text-gray-500">
+          {actionMessage}
+        </p>
+      )}
 
       {showCommentBox && (
         <div className="flex gap-2 border-t border-[#edf0f3] px-4 py-3">
           <Avatar
-            name="Shubhra Tripathi"
+            name={currentUserName}
+            src={currentUserAvatarUrl}
             sizeClassName="h-9 w-9"
             textClassName="text-xs"
           />
@@ -189,6 +307,32 @@ export default function FeedPostCard({
               <Send size={16} />
             </button>
           </div>
+        </div>
+      )}
+
+      {showComments && (
+        <div className="space-y-3 border-t border-[#edf0f3] px-4 py-3">
+          {commentsLoading ? (
+            <p className="text-sm text-gray-500">Loading comments...</p>
+          ) : commentsError ? (
+            <p className="text-sm text-red-600">{commentsError}</p>
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-gray-500">No comments yet.</p>
+          ) : (
+            comments.map((item) => (
+              <div key={item.id} className="flex gap-2">
+                <Avatar
+                  name={item.authorName}
+                  sizeClassName="h-8 w-8"
+                  textClassName="text-xs"
+                />
+                <div className="min-w-0 rounded-2xl bg-[#f3f2ef] px-3 py-2">
+                  <p className="text-xs font-semibold text-[#191919]">{item.authorName}</p>
+                  <p className="whitespace-pre-wrap text-sm text-[#191919]">{item.content}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </article>

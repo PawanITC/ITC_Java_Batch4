@@ -29,6 +29,9 @@ class TimelineServiceTest {
     @Mock
     private FollowEdgeRepository followEdgeRepository;
 
+    @Mock
+    private MediaUrlService mediaUrlService;
+
     @InjectMocks
     private TimelineService timelineService;
 
@@ -128,6 +131,8 @@ class TimelineServiceTest {
                 "Author One",
                 "Engineer",
                 "hello network",
+                null,
+                null,
                 LocalDateTime.now()
         );
 

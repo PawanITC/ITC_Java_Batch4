@@ -48,6 +48,9 @@ class PostServiceTest {
     @Mock
     private CommentRepository commentRepository;
 
+    @Mock
+    private PostMediaService postMediaService;
+
     @Captor
     private ArgumentCaptor<Post> postCaptor;
 
@@ -66,7 +69,8 @@ class PostServiceTest {
                 postLikeRepository,
                 commentRepository,
                 outboxEventRepository,
-                objectMapper
+                objectMapper,
+                postMediaService
         );
     }
 
@@ -85,7 +89,7 @@ class PostServiceTest {
         PostResponse response = postService.createPost(
                 "user.demo",
                 "user.demo",
-                new CreatePostRequest("Kafka outbox test post")
+                new CreatePostRequest("Kafka outbox test post", null, null)
         );
 
         verify(postRepository).save(postCaptor.capture());
@@ -113,6 +117,8 @@ class PostServiceTest {
         assertThat(event.authorId()).isEqualTo("user.demo");
         assertThat(event.authorName()).isEqualTo("user.demo");
         assertThat(event.content()).isEqualTo("Kafka outbox test post");
+        assertThat(event.mediaObjectKey()).isNull();
+        assertThat(event.mediaType()).isNull();
     }
 
     @Test
@@ -198,7 +204,8 @@ class PostServiceTest {
 
         assertThat(event.commentId()).isEqualTo(55L);
         assertThat(event.postId()).isEqualTo(12L);
-        assertThat(event.authorName()).isEqualTo("User One");
+        assertThat(event.postAuthorId()).isEqualTo("author-1");
+        assertThat(event.actorName()).isEqualTo("User One");
         assertThat(event.commentsCount()).isEqualTo(1);
     }
 

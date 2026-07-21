@@ -1,5 +1,4 @@
-import { ShieldCheck, MapPin, Pencil } from "lucide-react";
-import companyphoto from "../../../assets/profile.jpeg";
+import { BriefcaseBusiness, Building2, MapPin, Pencil, ShieldCheck } from "lucide-react";
 import type { Profile } from "../api";
 
 type ProfileInfoProps = {
@@ -10,53 +9,36 @@ type ProfileInfoProps = {
 function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
   if (!profile) return null;
 
-  return (
-    <div className="bg-white p-8 flex justify-between">
-      
-      {/* LEFT */}
-      <div className="flex-1">
+  const location = [profile.city, profile.country].filter(Boolean).join(", ");
+  const headline = profile.headline || profile.currentPosition || "Complete your profile";
 
-        <div className="flex items-center gap-3 flex-wrap">
+  return (
+    <div className="flex justify-between bg-white p-8">
+      <div className="flex-1">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold">
             {profile.firstName} {profile.lastName}
           </h1>
 
-          <span className="text-xl text-gray-600">
-            He/Him
-          </span>
-
-          <button className="flex items-center gap-2 border-2 border-dashed border-blue-600 rounded-full px-5 py-1 text-blue-700 font-semibold">
+          <button className="flex items-center gap-2 rounded-full border-2 border-dashed border-blue-600 px-5 py-1 font-semibold text-blue-700">
             <ShieldCheck size={15} />
             Add verification badge
           </button>
         </div>
 
-        <p className="text-xl mt-2 text-gray-900">
-          {profile.headline}
-        </p>
+        <p className="mt-2 text-xl text-gray-900">{headline}</p>
 
-        <div className="flex items-center gap-2 mt-2 text-gray-500 text-xl">
-          <MapPin size={18} />
-
-          <span>
-            {profile.city}, {profile.country}
-          </span>
-
-          <span>·</span>
-
-          <button className="text-blue-700 font-semibold">
-            Contact info
-          </button>
-        </div>
-
-        <p className="text-blue-700 font-semibold text-xl mt-6">
-          500+ connections
-        </p>
-
+        {location && (
+          <div className="mt-2 flex items-center gap-2 text-xl text-gray-500">
+            <MapPin size={18} />
+            <span>{location}</span>
+            <span>-</span>
+            <button className="font-semibold text-blue-700">Contact info</button>
+          </div>
+        )}
       </div>
 
-      {/* RIGHT */}
-      <div className="w-80 ml-10 space-y-8">
+      <div className="ml-10 w-80 space-y-8">
         <div className="flex justify-end">
           <button
             onClick={onEdit}
@@ -66,19 +48,24 @@ function ProfileInfo({ profile, onEdit }: ProfileInfoProps) {
             <Pencil size={20} />
           </button>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <img src={companyphoto} alt="Company" className="w-16 h-16 rounded-full" />
-          <h3 className="text-xl font-semibold">{profile.currentCompany || "Fiverr"}</h3>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <img src={companyphoto} alt="company" className="w-16 h-16 rounded-full" />
-          <h3 className="text-xl font-semibold">
-            {profile.currentPosition || "COMSATS University Islamabad"}
-          </h3>
-        </div>
+        {profile.currentCompany && (
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+              <Building2 size={28} />
+            </div>
+            <h3 className="text-xl font-semibold">{profile.currentCompany}</h3>
+          </div>
+        )}
 
+        {profile.currentPosition && (
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+              <BriefcaseBusiness size={28} />
+            </div>
+            <h3 className="text-xl font-semibold">{profile.currentPosition}</h3>
+          </div>
+        )}
       </div>
     </div>
   );

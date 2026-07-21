@@ -1,10 +1,13 @@
 package com.itc.linkedin.searchAndDiscover.controller;
 
 import com.itc.linkedin.searchAndDiscover.dto.ApiResponse;
+import com.itc.linkedin.searchAndDiscover.kafka.event.PostCreatedEvent;
+import com.itc.linkedin.searchAndDiscover.kafka.event.ProfileIndexEvent;
 import com.itc.linkedin.searchAndDiscover.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,6 +21,18 @@ public class SearchAdminController {
     public ApiResponse<String> seedSearchData() {
         searchService.seedAll();
         return ApiResponse.success("OpenSearch seed data inserted successfully");
+    }
+
+    @PostMapping("/reindex/people")
+    public ApiResponse<String> reindexPeople(@RequestBody List<ProfileIndexEvent> profiles) {
+        searchService.indexProfiles(profiles);
+        return ApiResponse.success("People search reindex accepted: " + profiles.size());
+    }
+
+    @PostMapping("/reindex/posts")
+    public ApiResponse<String> reindexPosts(@RequestBody List<PostCreatedEvent> posts) {
+        searchService.indexPosts(posts);
+        return ApiResponse.success("Post search reindex accepted: " + posts.size());
     }
 
     @GetMapping("/health")

@@ -29,3 +29,15 @@ output "opensearch_endpoint" {
 output "opensearch_url" {
   value = "https://${aws_opensearch_domain.linkedin_opensearch.endpoint}"
 }
+
+output "s3_upload_bucket_name" {
+  value = aws_s3_bucket.app_uploads.bucket
+}
+
+output "s3_upload_bucket_arn" {
+  value = aws_s3_bucket.app_uploads.arn
+}
+
+output "media_service_role_arn" {
+  value = aws_iam_role.media_service.arn
+}

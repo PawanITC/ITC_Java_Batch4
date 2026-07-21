@@ -12,6 +12,8 @@ public record PostCreatedEvent(
         String authorName,
         String authorHeadline,
         String content,
+        String mediaObjectKey,
+        String mediaType,
         LocalDateTime createdAt
 ) {
 }

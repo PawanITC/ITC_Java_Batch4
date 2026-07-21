@@ -1,20 +1,19 @@
 import axios from "axios";
 import keycloak from "../../features/auth/keycloak";
+import { apiBaseUrl } from "../../config/runtimeConfig";
 import { ApiResponse, BackendJob } from "../../pages/JobPosting";
 
-// --- 1. Axios Client Configuration ---
 const jobPostingApi = axios.create({
-  baseURL:
-    process.env.REACT_APP_JOBPOSTING_API_BASE_URL ?? "http://localhost:8089",
+  baseURL: apiBaseUrl,
 });
 
-// --- 2. Keycloak Authentication Token Interceptor ---
 jobPostingApi.interceptors.request.use(async (config) => {
   if (keycloak.authenticated) {
     try {
+      // Refresh the token if it is about to expire within 30 seconds
       await keycloak.updateToken(30);
-    } catch {
-      // Allow structural paths to try unauthenticated fallbacks if gateway permits
+    } catch (error) {
+      console.warn("Could not refresh Keycloak token; attempting request with existing or empty token state.", error);
     }
 
     if (keycloak.token) {
@@ -25,7 +24,6 @@ jobPostingApi.interceptors.request.use(async (config) => {
   return config;
 });
 
-// --- 3. Request/Response TypeScript DTO Payloads ---
 export type CreateJobPayload = {
   companyId: string;
   title: string;
@@ -43,10 +41,9 @@ export type CreateJobPayload = {
 
 export type UpdateJobPayload = Partial<CreateJobPayload>;
 
-// --- 4. API Request Methods ---
 
 /**
- * Fetches the paginated job list content stream
+ * Fetches the paginated job list content stream from the gateway
  */
 export async function fetchJobsList() {
   const response = await jobPostingApi.get<ApiResponse>("/api/v1/jobs");

@@ -1,5 +1,7 @@
 package com.itc.linkedin.connections_service.security;
 
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -11,17 +13,18 @@ import java.util.UUID;
 
 @Component
 public class CurrentUserProvider {
+    HttpServletRequest request;
 
     public UUID getCurrentUserId() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//
-//        Jwt jwt = (Jwt) authentication.getPrincipal();
-//
-//        String userId = jwt.getSubject();
-//
-//        return UUID.fromString(userId);
-       // for testing only need to remove in prod
-        return getRandomLoggedInUserId();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+
+        String userId = jwt.getSubject();
+
+        return UUID.fromString(userId);
+      //  for testing only need to remove in prod
+       // return getRandomLoggedInUserId();
     }
     private static final List<UUID> TEST_USER_IDS = List.of(
             UUID.fromString("11111111-1111-1111-1111-111111111111"),

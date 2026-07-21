@@ -7,17 +7,19 @@ const userProfileApi = axios.create({
 });
 
 userProfileApi.interceptors.request.use(async (config) => {
+  
   if (keycloak.authenticated) {
     try {
       await keycloak.updateToken(30);
     } catch {
-      // The userprofile service currently allows these routes without auth.
+      // Keep the existing token if refresh fails; protected routes will reject it if expired.
     }
 
     if (keycloak.token) {
       config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${keycloak.token}`;
     }
+    
   }
 
   return config;
@@ -82,7 +84,6 @@ export type Language = {
 };
 
 export type CreateProfilePayload = {
-  keycloakUserId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -95,7 +96,7 @@ export type CreateProfilePayload = {
   profilePublic?: boolean;
 };
 
-export type UpdateProfilePayload = Partial<Omit<CreateProfilePayload, "keycloakUserId">> & {
+export type UpdateProfilePayload = Partial<CreateProfilePayload> & {
   profilePictureUrl?: string;
   coverPhotoUrl?: string;
   industry?: string;

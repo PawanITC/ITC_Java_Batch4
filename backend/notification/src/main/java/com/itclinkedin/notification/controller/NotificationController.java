@@ -15,8 +15,8 @@ public class NotificationController {
     }
 
     @GetMapping
-    public List<Notification>getForUser(@RequestParam String userId){
-    return notificationService.getNotificationsForUser(userId);
+    public List<Notification> getForUser(@RequestParam String userId){
+        return notificationService.getNotificationsForUser(userId);
     }
 
     @PutMapping("/{id}/read")

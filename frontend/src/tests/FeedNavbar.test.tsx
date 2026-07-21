@@ -32,6 +32,20 @@ jest.mock(
 
 jest.mock("../features/auth/keycloak", () => ({
   logout: jest.fn(),
+  tokenParsed: {
+    name: "Feed User",
+    preferred_username: "feed.user",
+  },
+}));
+
+jest.mock("../hooks/reduxHooks", () => ({
+  useAppDispatch: () => jest.fn(),
+  useAppSelector: (selector: any) =>
+    selector({
+      notifications: {
+        items: [],
+      },
+    }),
 }));
 
 function renderNavbar() {
@@ -52,6 +66,7 @@ describe("FeedNavbar", () => {
     expect(screen.getAllByText(/jobs/i)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/messaging/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/^me$/i)).toBeInTheDocument();
+    expect(screen.getByText("FU")).toBeInTheDocument();
   });
 
   test("navigates to search when the search input receives focus", () => {

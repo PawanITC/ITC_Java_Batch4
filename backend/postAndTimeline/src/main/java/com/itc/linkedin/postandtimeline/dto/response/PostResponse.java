@@ -12,6 +12,9 @@ public record PostResponse(
         String authorHeadline,
         String authorAvatarUrl,
         String content,
+        String mediaUrl,
+        String mediaObjectKey,
+        String mediaType,
         int likesCount,
         int commentsCount,
         LocalDateTime createdAt

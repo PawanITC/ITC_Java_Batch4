@@ -4,25 +4,11 @@ import { X } from "lucide-react";
 interface SkillsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  skills: string[];
 }
 
-function SkillsModal({ isOpen, onClose }: SkillsModalProps) {
+function SkillsModal({ isOpen, onClose, skills }: SkillsModalProps) {
   if (!isOpen) return null;
-
-  const skills = [
-    "React.js",
-    "Next.js",
-    "TypeScript",
-    "JavaScript",
-    "Node.js",
-    "Express.js",
-    "MongoDB",
-    "Redux Toolkit",
-    "Tailwind CSS",
-    "REST APIs",
-    "Git & GitHub",
-    "React Native",
-  ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -38,16 +24,20 @@ function SkillsModal({ isOpen, onClose }: SkillsModalProps) {
           Top Skills
         </h2>
 
-        <div className="flex flex-wrap gap-3">
-          {skills.map((skill) => (
-            <span
-              key={skill}
-              className="px-4 py-2 bg-gray-100 rounded-full"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+        {skills.length > 0 ? (
+          <div className="flex flex-wrap gap-3">
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className="px-4 py-2 bg-gray-100 rounded-full"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No skills added yet.</p>
+        )}
       </div>
     </div>
   );

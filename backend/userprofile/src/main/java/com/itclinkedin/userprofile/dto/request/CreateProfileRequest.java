@@ -1,5 +1,6 @@
 package com.itclinkedin.userprofile.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.itclinkedin.userprofile.entity.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import org.hibernate.validator.constraints.URL;
 @Data
 public class CreateProfileRequest {
 
+    @JsonIgnore
     private String keycloakUserId;
 
     @NotBlank(message = "First name is required")

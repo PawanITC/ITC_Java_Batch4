@@ -10,36 +10,68 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Avatar from "../common/Avatar";
-import profileImage from "../../assets/profile.jpeg";
+import { Profile } from "../../features/userprofile/api";
 
-export default function LeftProfileCard() {
+type Props = {
+  profile: Profile | null;
+  loading?: boolean;
+  missing?: boolean;
+};
+
+function displayName(profile: Profile | null) {
+  if (!profile) return "Your profile";
+  return `${profile.firstName} ${profile.lastName}`.trim() || "Your profile";
+}
+
+export default function LeftProfileCard({ profile, loading = false, missing = false }: Props) {
+  const name = displayName(profile);
+  const headline = profile?.headline || profile?.currentPosition || "Complete your profile";
+
   return (
     <aside className="sticky top-[68px] space-y-2">
       <div className="overflow-hidden rounded-lg border border-[#d6d6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
-        <div className="relative h-16 bg-[#0a66c2]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.28)_0,rgba(255,255,255,0.28)_12%,transparent_13%),radial-gradient(circle_at_78%_28%,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_10%,transparent_11%),linear-gradient(135deg,#0a66c2_0%,#004182_100%)]" />
-          <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/10 to-transparent" />
-        </div>
+        <div className="relative h-[116px] bg-white">
+          <div className="absolute inset-x-0 top-0 h-20 overflow-hidden bg-[#0a66c2]">
+            {profile?.coverPhotoUrl ? (
+              <img
+                src={profile.coverPhotoUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.28)_0,rgba(255,255,255,0.28)_12%,transparent_13%),radial-gradient(circle_at_78%_28%,rgba(255,255,255,0.18)_0,rgba(255,255,255,0.18)_10%,transparent_11%),linear-gradient(135deg,#0a66c2_0%,#004182_100%)]" />
+            )}
+            <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/10 to-transparent" />
+          </div>
 
-        <div className="px-3 pb-4 text-center">
-          <div className="mx-auto -mt-10 w-fit rounded-full border-4 border-white shadow-sm">
+          <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 rounded-full border-4 border-white bg-white shadow-sm">
             <Avatar
-              name="Shubhra Tripathi"
-              src={profileImage}
+              name={name}
+              src={profile?.profilePictureUrl}
               sizeClassName="h-20 w-20"
               textClassName="text-lg"
             />
           </div>
+        </div>
 
+        <div className="px-3 pb-4 text-center">
           <Link
             to="/profile"
             className="mt-3 block text-base font-semibold hover:underline"
           >
-            Shubhra Tripathi
+            {loading ? "Loading profile..." : name}
           </Link>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Java Full Stack Developer | Spring Boot | React
+            {loading ? "Checking your profile" : headline}
           </p>
+          {missing && (
+            <Link
+              to="/profile"
+              className="mt-3 inline-flex rounded-full bg-[#0a66c2] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#004182]"
+            >
+              Complete profile
+            </Link>
+          )}
         </div>
 
         <div className="border-t border-[#edf0f3] py-2 text-xs">

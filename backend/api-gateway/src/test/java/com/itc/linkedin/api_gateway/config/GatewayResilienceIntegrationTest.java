@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 class GatewayResilienceIntegrationTest {
 
     private static final AtomicInteger searchAttempts = new AtomicInteger();
+    private static final AtomicInteger profileRequests = new AtomicInteger();
     private static final DisposableServer backendServer = HttpServer.create()
             .port(0)
             .route(routes -> routes
@@ -41,6 +42,14 @@ class GatewayResilienceIntegrationTest {
 
                         response.status(HttpResponseStatus.OK);
                         return response.sendString(Mono.just("search ok"));
+                    })
+                    .get("/api/profiles/me", (request, response) -> {
+                        profileRequests.incrementAndGet();
+                        response.status(HttpResponseStatus.OK);
+                        response.header("Content-Type", "application/json");
+                        return response.sendString(Mono.just("""
+                                {"id":"11111111-1111-1111-1111-111111111111","keycloakUserId":"user-1","email":"user@example.com"}
+                                """));
                     })
             )
             .bindNow();
@@ -57,12 +66,14 @@ class GatewayResilienceIntegrationTest {
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("SEARCH_SERVICE_URI", () -> "http://localhost:" + backendServer.port());
+        registry.add("USERPROFILE_SERVICE_URI", () -> "http://localhost:" + backendServer.port());
         registry.add("KEYCLOAK_JWK_SET_URI", () -> "http://localhost/fake-jwks");
     }
 
     @BeforeEach
     void setUp() {
         searchAttempts.set(0);
+        profileRequests.set(0);
         when(redisRateLimiter.isAllowed(anyString(), anyString()))
                 .thenReturn(Mono.just(new Response(true, Map.of("X-RateLimit-Remaining", "19"))));
         when(jwtDecoder.decode(anyString()))
@@ -106,6 +117,21 @@ class GatewayResilienceIntegrationTest {
                 .expectStatus().isOk();
 
         assertEquals(3, searchAttempts.get());
+    }
+
+    @Test
+    void shouldForwardCurrentProfileRequestToUserProfileService() {
+        testClient()
+                .get()
+                .uri("/api/profiles/me")
+                .header("Authorization", "Bearer test-token")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.keycloakUserId").isEqualTo("user-1")
+                .jsonPath("$.email").isEqualTo("user@example.com");
+
+        assertEquals(1, profileRequests.get());
     }
 
     @Test

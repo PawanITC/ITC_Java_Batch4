@@ -15,4 +15,28 @@ public class KafkaProducerConfig {
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    public NewTopic profileCreatedTopic() {
+        return TopicBuilder.name("profile.created")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic profileUpdatedTopic() {
+        return TopicBuilder.name("profile.updated")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic profileDeletedTopic() {
+        return TopicBuilder.name("profile.deleted")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 }

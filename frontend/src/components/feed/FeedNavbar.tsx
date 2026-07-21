@@ -10,13 +10,33 @@ import {
   Users,
 } from "lucide-react";
 import keycloak from "../../features/auth/keycloak";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/reduxHooks";
 import { loadNotifications } from "../../store/notificationSlice";
-import { getUsername } from "../../utils/authUtils";
+import { getUserId } from "../../utils/authUtils";
+
+function accountInitials() {
+  const token = keycloak.tokenParsed;
+  const name = String(
+    token?.name ||
+    [token?.given_name, token?.family_name].filter(Boolean).join(" ") ||
+    token?.preferred_username ||
+    token?.email ||
+    "Me"
+  );
+
+  return name
+    .split(/[\s.@_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "ME";
+}
 
 export default function FeedNavbar() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const dispatch = useAppDispatch();
   const unreadCount = useAppSelector(
@@ -24,7 +44,7 @@ export default function FeedNavbar() {
   );
 
   useEffect(() => {
-    const userId = getUsername();
+    const userId = getUserId();
     if (!userId) return;
 
     dispatch(loadNotifications(userId));
@@ -43,6 +63,16 @@ export default function FeedNavbar() {
     { label: "Notifications", to: "/notifications", icon: Bell },
   ];
 
+  const submitSearch = () => {
+    const query = searchQuery.trim();
+    if (!query) {
+      navigate("/search");
+      return;
+    }
+
+    navigate(`/search?type=people&q=${encodeURIComponent(query)}`);
+  };
+
   return (
     <>
       <nav className="sticky top-0 z-50 border-b border-[#d0d7de] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
@@ -60,7 +90,18 @@ export default function FeedNavbar() {
               <Search size={17} />
               <input
                 placeholder="Search"
-                onFocus={() => navigate("/search")}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onFocus={() => {
+                  if (!searchQuery.trim()) {
+                    navigate("/search");
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    submitSearch();
+                  }
+                }}
                 className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500"
               />
             </label>
@@ -96,7 +137,7 @@ export default function FeedNavbar() {
               className="flex h-full min-w-[58px] flex-col items-center justify-center gap-0.5 border-b-2 border-transparent px-2 text-xs text-gray-600 hover:bg-[#f3f6f8] hover:text-[#0a66c2]"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0a66c2] text-[10px] font-semibold text-white">
-                ST
+                {accountInitials()}
               </span>
               <span className="leading-none">Me</span>
             </Link>

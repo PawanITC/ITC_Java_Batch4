@@ -94,9 +94,7 @@ const loadBackendJobsData = useCallback(async () => {
       <div className="min-h-screen bg-[#f4f2ee] py-6 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 space-y-4">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 h-96">
-              [Profile View]
-            </div>
+           
             <JobNavigationMenu onJobAdded={loadBackendJobsData} />
             <JobFooterLinks />
           </div>
