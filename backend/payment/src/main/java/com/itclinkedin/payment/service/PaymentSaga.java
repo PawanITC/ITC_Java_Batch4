@@ -1,6 +1,8 @@
 package com.itclinkedin.payment.service;
 
+import com.itclinkedin.payment.exception.NotFoundException;
 import com.itclinkedin.payment.exception.PaymentFailedException;
+import com.itclinkedin.payment.exception.ProviderUnavailableException;
 import com.itclinkedin.payment.model.Subscription;
 import com.itclinkedin.payment.model.SubscriptionStatus;
 import com.itclinkedin.payment.provider.ChargeResult;
@@ -29,15 +31,22 @@ public class PaymentSaga {
         if (claimed == 0) {
             Subscription existing = repository.findById(subscriptionId).orElse(null);
             if (existing == null)
-                throw new IllegalArgumentException("No subscription with id " + subscriptionId);
+                throw new NotFoundException("No subscription with id " + subscriptionId);
             throw new IllegalStateException("Subscription is not PENDING, it is " + existing.getStatus());
         }
 
         Subscription sub = repository.findById(subscriptionId).orElseThrow();
 
-        // 2) charge the card — OUTSIDE any DB transaction
-        ChargeResult charge = provider.charge(
-                sub.getUserId(), sub.getAmount(), sub.getCurrency(), sub.getIdempotencyKey());
+        // 2) charge the card — OUTSIDE any DB transaction (retry + circuit breaker on the provider)
+        ChargeResult charge;
+        try {
+            charge = provider.charge(
+                    sub.getUserId(), sub.getAmount(), sub.getCurrency(), sub.getIdempotencyKey());
+        } catch (Exception providerDown) {
+            // transient: provider errored OR circuit is open → revert PROCESSING→PENDING so it's retryable
+            repository.claim(subscriptionId, SubscriptionStatus.PROCESSING, SubscriptionStatus.PENDING);
+            throw new ProviderUnavailableException("Payment provider unavailable — please retry");
+        }
 
         // 3a) declined → ledger(DECLINED) + CANCELED (one transaction)
         if (!charge.success()) {

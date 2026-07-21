@@ -11,9 +11,16 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.Currency;
 
 @Service
 public class SubscriptionService {
+
+    // server-side price catalog — the frontend's amount is VALIDATED, never trusted
+    private static final java.util.Map<String, BigDecimal> PLAN_PRICES = java.util.Map.of(
+            "premium-career",   new BigDecimal("29.99"),
+            "premium-business", new BigDecimal("59.99")
+    );
 
     private final SubscriptionRepository repository;
 
@@ -39,7 +46,7 @@ public class SubscriptionService {
             sub.setUserId(request.userId());
             sub.setPlan(request.plan());
             sub.setAmount(request.amount());
-            sub.setCurrency(request.currency());
+            sub.setCurrency(request.currency().toUpperCase());
             // status defaults to PENDING inside the entity
             return repository.saveAndFlush(sub);   // flush NOW → DB checks the unique key immediately
         } catch (DataIntegrityViolationException race) {
@@ -49,6 +56,12 @@ public class SubscriptionService {
                     .orElseThrow(() -> race);
             return replayOrConflict(winner, hash);
         }
+    }
+
+    public Subscription getById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new com.itclinkedin.payment.exception.NotFoundException(
+                        "No subscription with id " + id));
     }
 
     // same key + same body → safe replay.  same key + DIFFERENT body → 409.
@@ -65,8 +78,27 @@ public class SubscriptionService {
         if (isBlank(r.userId()))         throw new IllegalArgumentException("userId is required");
         if (isBlank(r.plan()))           throw new IllegalArgumentException("plan is required");
         if (isBlank(r.currency()))       throw new IllegalArgumentException("currency is required");
+
+        // currency must be a real ISO-4217 code (GBP, USD, EUR…)
+        try {
+            Currency.getInstance(r.currency().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("currency must be a valid ISO code, got: " + r.currency());
+        }
+
         if (r.amount() == null || r.amount().compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("amount must be greater than 0");
+        if (r.amount().scale() > 2)
+            throw new IllegalArgumentException("amount cannot have more than 2 decimal places");
+        if (r.amount().compareTo(new BigDecimal("100000")) > 0)
+            throw new IllegalArgumentException("amount exceeds the maximum allowed");
+
+        // don't trust the frontend's amount — it must match the server-side plan price
+        BigDecimal expected = PLAN_PRICES.get(r.plan());
+        if (expected == null)
+            throw new IllegalArgumentException("unknown plan: " + r.plan());
+        if (expected.compareTo(r.amount()) != 0)
+            throw new IllegalArgumentException("amount does not match plan price");
     }
 
     private boolean isBlank(String s) {
@@ -75,7 +107,9 @@ public class SubscriptionService {
 
     // SHA-256 fingerprint of the fields that define "the same request"
     private String hashOf(SubscribeRequest r) {
-        String canonical = r.userId() + "|" + r.plan() + "|" + r.amount() + "|" + r.currency();
+        String canonical = r.userId() + "|" + r.plan() + "|"
+                + r.amount().stripTrailingZeros().toPlainString() + "|"
+                + r.currency().toUpperCase();
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(canonical.getBytes(StandardCharsets.UTF_8));

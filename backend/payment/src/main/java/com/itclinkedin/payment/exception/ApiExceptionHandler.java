@@ -33,4 +33,22 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)         // 400
                 .body(Map.of("error", "bad_request", "message", ex.getMessage()));
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)          // 404
+                .body(Map.of("error", "not_found", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProviderUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handleProviderDown(ProviderUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)   // 503
+                .body(Map.of("error", "provider_unavailable", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.stripe.exception.StripeException.class)
+    public ResponseEntity<Map<String, String>> handleStripe(com.stripe.exception.StripeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)           // 502
+                .body(Map.of("error", "stripe_error", "message", ex.getMessage()));
+    }
 }

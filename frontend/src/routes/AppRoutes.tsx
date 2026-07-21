@@ -6,6 +6,7 @@ import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
 import JobPosting from "../pages/JobPosting";
 import NotificationsPage from "../pages/NotificationsPage";
+import PremiumPage from "../pages/PremiumPage";
 
 export default function AppRoutes() {
 
@@ -23,6 +24,7 @@ export default function AppRoutes() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/user-profile" element={<Navigate to="/profile" replace />} />
+          <Route path="/premium" element={<PremiumPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

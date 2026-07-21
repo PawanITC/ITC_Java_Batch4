@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export function PremiumBanner() {
+  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-xl border-t-4 border-t-amber-500 border border-x-gray-200 border-b-gray-200 p-4">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 mb-2">
@@ -29,7 +32,9 @@ export function PremiumBanner() {
       </div>
 
       <div className="mt-4">
-        <button className="bg-amber-500 hover:bg-amber-600 text-amber-950 text-sm font-semibold py-1.5 px-4 rounded-full transition-colors">
+        <button
+          onClick={() => navigate("/premium")}
+          className="bg-amber-500 hover:bg-amber-600 text-amber-950 text-sm font-semibold py-1.5 px-4 rounded-full transition-colors">
           Try Premium for £0
         </button>
       </div>

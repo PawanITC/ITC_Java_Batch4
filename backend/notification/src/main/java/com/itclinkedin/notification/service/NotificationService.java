@@ -44,6 +44,7 @@ public class NotificationService {
     private Boolean isBlank(String s){
     return s == null || s.isBlank();
     }
+
     public List<Notification>getNotificationsForUser(String userId){
         return repository.findByRecipientUserId(userId);
     }
