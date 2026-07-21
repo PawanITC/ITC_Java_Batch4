@@ -122,7 +122,7 @@ export default function ProfileEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">Edit intro</h2>
+          <h2 className="text-xl font-bold text-gray-900">Edit introduction</h2>
           <button
             type="button"
             onClick={onClose}
@@ -266,7 +266,7 @@ export default function ProfileEditModal({
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
+            {/* <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Profile photo URL</label>
               <input
                 name="profilePictureUrl"
@@ -275,8 +275,8 @@ export default function ProfileEditModal({
                 placeholder="https://..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Cover photo URL</label>
               <input
                 name="coverPhotoUrl"
@@ -285,7 +285,7 @@ export default function ProfileEditModal({
                 placeholder="https://..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="space-y-3">
