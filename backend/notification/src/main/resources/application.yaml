@@ -22,3 +22,9 @@ spring:
       concurrency: 3
 server:
   port: ${SERVER_PORT:8091}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
