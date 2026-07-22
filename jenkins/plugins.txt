@@ -4,3 +4,4 @@ pipeline-stage-view
 credentials
 docker-workflow
 blueocean
+htmlpublisher
