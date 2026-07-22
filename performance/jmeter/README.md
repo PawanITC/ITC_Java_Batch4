@@ -87,7 +87,7 @@ Watch:
 
 ## Run From Jenkins CI/CD
 
-The `Jenkinsfile` has an optional `JMeter Performance Test` stage. It uses a Dockerized JMeter runner, so JMeter does not need to be installed on the Jenkins agent.
+The `Jenkinsfile` has an optional `JMeter Performance Test` stage. It uses a Dockerized JMeter runner, so JMeter does not need to be installed on the Jenkins agent. The pipeline uses `justb4/jmeter:5.5`; do not change this to `justb4/jmeter:5.6.3` because that tag is not published on Docker Hub.
 
 Build with parameters:
 

@@ -177,7 +177,7 @@
         </HTTPSamplerProxy>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Notifications" enabled="true">
-          <stringProp name="HTTPSampler.path">${API_BASE_URL}/notifications</stringProp>
+          <stringProp name="HTTPSampler.path">${API_BASE_URL}/api/notifications</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>

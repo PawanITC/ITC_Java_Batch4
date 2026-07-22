@@ -247,6 +247,18 @@ pipeline {
                   exit 1
                 fi
 
+                if ! command -v docker >/dev/null 2>&1; then
+                  echo "Docker CLI is required for the Dockerized JMeter runner."
+                  echo "Use the local Jenkins image from docker-compose-jenkins.yml or install Docker on the Jenkins agent."
+                  exit 1
+                fi
+
+                if ! docker info >/dev/null 2>&1; then
+                  echo "Jenkins cannot reach the Docker daemon."
+                  echo "For local Jenkins, mount /var/run/docker.sock as configured in docker-compose-jenkins.yml."
+                  exit 1
+                fi
+
                 rm -rf performance/jmeter/results
                 mkdir -p performance/jmeter/results/html-report
 
@@ -256,9 +268,10 @@ pipeline {
                 fi
 
                 docker run --rm \
+                  --user root \
                   -v "$PWD:/work" \
                   -w /work \
-                  justb4/jmeter:5.6.3 \
+                  justb4/jmeter:5.5 \
                   -n \
                   -t performance/jmeter/linkedin-api-smoke.jmx \
                   -l performance/jmeter/results/linkedin-api-smoke.jtl \
@@ -270,6 +283,12 @@ pipeline {
                   -JRAMP_SECONDS="${PERF_RAMP_SECONDS}" \
                   -JDURATION_SECONDS="${PERF_DURATION_SECONDS}" \
                   -JSEARCH_QUERY="${PERF_SEARCH_QUERY}"
+
+                FAILED_SAMPLES=$(awk -F, 'NR > 1 && $8 == "false" { failed++ } END { print failed + 0 }' performance/jmeter/results/linkedin-api-smoke.jtl)
+                if [ "${FAILED_SAMPLES}" -gt 0 ]; then
+                  echo "JMeter completed, but ${FAILED_SAMPLES} samples failed. Check the archived JMeter HTML report."
+                  exit 1
+                fi
                 set -x
                 '''
             }
