@@ -24,7 +24,12 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/actuator/prometheus",
-                                "/gateway/health"
+                                "/gateway/health",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().denyAll()
