@@ -1,0 +1,43 @@
+output "cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "region" {
+  value = var.aws_region
+}
+
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+output "rds_endpoint" {
+  value = aws_db_instance.linkedin_postgres.address
+}
+
+output "msk_cluster_arn" {
+  value = aws_msk_cluster.linkedin_msk.arn
+}
+
+output "msk_bootstrap_brokers" {
+  value = aws_msk_cluster.linkedin_msk.bootstrap_brokers
+}
+
+output "opensearch_endpoint" {
+  value = aws_opensearch_domain.linkedin_opensearch.endpoint
+}
+
+output "opensearch_url" {
+  value = "https://${aws_opensearch_domain.linkedin_opensearch.endpoint}"
+}
+
+output "s3_upload_bucket_name" {
+  value = aws_s3_bucket.app_uploads.bucket
+}
+
+output "s3_upload_bucket_arn" {
+  value = aws_s3_bucket.app_uploads.arn
+}
+
+output "media_service_role_arn" {
+  value = aws_iam_role.media_service.arn
+}

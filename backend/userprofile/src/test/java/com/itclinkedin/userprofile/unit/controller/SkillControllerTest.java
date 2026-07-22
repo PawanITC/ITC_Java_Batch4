@@ -1,4 +1,5 @@
 package com.itclinkedin.userprofile.unit.controller;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itclinkedin.userprofile.controller.SkillController;
 import com.itclinkedin.userprofile.dto.request.CreateSkillRequest;
@@ -41,7 +42,6 @@ class SkillControllerTest {
 
     @BeforeEach
     void setUp() {
-
         profileId = UUID.randomUUID();
         skillId = UUID.randomUUID();
 
@@ -56,11 +56,8 @@ class SkillControllerTest {
         response.setEndorsementCount(5);
     }
 
-    // ---------------- CREATE SUCCESS ----------------
-
     @Test
     void shouldCreateSkillSuccessfully() throws Exception {
-
         given(skillService.addSkill(any())).willReturn(response);
 
         mockMvc.perform(post("/api/skills")
@@ -72,7 +69,6 @@ class SkillControllerTest {
 
     @Test
     void shouldFailWhenProfileNotFound() throws Exception {
-
         given(skillService.addSkill(any()))
                 .willThrow(new RuntimeException("Profile not found"));
 
@@ -80,12 +76,11 @@ class SkillControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Profile not found"));
+                .andExpect(jsonPath("$.message").value("Profile not found"));
     }
 
     @Test
     void shouldGetSkillsByProfile() throws Exception {
-
         given(skillService.getByProfileId(profileId))
                 .willReturn(List.of(response));
 
@@ -96,7 +91,6 @@ class SkillControllerTest {
 
     @Test
     void shouldUpdateSkillSuccessfully() throws Exception {
-
         given(skillService.updateSkill(eq(skillId), any()))
                 .willReturn(response);
 
@@ -109,7 +103,6 @@ class SkillControllerTest {
 
     @Test
     void shouldFailWhenSkillNotFound() throws Exception {
-
         given(skillService.updateSkill(eq(skillId), any()))
                 .willThrow(new RuntimeException("Skill not found"));
 
@@ -117,12 +110,11 @@ class SkillControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Skill not found"));
+                .andExpect(jsonPath("$.message").value("Skill not found"));
     }
 
     @Test
     void shouldDeleteSkillSuccessfully() throws Exception {
-
         willDoNothing().given(skillService).deleteSkill(skillId);
 
         mockMvc.perform(delete("/api/skills/{skillId}", skillId))
@@ -131,12 +123,11 @@ class SkillControllerTest {
 
     @Test
     void shouldFailWhenDeleteSkillNotFound() throws Exception {
-
         willThrow(new RuntimeException("Skill not found"))
                 .given(skillService).deleteSkill(skillId);
 
         mockMvc.perform(delete("/api/skills/{skillId}", skillId))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Skill not found"));
+                .andExpect(jsonPath("$.message").value("Skill not found"));
     }
 }

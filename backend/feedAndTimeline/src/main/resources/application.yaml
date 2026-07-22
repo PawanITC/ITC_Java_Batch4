@@ -1,17 +1,83 @@
+server:
+  port: 8087
+
 spring:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
+  application:
+    name: feed-and-timeline-service
+
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/linkedin-app
-<<<<<<< HEAD
-=======
-  application:
-    name: feedAndTimeline
->>>>>>> main
-=======
->>>>>>> c4e713a82e1baa1ee93fdb436c56d7991ad51579
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${POSTGRES_URL:jdbc:postgresql://localhost:5434/feeddb}}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:postgres}}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${MSK_BOOTSTRAP_SERVERS:${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9099}}
+    schema-registry-url: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+    consumer:
+      group-id: feed-timeline-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:linkedin-frontend}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:http://localhost:8087/swagger-ui/oauth2-redirect.html}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: feed-and-timeline-service
+
+  logging:
+    level:
+      org.springframework.kafka: DEBUG
+      org.apache.kafka.clients.consumer: INFO
+      com.itc.linkedin.feedAndTimeline.kafka.consumer: DEBUG
+
+app:
+  timeline:
+    seed-demo-data: ${TIMELINE_SEED_DEMO_DATA:false}
+    reset-demo-data: ${TIMELINE_RESET_DEMO_DATA:false}
+    demo-user-id: ${TIMELINE_DEMO_USER_ID:b153813e-ab6d-4e49-8f01-df40055dfd88}

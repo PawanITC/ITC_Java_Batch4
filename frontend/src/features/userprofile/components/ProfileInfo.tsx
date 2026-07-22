@@ -1,106 +1,88 @@
-import React from "react";
-import {
-  ShieldCheck,
-  MapPin,
-} from "lucide-react";
+import { BriefcaseBusiness, Building2, MapPin, Pencil, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
+import type { Profile } from "../api";
 
-import companyphoto from "../../../assets/profile.jpeg"
+type ProfileInfoProps = {
+  profile: Profile | null;
+  onEdit: () => void;
+  canEdit?: boolean;
+  actions?: ReactNode;
+};
 
-function ProfileInfo() {
+function ProfileInfo({ profile, onEdit, canEdit = true, actions }: ProfileInfoProps) {
+  if (!profile) return null;
+
+  const location = [profile.city, profile.country].filter(Boolean).join(", ");
+  const headline = profile.headline || profile.currentPosition || "Complete your profile";
+
   return (
-    <div className="bg-white p-8 flex justify-between">
-      {/* Left Section */}
-      <div className="flex-1">
-        {/* Name + Badge */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-semibold">Hasnain Ahmad</h1>
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="grid gap-8 p-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-normal text-gray-950">
+              {profile.firstName} {profile.lastName}
+            </h1>
 
-          <span className="text-xl text-gray-600">
-            He/Him
-          </span>
+            {canEdit && (
+              <button className="inline-flex items-center gap-2 rounded-full border border-dashed border-blue-600 px-4 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
+                <ShieldCheck size={15} />
+                Add verification badge
+              </button>
+            )}
+          </div>
 
-          <button className="flex items-center gap-2 border-2 border-dashed border-blue-600 rounded-full px-5 py-1 text-blue-700 font-semibold">
-            <ShieldCheck size={15} />
-            Add verification badge
-          </button>
+          <p className="mt-3 max-w-3xl text-lg leading-7 text-gray-900">{headline}</p>
+
+          {location && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-base text-gray-600">
+              <MapPin size={18} />
+              <span>{location}</span>
+              <span className="text-gray-300">-</span>
+              <button className="font-semibold text-blue-700 hover:underline">Contact info</button>
+            </div>
+          )}
+
+          {actions && <div className="mt-6 flex flex-wrap items-center gap-3">{actions}</div>}
         </div>
 
-        {/* Title */}
-        <p className="text-xl mt-2 text-gray-900">
-          Software Engineer | React js | Node js
-        </p>
+        <aside className="relative min-w-0 border-t border-gray-100 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="absolute right-0 top-0 rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+              title="Edit profile"
+            >
+              <Pencil size={20} />
+            </button>
+          )}
 
-        {/* Location */}
-        <div className="flex items-center gap-2 mt-2 text-gray-500 text-xl">
-          <MapPin size={18} />
+          <div className="space-y-5 pr-10">
+            {profile.currentCompany && (
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <Building2 size={23} />
+                </div>
+                <h3 className="break-words text-lg font-semibold text-gray-950">
+                  {profile.currentCompany}
+                </h3>
+              </div>
+            )}
 
-          <span>
-            Crawley, England, United Kingdom
-          </span>
-
-          <span>·</span>
-
-          <button className="text-blue-700 font-semibold">
-            Contact info
-          </button>
-        </div>
-
-        {/* Connections */}
-        <p className="text-blue-700 font-semibold text-xl mt-6">
-          500+ connections
-        </p>
-
-        {/* Buttons */}
-        <div className="flex gap-4 mt-8 flex-wrap">
-          <button className="bg-blue-700 text-white px-7 py-2 rounded-full text-xl font-semibold">
-            Open to
-          </button>
-
-          <button className="border-2 border-blue-700 text-blue-700 px-7 py-1 rounded-full text-xl font-semibold">
-            Add section
-          </button>
-
-          <button className="border-2 border-blue-700 text-blue-700 px-7 py-1 rounded-full text-xl font-semibold">
-            Enhance profile
-          </button>
-
-          <button className="border-2 border-gray-600 text-gray-700 px-7 py-1 rounded-full text-xl font-semibold">
-            Resources
-          </button>
-        </div>
+            {profile.currentPosition && (
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                  <BriefcaseBusiness size={23} />
+                </div>
+                <h3 className="break-words text-lg font-semibold text-gray-950">
+                  {profile.currentPosition}
+                </h3>
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
-
-      {/* Right Section */}
-      <div className="w-80 ml-10 space-y-8">
-        {/* Company */}
-        <div className="flex items-center gap-4">
-          <img
-            src={companyphoto}
-            alt="Fiverr"
-            className="w-16 h-16 object-contain rounded-full"
-          />
-
-          <h3 className="text-xl font-semibold">
-            Fiverr
-          </h3>
-        </div>
-
-        {/* University */}
-        <div className="flex items-center gap-4">
-          <img
-            src={companyphoto}
-            alt="Comsats"
-            className="w-16 h-16 object-contain rounded-full"
-          />
-
-          <h3 className="text-xl font-semibold leading-tight">
-            COMSATS University
-            <br />
-            Islamabad
-          </h3>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }
 

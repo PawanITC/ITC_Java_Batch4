@@ -1,0 +1,34 @@
+spring:
+  jpa:
+    show-sql: false
+
+  datasource:
+    hikari:
+      data-source-properties:
+        sslmode: ${POSTGRES_SSLMODE:require}
+
+  data:
+    redis:
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:true}
+
+springdoc:
+  swagger-ui:
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:https://feed.example.com/swagger-ui/oauth2-redirect.html}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+logging:
+  level:
+    org.springframework.kafka: INFO
+    org.apache.kafka.clients.consumer: INFO
+    com.itc.linkedin.feedAndTimeline.kafka.consumer: INFO
+
+app:
+  timeline:
+    seed-demo-data: ${TIMELINE_SEED_DEMO_DATA:false}
+    reset-demo-data: ${TIMELINE_RESET_DEMO_DATA:true}

@@ -1,0 +1,120 @@
+services:
+  search-discovery-service:
+    build: ./backend/searchAndDiscover
+    container_name: linkedin-search-discovery-service-prod
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      ELASTICSEARCH_URI: ${ELASTICSEARCH_URI}
+      ELASTICSEARCH_USERNAME: ${ELASTICSEARCH_USERNAME:-}
+      ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:-}
+      SEARCH_SEED_DEMO_DATA: ${SEARCH_SEED_DEMO_DATA:-true}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
+      SWAGGER_OAUTH_REDIRECT_URL: ${SEARCH_SWAGGER_OAUTH_REDIRECT_URL}
+
+  userprofile-service:
+    build: ./backend/userprofile
+    container_name: linkedin-userprofile-service-prod
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_DATASOURCE_URL: ${USERPROFILE_POSTGRES_URL}
+      SPRING_DATASOURCE_USERNAME: ${USERPROFILE_POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${USERPROFILE_POSTGRES_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-require}
+
+  feed-and-timeline-service:
+    build: ./backend/feedAndTimeline
+    container_name: linkedin-feed-and-timeline-service-prod
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      POSTGRES_URL: ${FEED_POSTGRES_URL}
+      POSTGRES_USER: ${FEED_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FEED_POSTGRES_PASSWORD}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-require}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      SWAGGER_OAUTH_CLIENT_ID: ${SWAGGER_OAUTH_CLIENT_ID}
+      SWAGGER_OAUTH_REDIRECT_URL: ${FEED_SWAGGER_OAUTH_REDIRECT_URL}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_KAFKA_SCHEMA_REGISTRY_URL: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_SSL_ENABLED: ${SPRING_DATA_REDIS_SSL_ENABLED:-true}
+      TIMELINE_SEED_DEMO_DATA: ${TIMELINE_SEED_DEMO_DATA:-true}
+      TIMELINE_RESET_DEMO_DATA: ${TIMELINE_RESET_DEMO_DATA:-true}
+      TIMELINE_DEMO_USER_ID: ${TIMELINE_DEMO_USER_ID}
+
+  post-service:
+    build: ./backend/postAndTimeline
+    container_name: linkedin-post-service-prod
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-require}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_KAFKA_SCHEMA_REGISTRY_URL: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: linkedin-api-gateway-prod
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    depends_on:
+      - search-discovery-service
+      - userprofile-service
+      - feed-and-timeline-service
+      - post-service
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      GATEWAY_ALLOWED_ORIGIN: ${GATEWAY_ALLOWED_ORIGIN}
+      GATEWAY_ALLOWED_TOKEN_CLIENT: ${GATEWAY_ALLOWED_TOKEN_CLIENT}
+      GATEWAY_ADDITIONAL_ALLOWED_TOKEN_CLIENT: ${GATEWAY_ADDITIONAL_ALLOWED_TOKEN_CLIENT:-api-gateway}
+      GATEWAY_RATE_LIMIT_REPLENISH_RATE: ${GATEWAY_RATE_LIMIT_REPLENISH_RATE:-25}
+      GATEWAY_RATE_LIMIT_BURST_CAPACITY: ${GATEWAY_RATE_LIMIT_BURST_CAPACITY:-50}
+      GATEWAY_CONNECT_TIMEOUT_MILLIS: ${GATEWAY_CONNECT_TIMEOUT_MILLIS:-5000}
+      GATEWAY_RESPONSE_TIMEOUT: ${GATEWAY_RESPONSE_TIMEOUT:-10s}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_SSL_ENABLED: ${REDIS_SSL_ENABLED:-true}
+      USERPROFILE_SERVICE_URI: ${USERPROFILE_SERVICE_URI:-http://userprofile-service:8083}
+      SEARCH_SERVICE_URI: ${SEARCH_SERVICE_URI:-http://search-discovery-service:8086}
+      FEED_SERVICE_URI: ${FEED_SERVICE_URI:-http://feed-and-timeline-service:8087}
+      POST_SERVICE_URI: ${POST_SERVICE_URI:-http://post-service:8088}
+
+  client:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+        REACT_APP_KEYCLOAK_URL: ${REACT_APP_KEYCLOAK_URL}
+        REACT_APP_KEYCLOAK_REALM: ${REACT_APP_KEYCLOAK_REALM}
+        REACT_APP_KEYCLOAK_CLIENT_ID: ${REACT_APP_KEYCLOAK_CLIENT_ID}
+        REACT_APP_LOGOUT_REDIRECT_URI: ${REACT_APP_LOGOUT_REDIRECT_URI}
+    container_name: linkedin-frontend-prod
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:80"

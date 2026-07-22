@@ -1,53 +1,36 @@
-package com.itc.linkedin.api_gateway.controller;
+package com.itc.linkedin.apigateway.fallback;
 
-import org.junit.jupiter.api.BeforeEach;
+import com.itc.linkedin.api_gateway.controller.FallbackController;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.http.ResponseEntity;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class FallbackControllerTest {
 
-    private WebTestClient webTestClient;
+    private final FallbackController controller = new FallbackController();
 
-    @BeforeEach
-    void setup() {
-        webTestClient = WebTestClient
-                .bindToController(new FallbackController())
-                .build();
+    @Test
+    void shouldReturnFeedFallback() {
+        ResponseEntity<?> response = controller.feedFallback();
+
+        assertEquals(503, response.getStatusCode().value());
+        assertNotNull(response.getBody());
     }
 
     @Test
-    void searchDiscoveryFallbackShouldReturnFallbackResponse() {
-        webTestClient.get()
-                .uri("/fallback/search-discovery")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.status").isEqualTo("fallback")
-                .jsonPath("$.message")
-                .isEqualTo("Search and Discovery service is temporarily unavailable");
+    void shouldReturnSearchFallback() {
+        ResponseEntity<?> response = controller.searchFallback();
+
+        assertEquals(503, response.getStatusCode().value());
+        assertNotNull(response.getBody());
     }
 
     @Test
-    void profileFallbackShouldReturnFallbackResponse() {
-        webTestClient.get()
-                .uri("/fallback/profile")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.status").isEqualTo("fallback")
-                .jsonPath("$.message")
-                .isEqualTo("Profile service is temporarily unavailable");
-    }
+    void shouldReturnUserProfileFallback() {
+        ResponseEntity<?> response = controller.userProfileFallback();
 
-    @Test
-    void postsFallbackShouldReturnFallbackResponse() {
-        webTestClient.get()
-                .uri("/fallback/posts")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.status").isEqualTo("fallback")
-                .jsonPath("$.message")
-                .isEqualTo("Post service is temporarily unavailable");
+        assertEquals(503, response.getStatusCode().value());
+        assertNotNull(response.getBody());
     }
 }

@@ -1,9 +1,14 @@
 import Keycloak from "keycloak-js";
+import {
+  keycloakClientId,
+  keycloakRealm,
+  keycloakUrl,
+} from "../../config/runtimeConfig";
 
 const keycloak = new Keycloak({
-  url: "http://localhost:8080",
-  realm: "linkedin-app",
-  clientId: "linkedin-frontend",
+  url: keycloakUrl,
+  realm: keycloakRealm,
+  clientId: keycloakClientId,
 });
 
 

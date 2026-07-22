@@ -1,100 +1,118 @@
-import React, { useState } from 'react';
-import SkillsModal from './SkillsModal';
-import SkillsModal2 from './SkillsModal2';
+import React, { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { deleteEducation } from "../api";
+import EducationFormModal from "./EducationFormModal";
 
-export default function Education() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+interface EducationProps {
+  profile: any;
+  onRefresh?: () => Promise<void>;
+  canEdit?: boolean;
+}
 
-  // Separate array to dynamically inject more items inside the popup 
-  const previewSkills = ['Tailwind CSS', 'Responsive Web Design'];
-  const extraSkills = [
-    'Software Quality',
-    'Software Engineering Practices',
-    'Teamwork',
-    'Communication',
-    'Web Testing',
-    'Secure Messaging'
-  ];
-  const allSkills = [...previewSkills, ...extraSkills];
+export default function Education({ profile, onRefresh, canEdit = true }: EducationProps) {
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [selectedEducation, setSelectedEducation] = useState<any>(null);
+
+  const educationsList = profile?.educations || [];
+
+  const handleAddClick = () => {
+    setSelectedEducation(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEditClick = (education: any) => {
+    setSelectedEducation(education);
+    setIsFormModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this education history?")) {
+      return;
+    }
+
+    deleteEducation(id)
+      .then(() => onRefresh?.())
+      .catch((error) => {
+        console.error(error);
+        window.alert("Unable to delete the education entry.");
+      });
+  };
 
   return (
-    <div className="min-h-screen mt-6 flex flex-col gap-6 items-center ">
-      <div className="w-full flex flex-col gap-4">
-        
-        {/* Education Section */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Education</h2>
-            <div className="flex gap-2 text-gray-600">
-              <button className="p-1.5 hover:bg-gray-100 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>
-              <button className="p-1.5 hover:bg-gray-100 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg></button>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {/* Degree 1 */}
-            <div className="flex gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-900 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold text-center p-1">COMSATS</div>
-              <div>
-                <h3 className="font-semibold text-gray-900">COMSATS University Islamabad</h3>
-                <p className="text-gray-700 text-sm">Bachelor's degree, Computer Engineering</p>
-                <p className="text-gray-500 text-sm mb-2">Sep 2018 – Jul 2022</p>
-                <p className="text-gray-700 text-sm mb-2"><span className="font-medium">Activities and societies:</span> Football and Swimming</p>
-                <p className="text-gray-600 text-sm leading-relaxed">Javascript developer with hands on experience in Web development with MERN Stack. Quick solution provider with strong concepts of core computer science and have excellent communication skills.</p>
-              </div>
-            </div>
-            
-            <hr className="border-gray-100" />
-
-            {/* Degree 2 */}
-            <div className="flex gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-900 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold text-center p-1">COMSATS</div>
-              <div>
-                <h3 className="font-semibold text-gray-900">COMSATS University Islamabad</h3>
-                <p className="text-gray-700 text-sm">Bachelor of Science, Computer Engineering</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Skills Section */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6 pb-2 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Skills</h2>
-            <div className="flex gap-2 text-gray-600">
-              <button className="p-1.5 hover:bg-gray-100 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>
-              <button className="p-1.5 hover:bg-gray-100 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg></button>
-            </div>
-          </div>
-
-          {/* List Preview Skills */}
-          <div className="divide-y divide-gray-100 px-6">
-            {previewSkills.map((skill, index) => (
-              <div key={index} className="py-4 font-semibold text-gray-800">
-                {skill}
-              </div>
-            ))}
-          </div>
-
-          {/* Show All Button footer */}
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="w-full border-t border-gray-200 py-3 text-center text-gray-600 font-semibold hover:bg-gray-50 flex items-center justify-center gap-2 transition"
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">Education</h2>
+        {canEdit && (
+          <button
+            onClick={handleAddClick}
+            className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
+            title="Add education"
           >
-            Show all 
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
+            <Plus className="h-6 w-6" />
           </button>
-        </div>
-
+        )}
       </div>
 
-      {/* Pop up Overlay Injector */}
-      <SkillsModal2 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        skills={allSkills} 
+      <div className="space-y-6">
+        {educationsList.length === 0 ? (
+          <p className="text-sm text-gray-500">No education history available.</p>
+        ) : (
+          educationsList.map((education: any, index: number) => (
+            <div key={education.id || index} className="group/edu-item">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex gap-4">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-blue-900 p-1 text-center text-[10px] font-bold leading-tight text-white">
+                    {education.schoolName
+                      ?.split(" ")
+                      .slice(0, 2)
+                      .map((word: string) => word[0])
+                      .join("")
+                      .toUpperCase() || "EDU"}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{education.schoolName}</h3>
+                    <p className="text-sm text-gray-700">
+                      {education.degree}, {education.fieldOfStudy}
+                    </p>
+                    <p className="mb-2 text-sm text-gray-500">
+                      {education.startYear} - {education.endYear || "Present"}
+                    </p>
+                  </div>
+                </div>
+
+                {canEdit && (
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/edu-item:opacity-100">
+                    <button
+                      onClick={() => handleEditClick(education)}
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      title="Edit education"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(education.id)}
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete education"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {index < educationsList.length - 1 && <hr className="mt-6 border-gray-100" />}
+            </div>
+          ))
+        )}
+      </div>
+
+      <EducationFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        initialData={selectedEducation}
+        profileId={profile?.id}
+        onSaved={async () => {
+          await onRefresh?.();
+        }}
       />
     </div>
   );

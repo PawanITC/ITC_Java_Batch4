@@ -5,28 +5,43 @@ spring:
   application:
     name: search-discovery-service
 
-  datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/searchdb}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
-
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
+
+  elasticsearch:
+    uris: ${OPENSEARCH_URL:${ELASTICSEARCH_URI:http://localhost:9200}}
+    username: ${OPENSEARCH_USERNAME:${ELASTICSEARCH_USERNAME:}}
+    password: ${OPENSEARCH_PASSWORD:${ELASTICSEARCH_PASSWORD:}}
+
+  kafka:
+    bootstrap-servers: ${MSK_BOOTSTRAP_SERVERS:${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9099}}
+    schema-registry-url: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+    consumer:
+      group-id: search-discovery-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      ack-mode: record
+
+  main:
+    lazy-initialization: true
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:linkedin-frontend}
+      use-pkce-with-authorization-code-grant: true
+    oauth2-redirect-url: ${SWAGGER_OAUTH_REDIRECT_URL:http://localhost:8086/swagger-ui/oauth2-redirect.html}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always

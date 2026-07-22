@@ -36,6 +36,8 @@ const authSlice = createSlice({
       action: PayloadAction<{
         token: string;
         username: string;
+        name?: string;
+        email?: string;
         roles: string[];
       }>
     ) => {
@@ -46,7 +48,8 @@ const authSlice = createSlice({
       state.username = action.payload.username;
       state.roles = action.payload.roles;
       state.user = {
-        name: action.payload.username,
+        name: action.payload.name || action.payload.username,
+        email: action.payload.email,
         roles: action.payload.roles,
       };
     },

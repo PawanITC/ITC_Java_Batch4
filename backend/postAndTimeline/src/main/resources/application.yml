@@ -1,0 +1,46 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: post-service
+
+  servlet:
+    multipart:
+      max-file-size: ${POST_MEDIA_MAX_FILE_SIZE:50MB}
+      max-request-size: ${POST_MEDIA_MAX_REQUEST_SIZE:55MB}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${POSTGRES_URL:jdbc:postgresql://localhost:5438/postdb}}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:postgres}}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9099}
+    schema-registry-url: ${SPRING_KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

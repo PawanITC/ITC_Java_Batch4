@@ -13,6 +13,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "axios": "^1.18.0",
+    "formik": "^2.4.9",
     "keycloak-js": "^24.0.5",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
@@ -23,7 +24,7 @@
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4",
-    "zustand": "^5.0.14"
+    "yup": "^1.7.1"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -1,55 +1,132 @@
 server:
   port: 8085
+  forward-headers-strategy: framework
 
 spring:
   application:
     name: api-gateway
 
+  codec:
+    max-in-memory-size: ${GATEWAY_MAX_IN_MEMORY_SIZE:60MB}
+
+  webflux:
+    multipart:
+      max-in-memory-size: ${GATEWAY_MULTIPART_MAX_IN_MEMORY_SIZE:60MB}
+      max-disk-usage-per-part: ${GATEWAY_MULTIPART_MAX_DISK_USAGE_PER_PART:60MB}
+      max-parts: ${GATEWAY_MULTIPART_MAX_PARTS:16}
+
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/linkedin-app
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
+
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
   cloud:
     gateway:
-      routes:
-        - id: search-discovery-service-route
-          uri: http://localhost:8086
-          predicates:
-            - Path=/api/search/**,/api/discovery/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: searchDiscoveryCircuitBreaker
-                fallbackUri: forward:/fallback/search-discovery
-
-        - id: userprofile-service-route
-          uri: ${USERPROFILE_SERVICE_URI:http://localhost:8082}
-          predicates:
-            - Path=/api/profiles/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: userProfileCircuitBreaker
-                fallbackUri: forward:/fallback/profile
-
+      server:
+        webflux:
+          default-filters:
+            - SecureHeaders
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials Access-Control-Expose-Headers RETAIN_FIRST
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: ${GATEWAY_RATE_LIMIT_REPLENISH_RATE:10}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_LIMIT_BURST_CAPACITY:20}
                 redis-rate-limiter.requestedTokens: 1
+            - name: Retry
+              args:
+                retries: 2
+                methods: GET
+                statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE
+          routes:
+            - id: userprofile-service
+              uri: ${USERPROFILE_SERVICE_URI:http://localhost:8083}
+              predicates:
+                - Path=/api/profiles,/api/profiles/**,/api/skills,/api/skills/**,/api/educations,/api/educations/**,/api/experiences,/api/experiences/**,/api/languages,/api/languages/**,/api/follows,/api/follows/**
 
-            - AddResponseHeader=X-Service-Name, search-discovery-service
-            - AddResponseHeader=X-Gateway-Cache-Strategy, redis-cache-for-public-search-results
+            - id: search-discovery-service
+              uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
+              predicates:
+                - Path=/api/search/**,/api/discovery/**
+
+            - id: trending-service
+              uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
+              predicates:
+                - Path=/api/trending/**
+              filters:
+                - RewritePath=/api/trending/(?<segment>.*), /api/discovery/trending/${segment}
+
+            - id: feed-and-timeline-service
+              uri: ${FEED_SERVICE_URI:http://localhost:8087}
+              predicates:
+                - Path=/api/timeline,/api/timeline/**
+              filters:
+                - RewritePath=/api/timeline$, /api/timeline/
+
+            - id: post-and-timeline-service
+              uri: ${POST_SERVICE_URI:http://localhost:8088}
+              predicates:
+                - Path=/api/posts/**,/api/posts
+
+            - id: jobposting-service
+              uri: ${JOBPOSTING_SERVICE_URI:http://localhost:8089}
+              predicates:
+                - Path=/api/v1/jobs,/api/v1/jobs/**
+              filters:
+                - RemoveRequestHeader=Origin
+
+            - id: notification-service-root
+              uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8091}
+              predicates:
+                - Path=/api/notifications
+              filters:
+                - RewritePath=/api/notifications, /notifications
+
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8091}
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - RewritePath=/api/notifications/(?<segment>.*), /notifications/${segment}
+            - id: connections-service
+              uri: ${CONNECTIONS_SERVICE_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/connections/**
+
+app:
+  gateway:
+    security:
+      allowed-origins:
+        - ${GATEWAY_ALLOWED_ORIGIN:http://localhost:3000}
+      allowed-token-clients:
+        - ${GATEWAY_ALLOWED_TOKEN_CLIENT:linkedin-frontend}
+        - ${GATEWAY_ADDITIONAL_ALLOWED_TOKEN_CLIENT:api-gateway}
+        - api-gateway
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,prometheus
+
+  endpoint:
+    health:
+      show-details: when_authorized
+
+  metrics:
+    tags:
+      application: api-gateway
+
+  logging:
+    level:
+      org.springframework.cloud.gateway: INFO
+      org.springframework.security: INFO
+      com.itc.linkedin.api_gateway: INFO
