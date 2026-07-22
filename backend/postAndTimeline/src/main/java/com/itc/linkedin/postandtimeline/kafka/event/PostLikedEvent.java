@@ -8,6 +8,7 @@ public record PostLikedEvent(
         String postAuthorId,
         String actorUserId,
         String actorName,
+        boolean liked,
         int likesCount,
         LocalDateTime likedAt
 ) {}

@@ -6,9 +6,10 @@ import EducationFormModal from "./EducationFormModal";
 interface EducationProps {
   profile: any;
   onRefresh?: () => Promise<void>;
+  canEdit?: boolean;
 }
 
-export default function Education({ profile, onRefresh }: EducationProps) {
+export default function Education({ profile, onRefresh, canEdit = true }: EducationProps) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedEducation, setSelectedEducation] = useState<any>(null);
 
@@ -41,13 +42,15 @@ export default function Education({ profile, onRefresh }: EducationProps) {
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Education</h2>
-        <button
-          onClick={handleAddClick}
-          className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
-          title="Add education"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        {canEdit && (
+          <button
+            onClick={handleAddClick}
+            className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100"
+            title="Add education"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -77,22 +80,24 @@ export default function Education({ profile, onRefresh }: EducationProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/edu-item:opacity-100">
-                  <button
-                    onClick={() => handleEditClick(education)}
-                    className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                    title="Edit education"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(education.id)}
-                    className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                    title="Delete education"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/edu-item:opacity-100">
+                    <button
+                      onClick={() => handleEditClick(education)}
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      title="Edit education"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(education.id)}
+                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete education"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
               {index < educationsList.length - 1 && <hr className="mt-6 border-gray-100" />}
             </div>

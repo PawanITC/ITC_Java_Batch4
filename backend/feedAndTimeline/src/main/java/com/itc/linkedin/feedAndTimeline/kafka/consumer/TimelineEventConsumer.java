@@ -136,6 +136,31 @@ public class TimelineEventConsumer {
                 event.eventId(), event.followerId(), event.followingId());
     }
 
+    @KafkaListener(
+            topics = "social-unfollow-events",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void consumeUserUnfollowed(String message) throws Exception {
+        log.info("Received social-unfollow-events event: {}", message);
+
+        UserFollowedEvent event = objectMapper.readValue(message, UserFollowedEvent.class);
+
+        if (!StringUtils.hasText(event.eventId())) {
+            throw new IllegalArgumentException("social-unfollow-events eventId is required");
+        }
+
+        if (processedEventService.isAlreadyProcessed(event.eventId())) {
+            log.info("Skipping duplicate social-unfollow-events eventId={}", event.eventId());
+            return;
+        }
+
+        timelineService.handleUserUnfollowed(event);
+        processedEventService.markProcessed("social-unfollow-events", event.eventId(), null);
+
+        log.info("Successfully processed social-unfollow-events eventId={} followerId={} followingId={}",
+                event.eventId(), event.followerId(), event.followingId());
+    }
+
     private void validatePostCreatedEvent(PostCreatedEvent event) {
         if (!StringUtils.hasText(event.eventId())) {
             throw new IllegalArgumentException("post.created eventId is required");

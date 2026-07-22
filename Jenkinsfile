@@ -10,6 +10,14 @@ pipeline {
 
     parameters {
         booleanParam(name: 'PUSH_IMAGES', defaultValue: true, description: 'Push Docker images and update GitOps repo.')
+        booleanParam(name: 'RUN_PERFORMANCE_TEST', defaultValue: false, description: 'Run JMeter performance test against the deployed API Gateway.')
+        string(name: 'PERF_API_BASE_URL', defaultValue: 'http://ac2511ef9149847f0ae9ed56e0f05ba3-876930999.eu-west-2.elb.amazonaws.com:8085', description: 'API Gateway base URL for JMeter.')
+        password(name: 'PERF_JWT_TOKEN', defaultValue: '', description: 'Keycloak JWT token without the Bearer prefix. Required only when RUN_PERFORMANCE_TEST is enabled.')
+        string(name: 'PERF_THREADS', defaultValue: '10', description: 'JMeter virtual users. Start small for production demos.')
+        string(name: 'PERF_RAMP_SECONDS', defaultValue: '60', description: 'Ramp-up duration in seconds.')
+        string(name: 'PERF_DURATION_SECONDS', defaultValue: '300', description: 'Performance test duration in seconds.')
+        string(name: 'PERF_WAIT_SECONDS', defaultValue: '120', description: 'Wait before JMeter when the build also updates GitOps, giving ArgoCD time to roll out.')
+        string(name: 'PERF_SEARCH_QUERY', defaultValue: 'test', description: 'Search query used by JMeter search requests.')
     }
 
     environment {
@@ -219,6 +227,64 @@ pipeline {
 
                     git push origin main
                     '''
+                }
+            }
+        }
+
+        stage('JMeter Performance Test') {
+            when {
+                expression {
+                    return params.RUN_PERFORMANCE_TEST
+                }
+            }
+
+            steps {
+                sh '''
+                set +x
+
+                if [ -z "${PERF_JWT_TOKEN}" ]; then
+                  echo "PERF_JWT_TOKEN is required when RUN_PERFORMANCE_TEST=true"
+                  exit 1
+                fi
+
+                rm -rf performance/jmeter/results
+                mkdir -p performance/jmeter/results/html-report
+
+                if [ "${PUSH_IMAGES}" = "true" ] && [ "${IS_MAIN_BRANCH}" = "true" ]; then
+                  echo "Waiting ${PERF_WAIT_SECONDS}s before JMeter so ArgoCD can roll out the new image tag."
+                  sleep "${PERF_WAIT_SECONDS}"
+                fi
+
+                docker run --rm \
+                  -v "$PWD:/work" \
+                  -w /work \
+                  justb4/jmeter:5.6.3 \
+                  -n \
+                  -t performance/jmeter/linkedin-api-smoke.jmx \
+                  -l performance/jmeter/results/linkedin-api-smoke.jtl \
+                  -e \
+                  -o performance/jmeter/results/html-report \
+                  -JAPI_BASE_URL="${PERF_API_BASE_URL}" \
+                  -JJWT_TOKEN="${PERF_JWT_TOKEN}" \
+                  -JTHREADS="${PERF_THREADS}" \
+                  -JRAMP_SECONDS="${PERF_RAMP_SECONDS}" \
+                  -JDURATION_SECONDS="${PERF_DURATION_SECONDS}" \
+                  -JSEARCH_QUERY="${PERF_SEARCH_QUERY}"
+                set -x
+                '''
+            }
+
+            post {
+                always {
+                    archiveArtifacts artifacts: 'performance/jmeter/results/**', allowEmptyArchive: true
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'performance/jmeter/results/html-report',
+                        reportFiles: 'index.html',
+                        reportName: 'JMeter Performance Report'
+                    ])
                 }
             }
         }

@@ -71,8 +71,8 @@ class PostControllerTest {
 
         when(currentUserService.getUserId(authentication)).thenReturn("jwt-user");
         when(currentUserService.getUsername(authentication)).thenReturn("jwt-name");
-        when(postService.likePost(5L, "jwt-user")).thenReturn(response);
-        when(postService.unlikePost(5L, "jwt-user")).thenReturn(response);
+        when(postService.likePost(5L, "jwt-user", "jwt-name")).thenReturn(response);
+        when(postService.unlikePost(5L, "jwt-user", "jwt-name")).thenReturn(response);
         when(postService.addComment(5L, "jwt-user", "jwt-name", new CreateCommentRequest("Nice one")))
                 .thenReturn(response);
 
@@ -83,8 +83,8 @@ class PostControllerTest {
 
         postController.deletePost(authentication, 5L);
 
-        verify(postService).likePost(5L, "jwt-user");
-        verify(postService).unlikePost(5L, "jwt-user");
+        verify(postService).likePost(5L, "jwt-user", "jwt-name");
+        verify(postService).unlikePost(5L, "jwt-user", "jwt-name");
         verify(postService).addComment(5L, "jwt-user", "jwt-name", new CreateCommentRequest("Nice one"));
         verify(postService).deletePost(5L, "jwt-user");
     }

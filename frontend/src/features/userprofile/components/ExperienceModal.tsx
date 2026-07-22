@@ -6,6 +6,7 @@ interface ExperienceModalProps {
   experiences: any[];
   onEditClick: (exp: any) => void;
   onDeleteClick?: (id: string) => void | Promise<void>;
+  canEdit?: boolean;
 }
 
 export default function ExperienceModal({
@@ -14,6 +15,7 @@ export default function ExperienceModal({
   experiences,
   onEditClick,
   onDeleteClick,
+  canEdit = true,
 }: ExperienceModalProps) {
   if (!isOpen) return null;
 
@@ -98,27 +100,29 @@ export default function ExperienceModal({
                     )}
                   </div>
 
-                  <div className="flex items-start gap-1 opacity-0 transition-opacity group-hover/modal-item:opacity-100">
-                    <button
-                      onClick={() => {
-                        onClose();
-                        onEditClick(experience);
-                      }}
-                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
-                      title="Edit entry"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (onDeleteClick) onDeleteClick(experience.id);
-                      }}
-                      className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                      title="Delete entry"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="flex items-start gap-1 opacity-0 transition-opacity group-hover/modal-item:opacity-100">
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onEditClick(experience);
+                        }}
+                        className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                        title="Edit entry"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onDeleteClick) onDeleteClick(experience.id);
+                        }}
+                        className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                        title="Delete entry"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })

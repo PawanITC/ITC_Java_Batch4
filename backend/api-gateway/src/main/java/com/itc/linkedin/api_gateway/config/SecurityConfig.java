@@ -17,12 +17,13 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(Customizer.withDefaults())
+                .cors(ServerHttpSecurity.CorsSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**",
+                                "/actuator/prometheus",
                                 "/gateway/health"
                         ).permitAll()
                         .pathMatchers("/api/**").authenticated()

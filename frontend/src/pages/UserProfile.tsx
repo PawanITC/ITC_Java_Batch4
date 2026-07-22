@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useAppSelector } from "../hooks/reduxHooks";
 import { getKeycloakUser } from "../features/auth/keycloakUser";
 import About from "../features/userprofile/components/About";
@@ -9,15 +10,19 @@ import ProfileInfo from "../features/userprofile/components/ProfileInfo";
 import ProfileEditModal from "../features/userprofile/components/ProfileEditModal";
 import Services from "../features/userprofile/components/Services";
 import Skills from "../features/userprofile/components/Skills";
+import ConnectionButton from "../components/connections/ConnectionButton";
+import FollowActionButton from "../features/userprofile/components/FollowActionButton";
 import {
   createProfile,
   getCurrentProfile,
   getProfile,
+  updateProfile, // <-- Imported the update API function
   type CreateProfilePayload,
   type Profile,
 } from "../features/userprofile/api";
 
 function UserProfile() {
+  const { profileId } = useParams();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +31,8 @@ function UserProfile() {
   const { isLoggedIn, loading: authLoading, user: authUser } = useAppSelector(
     (state) => state.auth
   );
+  const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
+  const isViewingOwnProfile = !profileId || currentProfile?.id === profileId;
 
   const loadProfile = useCallback(async () => {
     if (authLoading) return;
@@ -37,6 +44,24 @@ function UserProfile() {
     if (!isLoggedIn) {
       setProfile(null);
       setLoading(false);
+      return;
+    }
+
+    if (profileId) {
+      try {
+        const [selectedProfile, signedInProfile] = await Promise.all([
+          getProfile(profileId),
+          getCurrentProfile().catch(() => null),
+        ]);
+        setProfile(selectedProfile);
+        setCurrentProfile(signedInProfile);
+      } catch (loadError) {
+        console.error(loadError);
+        setProfile(null);
+        setError("Unable to load this profile right now.");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -54,6 +79,7 @@ function UserProfile() {
 
       try {
         selectedProfile = await getCurrentProfile();
+        setCurrentProfile(selectedProfile);
       } catch (profileError: any) {
         if (profileError?.response?.status !== 404) {
           throw profileError;
@@ -77,7 +103,7 @@ function UserProfile() {
     } finally {
       setLoading(false);
     }
-  }, [authLoading, authUser, isLoggedIn]);
+  }, [authLoading, authUser, isLoggedIn, profileId]);
 
   useEffect(() => {
     loadProfile();
@@ -89,6 +115,23 @@ function UserProfile() {
     const hydratedProfile = await getProfile(createdProfile.id);
     setProfile(hydratedProfile);
     setNeedsOnboarding(false);
+  };
+
+  // Synchronize image transformations with the PostgreSQL backend
+  const handleProfileUpdate = async (updatedFields: Partial<Profile>) => {
+    if (!profile?.id) return;
+
+    try {
+      // 1. Submit asynchronous PUT payload to gateway endpoint
+      const updatedData = await updateProfile(profile.id, updatedFields);
+      
+      // 2. Refresh state using the returned updated entity from database
+      setProfile(updatedData);
+      console.log("Profile assets updated successfully.");
+    } catch (updateError) {
+      console.error("Database update failed:", updateError);
+      alert("Failed to save image. Please verify file sizes are within acceptable limits.");
+    }
   };
 
   if (loading) {
@@ -119,29 +162,57 @@ function UserProfile() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#F4F2EE] py-10 pb-24">
-      <div className="w-[65%] mx-auto flex flex-col gap-6">
-        <HeroSection profile={profile} />
-        <ProfileInfo profile={profile} onEdit={() => setIsEditModalOpen(true)} />
-        <About profile={profile} onEdit={() => setIsEditModalOpen(true)} />
-        <Services profile={profile} />
+    <div className="min-h-screen w-full bg-[#F4F2EE] py-10 pb-24">
+      <div className="mx-auto flex w-[92%] max-w-[1128px] flex-col gap-6">
+        {/* Pass down the callback handler to trigger media changes */}
+        <HeroSection
+          profile={profile}
+          onProfileUpdate={handleProfileUpdate}
+          canEdit={isViewingOwnProfile}
+        />
+        
+        <ProfileInfo
+          profile={profile}
+          onEdit={() => setIsEditModalOpen(true)}
+          canEdit={isViewingOwnProfile}
+          actions={
+            !isViewingOwnProfile ? (
+              <>
+                <FollowActionButton targetProfileId={profile.id} />
+                {profile.keycloakUserId && (
+                  <ConnectionButton targetUserId={profile.keycloakUserId} />
+                )}
+              </>
+            ) : undefined
+          }
+        />
+        <About
+          profile={profile}
+          onEdit={() => setIsEditModalOpen(true)}
+          canEdit={isViewingOwnProfile}
+        />
+        <Services profile={profile} canEdit={isViewingOwnProfile} />
         <Experience
           experiences={profile.experiences || []}
           profileId={profile.id}
           onRefresh={loadProfile}
+          canEdit={isViewingOwnProfile}
         />
-        <Education profile={profile} onRefresh={loadProfile} />
+        <Education profile={profile} onRefresh={loadProfile} canEdit={isViewingOwnProfile} />
         <Skills
           skills={profile.skills || []}
           profileId={profile.id}
           onRefresh={loadProfile}
+          canEdit={isViewingOwnProfile}
         />
-        <ProfileEditModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          profile={profile}
-          onSaved={loadProfile}
-        />
+        {isViewingOwnProfile && (
+          <ProfileEditModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            profile={profile}
+            onSaved={loadProfile}
+          />
+        )}
       </div>
     </div>
   );

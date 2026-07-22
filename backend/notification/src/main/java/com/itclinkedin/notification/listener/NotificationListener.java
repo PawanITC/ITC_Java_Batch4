@@ -35,7 +35,7 @@ public class NotificationListener {
     public void onPostLiked(String message, Acknowledgment ack) throws Exception {
         PostLikedEvent event = objectMapper.readValue(extractJsonPayload(message), PostLikedEvent.class);
 
-        if (!event.postAuthorId().equals(event.actorUserId())) {
+        if (event.liked() && !event.postAuthorId().equals(event.actorUserId())) {
             createNotification(new NotificationEvent(
                     String.valueOf(event.eventId()),
                     event.postAuthorId(),

@@ -56,10 +56,12 @@ public class UserProfile {
 
     private String country;
 
-    @URL(message = "Profile picture must be a valid URL link")
+//    @URL(message = "Profile picture must be a valid URL link")
+    @Column(columnDefinition = "TEXT")
     private String profilePictureUrl;
 
-    @URL(message = "Cover photo must be a valid URL link")
+//    @URL(message = "Cover photo must be a valid URL link")
+    @Column(columnDefinition = "TEXT")
     private String coverPhotoUrl;
 
     private String industry;

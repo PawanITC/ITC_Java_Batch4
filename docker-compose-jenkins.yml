@@ -4,7 +4,7 @@ services:
     container_name: jenkins
     user: root
     ports:
-      - "8088:8080"
+      - "8095:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home

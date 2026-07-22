@@ -4,10 +4,10 @@ import UserProfile from "../pages/UserProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import FeedTimelinePage from "../pages/FeedTimelinePage";
 import SearchDiscoveryPage from "../pages/SearchDiscoveryPage";
-import JobPosting from "../pages/JobPosting";
 import NotificationsPage from "../pages/NotificationsPage";
 import PremiumPage from "../pages/PremiumPage";
 import ConnectionsPage from "../pages/ConnectionsPage";
+import PostDetailPage from "../pages/PostDetailPage";
 
 export default function AppRoutes() {
 
@@ -20,6 +20,8 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<FeedTimelinePage />} />
           <Route path="/search" element={<SearchDiscoveryPage />} />
+          <Route path="/posts/:postId" element={<PostDetailPage />} />
+          <Route path="/profiles/:profileId" element={<UserProfile />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/user-profile" element={<Navigate to="/profile" replace />} />

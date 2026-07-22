@@ -1,5 +1,6 @@
 package com.itc.linkedin.feedAndTimeline.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itc.linkedin.feedAndTimeline.entity.TimelinePost;
 import com.itc.linkedin.feedAndTimeline.kafka.event.PostCreatedEvent;
 import com.itc.linkedin.feedAndTimeline.kafka.event.UserFollowedEvent;
@@ -11,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +33,12 @@ class TimelineServiceTest {
 
     @Mock
     private MediaUrlService mediaUrlService;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private KafkaTemplate<String, String> stringKafkaTemplate;
 
     @InjectMocks
     private TimelineService timelineService;
@@ -120,7 +128,7 @@ class TimelineServiceTest {
     }
 
     @Test
-    void shouldFanoutNewPostToAuthorAndFollowers() {
+    void shouldFanoutNewPostToAuthorAndFollowers() throws Exception {
         PostCreatedEvent event = new PostCreatedEvent(
                 "evt-1",
                 "post.created",
@@ -142,6 +150,8 @@ class TimelineServiceTest {
                 .thenReturn(Optional.empty());
         when(timelinePostRepository.save(any(TimelinePost.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        when(objectMapper.writeValueAsString(any()))
+                .thenReturn("{\"eventId\":\"evt-1:post-created:follower\",\"recipientUserId\":\"follower\"}");
 
         timelineService.handlePostCreated(event);
 
@@ -153,6 +163,8 @@ class TimelineServiceTest {
                 .toList();
 
         assertThat(recipients).containsExactlyInAnyOrder("author-1", "follower-1", "follower-2");
+        verify(stringKafkaTemplate).send(eq("notifications"), eq("follower-1"), anyString());
+        verify(stringKafkaTemplate).send(eq("notifications"), eq("follower-2"), anyString());
     }
 
     @Test
@@ -204,5 +216,25 @@ class TimelineServiceTest {
         assertThat(saved.getPostId()).isEqualTo(11L);
         assertThat(saved.getLikesCount()).isEqualTo(4);
         assertThat(saved.getCommentsCount()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRemoveFollowEdgeWhenUserUnfollowsAuthor() {
+        UserFollowedEvent event = new UserFollowedEvent(
+                "unfollow-1",
+                "follower-1",
+                "author-1",
+                "Follower",
+                "One",
+                "follower@example.com",
+                "Author",
+                "One",
+                "author@example.com",
+                "2026-06-25T12:00:00"
+        );
+
+        timelineService.handleUserUnfollowed(event);
+
+        verify(followEdgeRepository).deleteByFollowerIdAndFolloweeId("follower-1", "author-1");
     }
 }

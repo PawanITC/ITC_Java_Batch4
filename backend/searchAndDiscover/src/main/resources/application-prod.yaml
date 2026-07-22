@@ -9,7 +9,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/linkedin-app}
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://host.docker.internal:8080/realms/linkedin-app/protocol/openid-connect/certs}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/linkedin-app/protocol/openid-connect/certs}
 
   elasticsearch:
     uris: ${OPENSEARCH_URL:${ELASTICSEARCH_URI:http://localhost:9200}}
@@ -49,4 +49,4 @@ management:
 
 app:
   search:
-    seed-demo-data: ${SEARCH_SEED_DEMO_DATA:true}
+    seed-demo-data: ${SEARCH_SEED_DEMO_DATA:false}

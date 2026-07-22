@@ -8,9 +8,10 @@ interface SkillsProps {
   skills: any[];
   profileId: string;
   onRefresh: () => Promise<void>;
+  canEdit?: boolean;
 }
 
-export default function Skills({ skills, profileId, onRefresh }: SkillsProps) {
+export default function Skills({ skills, profileId, onRefresh, canEdit = true }: SkillsProps) {
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<any>(null);
@@ -43,13 +44,15 @@ export default function Skills({ skills, profileId, onRefresh }: SkillsProps) {
       {/* Header */}
       <div className="p-6 pb-2 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-900">Skills</h2>
-        <button 
-          onClick={handleAddClick}
-          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-          title="Add skill"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
+        {canEdit && (
+          <button 
+            onClick={handleAddClick}
+            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            title="Add skill"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        )}
       </div>
 
       {/* Main dashboard list container */}
@@ -70,22 +73,24 @@ export default function Skills({ skills, profileId, onRefresh }: SkillsProps) {
               </div>
 
               {/* Quick actions direct from main screen display section */}
-              <div className="flex items-center gap-1 opacity-0 group-hover/skill-dash:opacity-100 transition-opacity">
-                <button
-                  onClick={() => handleEditClick(skill)}
-                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Delete ${skill.skillName}?`)) handleDelete(skill.id);
-                  }}
-                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {canEdit && (
+                <div className="flex items-center gap-1 opacity-0 group-hover/skill-dash:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleEditClick(skill)}
+                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Delete ${skill.skillName}?`)) handleDelete(skill.id);
+                    }}
+                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
             </div>
           ))
@@ -110,6 +115,7 @@ export default function Skills({ skills, profileId, onRefresh }: SkillsProps) {
         skills={skills} 
         onEditClick={handleEditClick}
         onDeleteClick={handleDelete}
+        canEdit={canEdit}
       />
 
       {/* Flow 2: Formik + Yup isolated validation creation layout */}

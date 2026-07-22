@@ -5,8 +5,20 @@ import java.time.LocalDateTime;
 public record PostLikedEvent(
         Long eventId,
         Long postId,
-        String userId,
+        String postAuthorId,
+        String actorUserId,
+        String actorName,
+        boolean liked,
         int likesCount,
         LocalDateTime likedAt
 ) {
+    public PostLikedEvent(
+            Long eventId,
+            Long postId,
+            String actorUserId,
+            int likesCount,
+            LocalDateTime likedAt
+    ) {
+        this(eventId, postId, null, actorUserId, actorUserId, true, likesCount, likedAt);
+    }
 }

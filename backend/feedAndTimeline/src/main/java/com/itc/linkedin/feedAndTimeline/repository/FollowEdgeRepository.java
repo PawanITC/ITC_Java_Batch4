@@ -17,4 +17,6 @@ public interface FollowEdgeRepository extends JpaRepository<FollowEdge, Long> {
     List<FollowEdge> findByFollowerIdAndFolloweeIdIn(String followerId, Collection<String> followeeIds);
 
     void deleteByFollowerId(String followerId);
+
+    void deleteByFollowerIdAndFolloweeId(String followerId, String followeeId);
 }

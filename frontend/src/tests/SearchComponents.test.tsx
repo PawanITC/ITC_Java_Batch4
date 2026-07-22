@@ -8,6 +8,22 @@ import CompanyResultCard from "../components/search/CompanyResultCard";
 import DiscoverySuggestions from "../components/search/DiscoverySuggestions";
 import TrendingTopics from "../components/search/TrendingTopics";
 
+jest.mock(
+  "react-router-dom",
+  () => {
+    const React = require("react");
+
+    return {
+      Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+          {children}
+        </a>
+      ),
+    };
+  },
+  { virtual: true }
+);
+
 describe("search components", () => {
   test("SearchBar updates query and triggers search", () => {
     const onChange = jest.fn();
@@ -82,6 +98,14 @@ describe("search components", () => {
 
     expect(screen.getByText("Alex Morgan")).toBeInTheDocument();
     expect(screen.getByText("React testing tips")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /alex morgan/i })).toHaveAttribute(
+      "href",
+      "/profiles/person-1"
+    );
+    expect(screen.getByRole("link", { name: /priya shah/i })).toHaveAttribute(
+      "href",
+      "/posts/post-1"
+    );
     expect(screen.getByText("Senior Engineer")).toBeInTheDocument();
     expect(screen.getByText("CloudLabs")).toBeInTheDocument();
     expect(screen.getByText(/1200 followers/i)).toBeInTheDocument();

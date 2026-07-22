@@ -14,6 +14,11 @@ jest.mock(
     const React = require("react");
 
     return {
+      Link: ({ to, children, ...props }: any) => (
+        <a href={to} {...props}>
+          {children}
+        </a>
+      ),
       useSearchParams: () => {
         const [params, setParams] = React.useState(
           () => new URLSearchParams(mockSearchString)

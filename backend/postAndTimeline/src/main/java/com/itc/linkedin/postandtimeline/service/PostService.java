@@ -94,7 +94,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse likePost(Long postId, String userId) {
+    public PostResponse likePost(Long postId, String userId, String actorName) {
         Post post = getPostOrThrow(postId);
 
         if (!postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
@@ -110,12 +110,12 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        publishPostLiked(post, userId, (int) likesCount);
+        publishPostLiked(post, userId, actorName, true, (int) likesCount);
         return mapToResponse(post);
     }
 
     @Transactional
-    public PostResponse unlikePost(Long postId, String userId) {
+    public PostResponse unlikePost(Long postId, String userId, String actorName) {
         Post post = getPostOrThrow(postId);
 
         postLikeRepository.deleteByPostIdAndUserId(postId, userId);
@@ -125,7 +125,7 @@ public class PostService {
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        publishPostLiked(post, userId, (int) likesCount);
+        publishPostLiked(post, userId, actorName, false, (int) likesCount);
         return mapToResponse(post);
     }
 
@@ -153,6 +153,11 @@ public class PostService {
 
         publishCommentCreated(post, comment, (int) commentsCount);
         return mapToResponse(post);
+    }
+
+    @Transactional(readOnly = true)
+    public PostResponse getPost(Long postId) {
+        return mapToResponse(getPostOrThrow(postId));
     }
 
     @Transactional(readOnly = true)
@@ -193,7 +198,7 @@ public class PostService {
         }
     }
 
-    private void publishPostLiked(Post post, String userId, int likesCount) {
+    private void publishPostLiked(Post post, String userId, String actorName, boolean liked, int likesCount) {
         try {
             saveOutboxEvent(
                     post.getId(),
@@ -204,7 +209,8 @@ public class PostService {
                             post.getId(),
                             post.getAuthorId(),
                             userId,
-                            userId,
+                            actorName,
+                            liked,
                             likesCount,
                             LocalDateTime.now()
                     )

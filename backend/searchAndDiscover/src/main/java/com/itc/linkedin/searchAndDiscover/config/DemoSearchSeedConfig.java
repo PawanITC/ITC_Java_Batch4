@@ -23,13 +23,17 @@ public class DemoSearchSeedConfig {
     )
     CommandLineRunner demoSearchSeeder() {
         return args -> {
-            if (searchService.hasSeedData()) {
-                log.info("Skipping search demo data seed because indexes already contain documents");
-                return;
-            }
+            try {
+                if (searchService.hasSeedData()) {
+                    log.info("Skipping search demo data seed because indexes already contain documents");
+                    return;
+                }
 
-            searchService.seedAll();
-            log.info("Seeded demo search data");
+                searchService.seedAll();
+                log.info("Seeded demo search data");
+            } catch (RuntimeException error) {
+                log.warn("Skipping demo search seed because OpenSearch is not ready: {}", error.getMessage());
+            }
         };
     }
 }
