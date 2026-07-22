@@ -117,6 +117,15 @@ pipeline {
                         }
                     }
                 }
+
+
+                stage('Payment Service') {
+                    steps {
+                        dir('backend/payment') {
+                            sh 'chmod +x mvnw && ./mvnw clean package -DskipTests ${MAVEN_CLI_OPTS}'
+                        }
+                    }
+                }
             }
         }
 
@@ -131,6 +140,7 @@ pipeline {
                     env.CONNECTIONS_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/connections-service:${IMAGE_TAG}"
                     env.JOBPOSTING_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/jobposting-service:${IMAGE_TAG}"
                     env.NOTIFICATION_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/notification-service:${IMAGE_TAG}"
+                    env.PAYMENT_SERVICE_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/payment-service:${IMAGE_TAG}"
                     env.FRONTEND_IMAGE = "${REGISTRY}/${DOCKER_NAMESPACE}/linkedin-frontend:${IMAGE_TAG}"
                 }
 
@@ -142,6 +152,7 @@ pipeline {
                 sh 'docker build -t ${CONNECTIONS_SERVICE_IMAGE} backend/connections-service'
                 sh 'docker build -t ${JOBPOSTING_SERVICE_IMAGE} backend/jobPosting'
                 sh 'docker build -t ${NOTIFICATION_SERVICE_IMAGE} backend/notification'
+                sh 'docker build -t ${PAYMENT_SERVICE_IMAGE} backend/payment'
                 sh 'docker build -t ${FRONTEND_IMAGE} frontend'
             }
         }
@@ -168,6 +179,7 @@ pipeline {
                     sh 'docker push ${CONNECTIONS_SERVICE_IMAGE}'
                     sh 'docker push ${JOBPOSTING_SERVICE_IMAGE}'
                     sh 'docker push ${NOTIFICATION_SERVICE_IMAGE}'
+                    sh 'docker push ${PAYMENT_SERVICE_IMAGE}'
                     sh 'docker push ${FRONTEND_IMAGE}'
                 }
             }
@@ -218,6 +230,8 @@ pipeline {
                     sed -i "s|image: .*jobposting-service:.*|image: docker.io/shubhratripathi16/jobposting-service:${IMAGE_TAG}|g" environments/prod/jobposting-service/deployment.yaml
 
                     sed -i "s|image: .*notification-service:.*|image: docker.io/shubhratripathi16/notification-service:${IMAGE_TAG}|g" environments/prod/notification-service/deployment.yaml
+
+                    sed -i "s|image: .*payment-service:.*|image: docker.io/shubhratripathi16/payment-service:${IMAGE_TAG}|g" environments/prod/payment-service/deployment.yaml
 
                     sed -i "s|image: .*linkedin-frontend:.*|image: docker.io/shubhratripathi16/linkedin-frontend:${IMAGE_TAG}|g" environments/prod/frontend/deployment.yaml
 

@@ -26,6 +26,9 @@ public class SecurityConfig {
                                 "/actuator/prometheus",
                                 "/gateway/health"
                         ).permitAll()
+                        // Stripe webhooks are server-to-server and carry no JWT;
+                        // the payment service authenticates them by verifying the Stripe signature
+                        .pathMatchers(HttpMethod.POST, "/api/payments/webhooks/stripe").permitAll()
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().denyAll()
                 )
