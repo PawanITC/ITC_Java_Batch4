@@ -1,16 +1,17 @@
 import { authFetch } from "../../services/api";
+import { apiBaseUrl } from "../../config/runtimeConfig";
 import { Subscription } from "../../types/payment";
 
-// direct to the payment service for local dev; via the gateway in prod
-const paymentBaseUrl =
-  process.env.REACT_APP_PAYMENT_API_URL ?? "http://localhost:8090";
+// All payment calls go through the API gateway (like every other service).
+// Gateway route: /api/payments      -> payment-service /subscriptions
+//                /api/payments/**   -> payment-service /**
+const paymentsUrl = `${apiBaseUrl}/api/payments`;
 
-// ≈ func createSubscription(userId: String, idempotencyKey: String) async throws -> Subscription
 export async function createSubscription(
   userId: string,
   idempotencyKey: string
 ): Promise<Subscription> {
-  const res = await authFetch(`${paymentBaseUrl}/subscriptions`, {
+  const res = await authFetch(paymentsUrl, {
     method: "POST",
     body: JSON.stringify({
       userId,
@@ -26,7 +27,7 @@ export async function createSubscription(
 
 export async function createPaymentIntent(subscriptionId: number): Promise<string> {
   const res = await authFetch(
-    `${paymentBaseUrl}/subscriptions/${subscriptionId}/payment-intent`,
+    `${paymentsUrl}/subscriptions/${subscriptionId}/payment-intent`,
     { method: "POST" }
   );
   if (!res.ok) throw new Error(`Failed to create payment intent: ${res.status}`);
@@ -34,7 +35,7 @@ export async function createPaymentIntent(subscriptionId: number): Promise<strin
 }
 
 export async function getSubscription(id: number): Promise<Subscription> {
-  const res = await authFetch(`${paymentBaseUrl}/subscriptions/${id}`);
+  const res = await authFetch(`${paymentsUrl}/subscriptions/${id}`);
   if (!res.ok) throw new Error(`Failed to load subscription: ${res.status}`);
   return res.json();
 }
