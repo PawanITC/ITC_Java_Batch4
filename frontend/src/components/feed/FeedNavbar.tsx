@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
   BriefcaseBusiness,
+  Crown,
   Grid3X3,
   Home,
   LogOut,
@@ -131,6 +132,21 @@ export default function FeedNavbar() {
                 <span className="leading-none">{label}</span>
               </NavLink>
             ))}
+
+            <NavLink
+              to="/premium"
+              className={({ isActive }) =>
+                `flex h-full min-w-[70px] flex-col items-center justify-center gap-0.5 border-b-2 px-2 text-xs transition hover:bg-[#fdf6e8] ${
+                  isActive ? "border-amber-500" : "border-transparent"
+                }`
+              }
+              title="LinkedIn Premium"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-amber-500 text-white">
+                <Crown size={13} strokeWidth={2.2} />
+              </span>
+              <span className="font-semibold leading-none text-amber-700">Go Premium</span>
+            </NavLink>
 
             <Link
               to="/profile"
