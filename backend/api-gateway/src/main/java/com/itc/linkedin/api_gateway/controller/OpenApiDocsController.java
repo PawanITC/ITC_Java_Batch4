@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -45,7 +46,7 @@ public class OpenApiDocsController {
     }
 
     @GetMapping(value = "/v3/api-docs/{service}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<JsonNode>> apiDocs(@PathVariable String service) {
+    public Mono<ResponseEntity<String>> apiDocs(@PathVariable String service) {
         ServiceDocs docs = serviceDocs.get(service);
         if (docs == null) {
             return Mono.just(ResponseEntity.notFound().build());
@@ -54,21 +55,28 @@ public class OpenApiDocsController {
         return webClient.get()
                 .uri(docs.docsUrl())
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(body -> ResponseEntity.ok(rewriteServers(body, docs.publicBasePath())));
+                .bodyToMono(String.class)
+                .map(body -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(rewriteServers(body, docs.publicBasePath())));
     }
 
-    private JsonNode rewriteServers(JsonNode body, String publicBasePath) {
-        if (!(body instanceof ObjectNode objectNode)) {
-            return body;
-        }
+    private String rewriteServers(String body, String publicBasePath) {
+        try {
+            JsonNode parsed = objectMapper.readTree(body);
+            if (!(parsed instanceof ObjectNode objectNode)) {
+                return body;
+            }
 
-        ArrayNode servers = objectMapper.createArrayNode();
-        servers.add(objectMapper.createObjectNode()
-                .put("url", publicBasePath)
-                .put("description", "API Gateway"));
-        objectNode.set("servers", servers);
-        return objectNode;
+            ArrayNode servers = objectMapper.createArrayNode();
+            servers.add(objectMapper.createObjectNode()
+                    .put("url", publicBasePath)
+                    .put("description", "API Gateway"));
+            objectNode.set("servers", servers);
+            return objectMapper.writeValueAsString(objectNode);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Unable to rewrite OpenAPI docs", ex);
+        }
     }
 
     private record ServiceDocs(String docsUrl, String publicBasePath) {
