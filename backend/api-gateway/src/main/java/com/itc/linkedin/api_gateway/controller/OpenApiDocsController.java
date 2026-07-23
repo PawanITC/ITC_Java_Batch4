@@ -40,7 +40,7 @@ public class OpenApiDocsController {
                 "post", new ServiceDocs(postServiceUri + "/v3/api-docs", "/"),
                 "search", new ServiceDocs(searchServiceUri + "/v3/api-docs", "/"),
                 "jobs", new ServiceDocs(jobPostingServiceUri + "/v3/api-docs", "/"),
-                "notifications", new ServiceDocs(notificationServiceUri + "/v3/api-docs", "/api/notifications"),
+                "notifications", new ServiceDocs(notificationServiceUri + "/v3/api-docs", "/api"),
                 "payments", new ServiceDocs(paymentServiceUri + "/v3/api-docs", "/api/payments")
         );
     }
