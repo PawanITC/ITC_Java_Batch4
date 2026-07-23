@@ -23,13 +23,13 @@ public class OpenApiDocsController {
     private final Map<String, ServiceDocs> serviceDocs;
 
     public OpenApiDocsController(
-            @Value("${USERPROFILE_SERVICE_URI:http://localhost:8083}") String userProfileServiceUri,
-            @Value("${FEED_SERVICE_URI:http://localhost:8087}") String feedServiceUri,
-            @Value("${POST_SERVICE_URI:http://localhost:8088}") String postServiceUri,
-            @Value("${SEARCH_SERVICE_URI:http://localhost:8086}") String searchServiceUri,
-            @Value("${JOBPOSTING_SERVICE_URI:http://localhost:8089}") String jobPostingServiceUri,
-            @Value("${NOTIFICATION_SERVICE_URI:http://localhost:8091}") String notificationServiceUri,
-            @Value("${PAYMENT_SERVICE_URI:http://localhost:8090}") String paymentServiceUri
+            @Value("${USERPROFILE_SERVICE_URI:http://userprofile-service:8083}") String userProfileServiceUri,
+            @Value("${FEED_SERVICE_URI:http://feed-service:8087}") String feedServiceUri,
+            @Value("${POST_SERVICE_URI:http://post-service:8088}") String postServiceUri,
+            @Value("${SEARCH_SERVICE_URI:http://search-service:8086}") String searchServiceUri,
+            @Value("${JOBPOSTING_SERVICE_URI:http://jobposting-service:8091}") String jobPostingServiceUri,
+            @Value("${NOTIFICATION_SERVICE_URI:http://notification-service:8090}") String notificationServiceUri,
+            @Value("${PAYMENT_SERVICE_URI:http://payment-service:8090}") String paymentServiceUri
         ) {
         this.objectMapper = JsonMapper.builder().build();
         this.webClient = WebClient.create();
