@@ -31,7 +31,7 @@ class GatewayRouteConfigTest {
     void shouldKeepConfiguredGatewayRoutes() {
         List<RouteDefinition> routes = gatewayProperties.getRoutes();
 
-        assertEquals(9, routes.size());
+        assertEquals(16, routes.size());
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("userprofile-service")));
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("search-discovery-service")));
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("trending-service")));
@@ -41,6 +41,13 @@ class GatewayRouteConfigTest {
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("notification-service-root")));
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("notification-service")));
         assertTrue(routes.stream().anyMatch(route -> route.getId().equals("connections-service")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("userprofile-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("feed-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("post-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("search-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("jobs-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("notifications-openapi")));
+        assertTrue(routes.stream().anyMatch(route -> route.getId().equals("payments-openapi")));
     }
 
     @Test

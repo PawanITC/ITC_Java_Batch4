@@ -135,12 +135,12 @@ class GatewayResilienceIntegrationTest {
     }
 
     @Test
-    void shouldRequireAuthenticationForPrometheusEndpoint() {
+    void shouldExposePrometheusEndpointForClusterScraping() {
         testClient()
                 .get()
                 .uri("/actuator/prometheus")
                 .exchange()
-                .expectStatus().isUnauthorized();
+                .expectStatus().isOk();
     }
 
     private WebTestClient testClient() {
